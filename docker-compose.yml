@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: dev
+      POSTGRES_DB: chai_form
 
     ports:
       - "5432:5432"
@@ -17,3 +17,4 @@ services:
 
 volumes:
   pg_data:
+ 

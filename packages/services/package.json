@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "devDependencies": {
+    "@types/nodemailer": "^8.0.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "dotenv-cli": "^11.0.0",
@@ -12,6 +13,7 @@
     "@repo/database": "workspace:*",
     "@repo/logger": "workspace:*",
     "google-auth-library": "^10.5.0",
+    "nodemailer": "^8.0.7",
     "zod": "^4.3.5"
   }
 }
