@@ -2,7 +2,7 @@ import { and, asc, count, desc, eq, ilike, inArray } from "drizzle-orm";
 import db from "..";
 import { formFields, formPages, forms, InsertForm, InsertFormField, InsertFormPage, SelectForm, SelectFormField, SelectFormPage } from "../models/form.model";
 
-export class WorkspaceQuery {
+export class FormQuery {
   public async createForm(data: InsertForm): Promise<SelectForm | undefined> {
     const [form] = await db.insert(forms).values(data).returning();
     return form;

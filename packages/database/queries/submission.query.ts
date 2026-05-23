@@ -76,10 +76,12 @@ export class SubmissionQuery {
       .limit(limit)
       .offset((page - 1) * limit);
 
-    const [{ total }] = await db
+    const totalResult = await db
       .select({ total: count() })
       .from(submissions)
       .where(and(...conditions));
+
+    const total = totalResult[0]?.total ?? 0;
 
     return { data, total };
   }

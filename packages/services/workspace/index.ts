@@ -56,6 +56,7 @@ export class WorkspaceService {
       name: validated.name,
       slug: validated.slug,
       createdBy: validated.userId,
+      logoUrl: validated.logoUrl || null,
     });
 
     if(!workspace){

@@ -36,6 +36,7 @@ export const createWorkspaceInputSchema = z.object({
   userId: z.string().uuid(),
   name: z.string().trim().min(2).max(255),
   slug: z.string().trim().min(2).max(255),
+  logoUrl: z.string().url().optional(),
 });
 
 export const updateWorkspaceInputSchema = z.object({
@@ -44,7 +45,7 @@ export const updateWorkspaceInputSchema = z.object({
   data: z.object({
     name: z.string().trim().min(2).max(255).optional(),
     slug: z.string().trim().min(2).max(255).optional(),
-    logoUrl: z.string().url().optional(),
+    logoUrl: z.string().url().optional().nullable(),
   }),
 });
 

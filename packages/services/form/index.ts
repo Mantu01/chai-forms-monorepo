@@ -11,14 +11,14 @@ import {
   UpdateFormInputSchema,
   UpdatePageInputSchema,
 } from "./model";
-import { WorkspaceQuery } from "@repo/database/queries";
+import { FormQuery } from "@repo/database/queries";
 
 export class WorkspaceService {
-  constructor(private readonly workspaceQuery = new WorkspaceQuery()) {}
+  constructor(private readonly workspaceQuery = new FormQuery()) {}
 
   public async createForm(input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
     const parsed = CreateFormInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid form input");
+    if (!parsed.success) throw new Error("Invalid form input");
 
     const existing = await this.workspaceQuery.getFormBySlug(parsed.data.workspaceId, parsed.data.slug);
     if (existing) throw new Error("Form slug already exists");
@@ -33,7 +33,7 @@ export class WorkspaceService {
     if (!formId) throw new Error("Form id is required");
 
     const parsed = UpdateFormInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid update input");
+    if (!parsed.success) throw new Error("Invalid update input");
 
     const existing = await this.workspaceQuery.getFormById(formId);
     if (!existing) throw new Error("Form not found");
@@ -129,7 +129,7 @@ export class WorkspaceService {
 
   public async createPage(input: z.infer<typeof CreatePageInputSchema>): Promise<z.infer<typeof PageResponseSchema>> {
     const parsed = CreatePageInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid page input");
+    if (!parsed.success) throw new Error("Invalid page input");
 
     const form = await this.workspaceQuery.getFormById(parsed.data.formId);
     if (!form) throw new Error("Form not found");
@@ -144,7 +144,7 @@ export class WorkspaceService {
     if (!pageId) throw new Error("Page id is required");
 
     const parsed = UpdatePageInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid page update input");
+    if (!parsed.success) throw new Error("Invalid page update input");
 
     const pages = await this.workspaceQuery.getPagesByForm(parsed.data.formId || "");
     const existing = pages.find((page) => page.id === pageId);
@@ -178,7 +178,7 @@ export class WorkspaceService {
 
   public async reorderPages(input: z.infer<typeof ReorderInputSchema>): Promise<void> {
     const parsed = ReorderInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid reorder input");
+    if (!parsed.success) throw new Error("Invalid reorder input");
 
     if (!parsed.data.ids.length) throw new Error("No page ids provided");
 
@@ -187,7 +187,7 @@ export class WorkspaceService {
 
   public async createField(input: z.infer<typeof CreateFieldInputSchema>): Promise<z.infer<typeof FieldResponseSchema>> {
     const parsed = CreateFieldInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid field input");
+    if (!parsed.success) throw new Error("Invalid field input");
 
     const form = await this.workspaceQuery.getFormById(parsed.data.formId);
     if (!form) throw new Error("Form not found");
@@ -208,7 +208,7 @@ export class WorkspaceService {
     if (!fieldId) throw new Error("Field id is required");
 
     const parsed = UpdateFieldInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid field update input");
+    if (!parsed.success) throw new Error("Invalid field update input");
 
     const existing = await this.workspaceQuery.getFieldById(fieldId);
     if (!existing) throw new Error("Field not found");
@@ -250,7 +250,7 @@ export class WorkspaceService {
 
   public async reorderFields(input: z.infer<typeof ReorderInputSchema>): Promise<void> {
     const parsed = ReorderInputSchema.safeParse(input);
-    if (!parsed.success) throw new Error(parsed.error.errors[0]?.message || "Invalid reorder input");
+    if (!parsed.success) throw new Error("Invalid reorder input");
 
     if (!parsed.data.ids.length) throw new Error("No field ids provided");
 

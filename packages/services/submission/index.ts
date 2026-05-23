@@ -9,6 +9,7 @@ import {
   GetSubmissionByIdInputSchema,
   getSubmissionByIdInputSchema,
   paginatedSubmissionResponseSchema,
+  PaginatedSubmissionResponseSchema,
   ReplaceSubmissionAnswersInputSchema,
   replaceSubmissionAnswersInputSchema,
   SubmissionResponseSchema,
@@ -17,6 +18,18 @@ import {
   submissionWithAnswersResponseSchema,
   UpdateSubmissionStatusInputSchema,
   updateSubmissionStatusInputSchema,
+  GetSubmissionStatsInputSchema,
+  getSubmissionStatsInputSchema,
+  SubmissionStatsResponseSchema,
+  submissionStatsResponseSchema,
+  GetUserSubmissionsInputSchema,
+  getUserSubmissionsInputSchema,
+  UserSubmissionsResponseSchema,
+  userSubmissionsResponseSchema,
+  GetRecentSubmissionsInputSchema,
+  getRecentSubmissionsInputSchema,
+  RecentSubmissionsResponseSchema,
+  recentSubmissionsResponseSchema,
 } from "./modal";
 
 export class SubmissionService {
@@ -83,7 +96,7 @@ export class SubmissionService {
 
   public async getFormSubmissions(
     input: GetFormSubmissionsInputSchema
-  ) {
+  ): Promise<PaginatedSubmissionResponseSchema> {
     const payload = getFormSubmissionsInputSchema.parse(input);
 
     const result = await this.submissionQuery.getFormSubmissions(payload);
@@ -174,27 +187,27 @@ export class SubmissionService {
     return submissionResponseSchema.parse(deletedSubmission);
   }
 
-  public async getSubmissionStats(formId: string) {
-    if (!formId) {
-      throw new Error("Form id is required");
-    }
-
-    return this.submissionQuery.getSubmissionStats(formId);
+  public async getSubmissionStats(
+    input: GetSubmissionStatsInputSchema
+  ): Promise<SubmissionStatsResponseSchema> {
+    const payload = getSubmissionStatsInputSchema.parse(input);
+    const stats = await this.submissionQuery.getSubmissionStats(payload.formId);
+    return submissionStatsResponseSchema.parse(stats);
   }
 
-  public async getUserSubmissions(userId: string) {
-    if (!userId) {
-      throw new Error("User id is required");
-    }
-
-    return this.submissionQuery.getUserSubmissions(userId);
+  public async getUserSubmissions(
+    input: GetUserSubmissionsInputSchema
+  ): Promise<UserSubmissionsResponseSchema> {
+    const payload = getUserSubmissionsInputSchema.parse(input);
+    const result = await this.submissionQuery.getUserSubmissions(payload.userId);
+    return userSubmissionsResponseSchema.parse(result);
   }
 
-  public async getRecentSubmissions(formId: string, limit?: number) {
-    if (!formId) {
-      throw new Error("Form id is required");
-    }
-
-    return this.submissionQuery.getRecentSubmissions(formId, limit);
+  public async getRecentSubmissions(
+    input: GetRecentSubmissionsInputSchema
+  ): Promise<RecentSubmissionsResponseSchema> {
+    const payload = getRecentSubmissionsInputSchema.parse(input);
+    const result = await this.submissionQuery.getRecentSubmissions(payload.formId, payload.limit);
+    return recentSubmissionsResponseSchema.parse(result);
   }
 }

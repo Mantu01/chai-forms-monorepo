@@ -9,6 +9,12 @@ export class UserQuery {
     });
   }
 
+  async findUserByGoogleId(googleId: string): Promise<SelectUser | undefined> {
+    return db.query.users.findFirst({
+      where: eq(users.googleId, googleId),
+    });
+  }
+
   async findUserById(id: string): Promise<SelectUser | undefined> {
     return db.query.users.findFirst({
       where: eq(users.id, id),
