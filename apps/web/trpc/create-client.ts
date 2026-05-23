@@ -3,6 +3,7 @@ import { env } from "~/env.js";
 
 interface CreateTRPCHttpBatchClientClientOpts {
   enableStreaming?: boolean;
+  headers?: Record<string, string>;
 }
 
 export const createTRPCHttpBatchClientClient = (opts?: CreateTRPCHttpBatchClientClientOpts) => {
@@ -14,6 +15,10 @@ export const createTRPCHttpBatchClientClient = (opts?: CreateTRPCHttpBatchClient
     fetch(url, options) {
       return fetch(url, {
         ...options,
+        headers: {
+          ...options?.headers,
+          ...opts?.headers,
+        },
         credentials: "include",
       });
     },

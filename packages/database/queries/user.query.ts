@@ -1,9 +1,8 @@
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
-import { users, oauthAccounts, InsertUser, SelectUser, InsertOauthAccount, SelectOauthAccount } from "../models/user.model";
+import { users, InsertUser, SelectUser } from "../models/user.model";
 import db from "..";
 
 export class UserQuery {
-  
   async findUserByEmail(email: string): Promise<SelectUser | undefined> {
     return db.query.users.findFirst({
       where: eq(users.email, email),
@@ -40,34 +39,6 @@ export class UserQuery {
     });
   }
 
-  async findVerifiedUsers(): Promise<SelectUser[]> {
-    return db.query.users.findMany({
-      where: eq(users.emailVerified, true),
-    });
-  }
-
-  async findUnverifiedUsers(): Promise<SelectUser[]> {
-    return db.query.users.findMany({
-      where: eq(users.emailVerified, false),
-    });
-  }
-
-  async verifyUserEmail(id: string): Promise<SelectUser | undefined> {
-    const [user] = await db.update(users)
-      .set({ emailVerified: true, emailVerificationToken: "" })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
-  }
-
-  async updateEmailVerificationToken(id: string, token: string, expiry: Date): Promise<SelectUser | undefined> {
-    const [user] = await db.update(users)
-      .set({ emailVerificationToken: token, emailVerificationTokenExpiry: expiry })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
-  }
-
   async updateProfileImage(id: string, imageUrl: string): Promise<SelectUser | undefined> {
     const [user] = await db.update(users)
       .set({ profileImageUrl: imageUrl })
@@ -84,86 +55,6 @@ export class UserQuery {
     return user;
   }
 
-  async findUserWithOAuthAccounts(id: string) {
-    return db.query.users.findFirst({
-      where: eq(users.id, id),
-      with: {
-        oauthAccounts: true,
-      },
-    });
-  }
-
-  async createOAuthAccount(data: InsertOauthAccount): Promise<SelectOauthAccount | undefined> {
-    const [account] = await db.insert(oauthAccounts).values(data).returning();
-    return account;
-  }
-
-  async findOAuthAccount(id: string): Promise<SelectOauthAccount | undefined> {
-    return db.query.oauthAccounts.findFirst({
-      where: eq(oauthAccounts.id, id),
-    });
-  }
-
-  async findOAuthAccountByProvider(userId: string, provider: string): Promise<SelectOauthAccount | undefined> {
-    return db.query.oauthAccounts.findFirst({
-      where: and(
-        eq(oauthAccounts.userId, userId),
-        eq(oauthAccounts.provider, provider)
-      ),
-    });
-  }
-
-  async findOAuthAccountByProviderAccountId(providerAccountId: string, provider: string): Promise<SelectOauthAccount | undefined> {
-    return db.query.oauthAccounts.findFirst({
-      where: and(
-        eq(oauthAccounts.providerAccountId, providerAccountId),
-        eq(oauthAccounts.provider, provider)
-      ),
-    });
-  }
-
-  async findUserOAuthAccounts(userId: string): Promise<SelectOauthAccount[]> {
-    return db.query.oauthAccounts.findMany({
-      where: eq(oauthAccounts.userId, userId),
-    });
-  }
-
-  async updateOAuthAccount(id: string, data: Partial<InsertOauthAccount>): Promise<SelectOauthAccount | undefined> {
-    const [account] = await db.update(oauthAccounts)
-      .set(data)
-      .where(eq(oauthAccounts.id, id))
-      .returning();
-    return account;
-  }
-
-  async deleteOAuthAccount(id: string): Promise<void> {
-    await db.delete(oauthAccounts).where(eq(oauthAccounts.id, id));
-  }
-
-  async deleteUserOAuthAccounts(userId: string): Promise<void> {
-    await db.delete(oauthAccounts).where(eq(oauthAccounts.userId, userId));
-  }
-
-  async findOAuthAccountsWithValidTokens(userId: string): Promise<SelectOauthAccount[]> {
-    return db.query.oauthAccounts.findMany({
-      where: and(
-        eq(oauthAccounts.userId, userId),
-        isNotNull(oauthAccounts.expiresAt)
-      ),
-    });
-  }
-
-  async updateOAuthAccessToken(id: string, accessToken: string, refreshToken?: string): Promise<SelectOauthAccount | undefined> {
-    const [account] = await db.update(oauthAccounts)
-      .set({
-        accessToken,
-        ...(refreshToken && { refreshToken }),
-      })
-      .where(eq(oauthAccounts.id, id))
-      .returning();
-    return account;
-  }
-
   async findUsersWithoutProfileImage(): Promise<SelectUser[]> {
     return db.query.users.findMany({
       where: isNull(users.profileImageUrl),
@@ -172,13 +63,6 @@ export class UserQuery {
 
   async countTotalUsers(): Promise<number> {
     const result = await db.query.users.findMany();
-    return result.length;
-  }
-
-  async countVerifiedUsers(): Promise<number> {
-    const result = await db.query.users.findMany({
-      where: eq(users.emailVerified, true),
-    });
     return result.length;
   }
 

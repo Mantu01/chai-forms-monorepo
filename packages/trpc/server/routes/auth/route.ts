@@ -1,17 +1,11 @@
 import { z, zodUndefinedModel } from "../../schema";
-import { userService } from "../../services";
-import {
-  getAuthenticationMethodOutputSchema,
-  signupUsingEmailInputSchema,
-  signupUsingEmailOutputSchema,
-  verifyEmailTokenInputSchema,
-  verifyEmailTokenOutputSchema,
-} from "@repo/services/user/model";
+import {getAuthenticationMethodOutputSchema, getLoggedInUserSchema} from "@repo/services/user/model";
 import { publicProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
+import { userService } from "@repo/services";
 
 const TAGS = ["Authentication"];
-const getPath = generatePath("/authentication");
+const getPath = generatePath("/auth");
 
 export const authRouter = router({
   getSupportedAuthenticationProviders: publicProcedure
@@ -23,21 +17,24 @@ export const authRouter = router({
       return supportedMethods;
     }),
 
-  signupUsingEmail: publicProcedure
-    .meta({ openapi: { method: "POST", path: getPath("/signup-email"), tags: TAGS } })
-    .input(signupUsingEmailInputSchema)
-    .output(signupUsingEmailOutputSchema)
-    .mutation(async ({ input }) => {
-      const result = await userService.signupUsingEmail(input.email);
-      return result;
+  me: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/me"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(getLoggedInUserSchema)
+    .query(async ({ ctx }) => {
+      return userService.getLoggedInUser(ctx.userId);
     }),
 
-  verifyEmailToken: publicProcedure
-    .meta({ openapi: { method: "POST", path: getPath("/verify-email"), tags: TAGS } })
-    .input(verifyEmailTokenInputSchema)
-    .output(verifyEmailTokenOutputSchema)
-    .mutation(async ({ input }) => {
-      const result = await userService.verifyEmailToken(input.token, input.sessionToken);
-      return result;
+  logout: publicProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/logout"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ ctx }) => {
+      if (ctx.res) {
+        ctx.res.clearCookie("session", {
+          path: "/",
+        });
+      }
+      return { success: true };
     }),
 });

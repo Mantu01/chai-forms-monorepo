@@ -3,11 +3,11 @@ import { OpenApiMeta } from "trpc-to-openapi";
 
 import { createContext } from "./context";
 
-export const tRPCContext = initTRPC
+export const t = initTRPC
   .meta<OpenApiMeta>()
   .context<typeof createContext>()
   .create({});
 
-export const router = tRPCContext.router;
+export const router = t.router;
 
-export const publicProcedure = tRPCContext.procedure;
+export const publicProcedure = t.procedure;
