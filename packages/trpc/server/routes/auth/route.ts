@@ -35,13 +35,13 @@ export const authRouter = router({
       console.log({ctx})
       if (ctx.res) {
         if ("clearCookie" in ctx.res && typeof (ctx.res as any).clearCookie === "function") {
-          (ctx.res as any).clearCookie("session", {
+          (ctx.res as any).clearCookie("cookie", {
             path: "/",
           });
         } else {
           ctx.res.setHeader(
             "Set-Cookie",
-            "session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly"
+            "cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly"
           );
         }
       }

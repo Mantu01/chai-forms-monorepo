@@ -16,7 +16,7 @@ import {
   userSubmissionsResponseSchema,
   recentSubmissionsResponseSchema,
 } from "@repo/services/submission/modal";
-import { publicProcedure, router } from "../../trpc";
+import { publicProcedure, protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { submissionService } from "@repo/services";
 
@@ -28,9 +28,12 @@ export const submissionRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/create"), tags: TAGS } })
     .input(createSubmissionInputSchema)
     .output(submissionWithAnswersResponseSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await submissionService.createSubmission(input);
+        return await submissionService.createSubmission({
+          ...input,
+          submittedBy: ctx.userId || undefined,
+        });
       } catch (error: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -39,7 +42,7 @@ export const submissionRouter = router({
       }
     }),
 
-  getSubmissionById: publicProcedure
+  getSubmissionById: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/get"), tags: TAGS } })
     .input(getSubmissionByIdInputSchema)
     .output(submissionWithAnswersResponseSchema)
@@ -54,7 +57,7 @@ export const submissionRouter = router({
       }
     }),
 
-  getFormSubmissions: publicProcedure
+  getFormSubmissions: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/list"), tags: TAGS } })
     .input(getFormSubmissionsInputSchema)
     .output(paginatedSubmissionResponseSchema)
@@ -69,7 +72,7 @@ export const submissionRouter = router({
       }
     }),
 
-  updateSubmissionStatus: publicProcedure
+  updateSubmissionStatus: protectedProcedure
     .meta({ openapi: { method: "POST", path: getPath("/status"), tags: TAGS } })
     .input(updateSubmissionStatusInputSchema)
     .output(submissionResponseSchema)
@@ -84,7 +87,7 @@ export const submissionRouter = router({
       }
     }),
 
-  replaceSubmissionAnswers: publicProcedure
+  replaceSubmissionAnswers: protectedProcedure
     .meta({ openapi: { method: "POST", path: getPath("/answers/replace"), tags: TAGS } })
     .input(replaceSubmissionAnswersInputSchema)
     .output(submissionWithAnswersResponseSchema)
@@ -99,7 +102,7 @@ export const submissionRouter = router({
       }
     }),
 
-  deleteSubmission: publicProcedure
+  deleteSubmission: protectedProcedure
     .meta({ openapi: { method: "POST", path: getPath("/delete"), tags: TAGS } })
     .input(deleteSubmissionInputSchema)
     .output(submissionResponseSchema)
@@ -114,7 +117,7 @@ export const submissionRouter = router({
       }
     }),
 
-  getSubmissionStats: publicProcedure
+  getSubmissionStats: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/stats"), tags: TAGS } })
     .input(getSubmissionStatsInputSchema)
     .output(submissionStatsResponseSchema)
@@ -129,13 +132,13 @@ export const submissionRouter = router({
       }
     }),
 
-  getUserSubmissions: publicProcedure
+  getUserSubmissions: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/user"), tags: TAGS } })
     .input(getUserSubmissionsInputSchema)
     .output(userSubmissionsResponseSchema)
-    .query(async ({ input }) => {
+    .query(async ({ ctx }) => {
       try {
-        return await submissionService.getUserSubmissions(input);
+        return await submissionService.getUserSubmissions(ctx.userId);
       } catch (error: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -144,7 +147,7 @@ export const submissionRouter = router({
       }
     }),
 
-  getRecentSubmissions: publicProcedure
+  getRecentSubmissions: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/recent"), tags: TAGS } })
     .input(getRecentSubmissionsInputSchema)
     .output(recentSubmissionsResponseSchema)

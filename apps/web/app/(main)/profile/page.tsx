@@ -8,14 +8,15 @@ import { Button } from "~/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "~/components/ui/table";
 import { Spinner } from "~/components/ui/spinner";
+import { useAppSelector } from "~/lib/store";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
+  const { user, loading: userLoading } = useAppSelector((state) => state.user);
   
-  const userId = userData?.user?.id;
+  const userId = user?.id;
   const { data: submissions, isLoading: submissionsLoading } = trpc.submission.getUserSubmissions.useQuery(
-    { userId: userId || "" },
+    {},
     { enabled: !!userId }
   );
 
@@ -33,12 +34,10 @@ export default function ProfilePage() {
     );
   }
 
-  if (!userData?.user) {
+  if (!user) {
     router.push("/auth");
     return null;
   }
-
-  const user = userData.user;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">

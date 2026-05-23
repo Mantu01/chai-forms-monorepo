@@ -13,7 +13,7 @@ authRouter.get("/callback", async (req, res) => {
   try {
     const user = await userService.handleGoogleCallback(code);
     const sessionToken = signToken({ userId: user.id });
-    res.cookie("session", sessionToken, {
+    res.cookie("cookie", sessionToken, {
       httpOnly: true,
       secure: false,
       sameSite: "lax",

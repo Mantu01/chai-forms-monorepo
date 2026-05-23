@@ -33,7 +33,6 @@ export const workspaceInviteSchema = z.object({
 });
 
 export const createWorkspaceInputSchema = z.object({
-  userId: z.string().uuid(),
   name: z.string().trim().min(2).max(255),
   slug: z.string().trim().min(2).max(255),
   logoUrl: z.string().url().optional(),
@@ -41,7 +40,6 @@ export const createWorkspaceInputSchema = z.object({
 
 export const updateWorkspaceInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  userId: z.string().uuid(),
   data: z.object({
     name: z.string().trim().min(2).max(255).optional(),
     slug: z.string().trim().min(2).max(255).optional(),
@@ -51,38 +49,31 @@ export const updateWorkspaceInputSchema = z.object({
 
 export const deleteWorkspaceInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  userId: z.string().uuid(),
 });
 
 export const getWorkspaceInputSchema = z.object({
   workspaceId: z.string().uuid(),
 });
 
-export const getUserWorkspacesInputSchema = z.object({
-  userId: z.string().uuid(),
-});
+export const getUserWorkspacesInputSchema = z.object({});
 
 export const inviteMemberInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  userId: z.string().uuid(),
   email: z.string().email(),
   role: inviteRoleSchema,
 });
 
 export const acceptInviteInputSchema = z.object({
   token: z.string(),
-  userId: z.string().uuid(),
 });
 
 export const removeMemberInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  currentUserId: z.string().uuid(),
   targetUserId: z.string().uuid(),
 });
 
 export const changeMemberRoleInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  currentUserId: z.string().uuid(),
   targetUserId: z.string().uuid(),
   role: inviteRoleSchema,
 });
@@ -97,7 +88,6 @@ export const getWorkspaceInvitesInputSchema = z.object({
 
 export const cancelInviteInputSchema = z.object({
   workspaceId: z.string().uuid(),
-  userId: z.string().uuid(),
   inviteId: z.string().uuid(),
 });
 

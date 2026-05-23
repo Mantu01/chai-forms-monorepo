@@ -35,6 +35,13 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
     { enabled: !!formId }
   );
 
+  const { data: workspace } = trpc.workspace.getWorkspace.useQuery(
+    { workspaceId: form?.workspaceId || "" },
+    { enabled: !!form?.workspaceId }
+  );
+
+  const workspaceSlug = workspace?.slug || form?.workspaceId || "";
+
   const { data: fields, isLoading: fieldsLoading } = trpc.form.getFieldsByForm.useQuery(
     { formId: formId || "" },
     { enabled: !!formId }
@@ -54,8 +61,8 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
 
   const deleteSubmission = trpc.submission.deleteSubmission.useMutation({
     onSuccess: () => {
-      if (formId) {
-        router.push(`/workspaces/${form?.workspaceId}/forms/${formId}?tab=submissions`);
+      if (formId && form?.slug) {
+        router.push(`/workspaces/${workspaceSlug}/form/${form.slug}?tab=submissions`);
       } else {
         router.push("/profile");
       }
@@ -103,9 +110,9 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
     <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">
       <header className="flex justify-between items-center border-b border-zinc-800 pb-4">
         <div className="flex items-center space-x-3">
-          {formId ? (
+          {formId && form?.slug ? (
             <Link
-              href={`/workspaces/${form?.workspaceId}/forms/${formId}?tab=submissions`}
+              href={`/workspaces/${workspaceSlug}/form/${form.slug}?tab=submissions`}
               className="text-zinc-400 hover:text-white transition-colors"
             >
               Submissions

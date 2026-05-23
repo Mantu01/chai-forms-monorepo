@@ -1,29 +1,36 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+const protectedRoutes = ["/profile", "/workspaces", "/submissions"];
+
+const publicRoutes = ["/auth"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const protectedPrefixes = ["/profile", "/workspaces", "/submissions"];
-  const isProtected = protectedPrefixes.some((prefix) =>
-    pathname.startsWith(prefix)
+
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
   );
 
-  if (isProtected) {
-    const session = request.cookies.get("session");
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/auth";
-      return NextResponse.redirect(url);
-    }
+  const isPublicRoute = publicRoutes.includes(pathname);
+
+  const session = request.cookies.get("cookie")?.value;
+
+  if (isProtectedRoute && !session) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/auth";
+
+    loginUrl.searchParams.set("from", pathname);
+
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isPublicRoute && session) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/profile/:path*",
-    "/workspaces/:path*",
-    "/submissions/:path*",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

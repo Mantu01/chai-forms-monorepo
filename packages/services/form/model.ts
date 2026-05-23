@@ -48,13 +48,13 @@ export const CreateFormInputSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   slug: z.string().min(1),
-  createdBy: z.string().uuid(),
   isPublic: z.boolean().optional(),
   allowMultipleSubmissions: z.boolean().optional(),
   requireAuth: z.boolean().optional(),
   maxSubmissions: z.number().optional(),
   redirectUrl: z.string().optional(),
   themeConfig: z.any(),
+  status: z.enum(["draft", "published", "archived"]).optional(),
   closeAt: z.date().optional(),
 });
 

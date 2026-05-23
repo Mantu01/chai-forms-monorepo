@@ -1,0 +1,1 @@
+ALTER TABLE "forms" ADD CONSTRAINT "forms_slug_unique" UNIQUE("slug");

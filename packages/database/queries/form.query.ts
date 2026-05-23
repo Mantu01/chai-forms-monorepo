@@ -28,6 +28,11 @@ export class FormQuery {
     return form;
   }
 
+  public async getFormBySlugOnly(slug: string): Promise<SelectForm | undefined> {
+    const [form] = await db.select().from(forms).where(eq(forms.slug, slug));
+    return form;
+  }
+
   public async getFormsByWorkspace(workspaceId: string): Promise<ReadonlyArray<SelectForm>> {
     return db.select().from(forms).where(eq(forms.workspaceId, workspaceId)).orderBy(desc(forms.createdAt));
   }

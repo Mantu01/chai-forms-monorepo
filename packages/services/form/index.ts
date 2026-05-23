@@ -16,14 +16,17 @@ import { FormQuery } from "@repo/database/queries";
 export class WorkspaceService {
   constructor(private readonly workspaceQuery = new FormQuery()) {}
 
-  public async createForm(input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
+  public async createForm(createdBy: string, input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
     const parsed = CreateFormInputSchema.safeParse(input);
     if (!parsed.success) throw new Error("Invalid form input");
 
     const existing = await this.workspaceQuery.getFormBySlug(parsed.data.workspaceId, parsed.data.slug);
     if (existing) throw new Error("Form slug already exists");
 
-    const form = await this.workspaceQuery.createForm(parsed.data);
+    const form = await this.workspaceQuery.createForm({
+      ...parsed.data,
+      createdBy,
+    });
     if (!form) throw new Error("Failed to create form");
 
     return FormResponseSchema.parse(form);
@@ -70,11 +73,13 @@ export class WorkspaceService {
     return FormResponseSchema.parse(form);
   }
 
-  public async getFormBySlug(workspaceId: string, slug: string): Promise<z.infer<typeof FormResponseSchema>> {
-    if (!workspaceId) throw new Error("Workspace id is required");
+  public async getFormBySlug(workspaceId: string | undefined, slug: string): Promise<z.infer<typeof FormResponseSchema>> {
     if (!slug) throw new Error("Slug is required");
 
-    const form = await this.workspaceQuery.getFormBySlug(workspaceId, slug);
+    const form = workspaceId
+      ? await this.workspaceQuery.getFormBySlug(workspaceId, slug)
+      : await this.workspaceQuery.getFormBySlugOnly(slug);
+
     if (!form) throw new Error("Form not found");
 
     return FormResponseSchema.parse(form);

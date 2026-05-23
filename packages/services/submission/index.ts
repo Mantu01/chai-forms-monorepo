@@ -36,13 +36,13 @@ export class SubmissionService {
   private readonly submissionQuery = new SubmissionQuery();
 
   public async createSubmission(
-    input: CreateSubmissionInputSchema
+    input: CreateSubmissionInputSchema & { submittedBy?: string }
   ): Promise<SubmissionWithAnswersResponseSchema> {
     const payload = createSubmissionInputSchema.parse(input);
 
     const submission = await this.submissionQuery.createSubmission({
       formId: payload.formId,
-      submittedBy: payload.submittedBy,
+      submittedBy: input.submittedBy,
       status: payload.status || "completed",
       submittedAt: new Date(),
     });
@@ -196,10 +196,9 @@ export class SubmissionService {
   }
 
   public async getUserSubmissions(
-    input: GetUserSubmissionsInputSchema
+    userId: string
   ): Promise<UserSubmissionsResponseSchema> {
-    const payload = getUserSubmissionsInputSchema.parse(input);
-    const result = await this.submissionQuery.getUserSubmissions(payload.userId);
+    const result = await this.submissionQuery.getUserSubmissions(userId);
     return userSubmissionsResponseSchema.parse(result);
   }
 

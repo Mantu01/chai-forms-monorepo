@@ -43,7 +43,7 @@ import {
 export class WorkspaceService {
   private workspaceQuery = new WorkspaceQuery();
 
-  public async createWorkspace(input: CreateWorkspaceInputSchema): Promise<WorkspaceSchema> {
+  public async createWorkspace(userId: string, input: CreateWorkspaceInputSchema): Promise<WorkspaceSchema> {
     const validated = createWorkspaceInputSchema.parse(input);
 
     const existingWorkspace = await this.workspaceQuery.findWorkspaceBySlug(validated.slug);
@@ -55,7 +55,7 @@ export class WorkspaceService {
     const workspace = await this.workspaceQuery.createWorkspace({
       name: validated.name,
       slug: validated.slug,
-      createdBy: validated.userId,
+      createdBy: userId,
       logoUrl: validated.logoUrl || null,
     });
 
@@ -65,17 +65,17 @@ export class WorkspaceService {
 
     await this.workspaceQuery.addWorkspaceMember({
       workspaceId: workspace.id,
-      userId: validated.userId,
+      userId: userId,
       role: "owner",
     });
 
     return workspaceSchema.parse(workspace);
   }
 
-  public async updateWorkspace(input: UpdateWorkspaceInputSchema): Promise<WorkspaceSchema> {
+  public async updateWorkspace(userId: string, input: UpdateWorkspaceInputSchema): Promise<WorkspaceSchema> {
     const validated = updateWorkspaceInputSchema.parse(input);
 
-    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.userId);
+    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
     if (!member?.role || !["owner", "admin"].includes(member.role)) {
       throw new Error("Unauthorized");
@@ -94,10 +94,10 @@ export class WorkspaceService {
     return workspaceSchema.parse(workspace);
   }
 
-  public async deleteWorkspace(input: DeleteWorkspaceInputSchema): Promise<WorkspaceSchema> {
+  public async deleteWorkspace(userId: string, input: DeleteWorkspaceInputSchema): Promise<WorkspaceSchema> {
     const validated = deleteWorkspaceInputSchema.parse(input);
 
-    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.userId);
+    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
     if (!member?.role || member.role !== "owner") {
       throw new Error("Only owner can delete workspace");
@@ -116,10 +116,17 @@ export class WorkspaceService {
     return workspaceSchema.parse(workspace);
   }
 
-  public async getUserWorkspaces(input: GetUserWorkspacesInputSchema): Promise<GetUserWorkspacesOutputSchema> {
-    const validated = getUserWorkspacesInputSchema.parse(input);
 
-    const workspaces = await this.workspaceQuery.getUserWorkspaces(validated.userId);
+  public async getWorkspaceBySlug(slug: string): Promise<WorkspaceSchema> {
+    const workspace = await this.workspaceQuery.findWorkspaceBySlug(slug);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+    return workspaceSchema.parse(workspace);
+  }
+
+  public async getUserWorkspaces(userId: string): Promise<GetUserWorkspacesOutputSchema> {
+    const workspaces = await this.workspaceQuery.getUserWorkspaces(userId);
 
     return workspaces.map((item) => ({
       workspace: workspaceSchema.parse(item.workspace),
@@ -128,10 +135,10 @@ export class WorkspaceService {
     }));
   }
 
-  public async inviteMember(input: InviteMemberInputSchema): Promise<WorkspaceInviteSchema> {
+  public async inviteMember(userId: string, input: InviteMemberInputSchema): Promise<WorkspaceInviteSchema> {
     const validated = inviteMemberInputSchema.parse(input);
 
-    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.userId);
+    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
     if (!member?.role || !["owner", "admin"].includes(member.role)) {
       throw new Error("Unauthorized");
@@ -156,7 +163,7 @@ export class WorkspaceService {
     return workspaceInviteSchema.parse(invite);
   }
 
-  public async acceptInvite(input: AcceptInviteInputSchema): Promise<SuccessResponseSchema> {
+  public async acceptInvite(userId: string, input: AcceptInviteInputSchema): Promise<SuccessResponseSchema> {
     const validated = acceptInviteInputSchema.parse(input);
 
     const invite = await this.workspaceQuery.findInviteByToken(validated.token);
@@ -173,7 +180,7 @@ export class WorkspaceService {
       throw new Error("Invite expired");
     }
 
-    const existingMember = await this.workspaceQuery.findWorkspaceMember(invite.workspaceId, validated.userId);
+    const existingMember = await this.workspaceQuery.findWorkspaceMember(invite.workspaceId, userId);
 
     if (existingMember) {
       throw new Error("Already member");
@@ -181,7 +188,7 @@ export class WorkspaceService {
 
     await this.workspaceQuery.addWorkspaceMember({
       workspaceId: invite.workspaceId,
-      userId: validated.userId,
+      userId: userId,
       role: invite.role,
     });
 
@@ -190,10 +197,10 @@ export class WorkspaceService {
     return successResponseSchema.parse({ success: true });
   }
 
-  public async removeMember(input: RemoveMemberInputSchema): Promise<WorkspaceMemberSchema> {
+  public async removeMember(currentUserId: string, input: RemoveMemberInputSchema): Promise<WorkspaceMemberSchema> {
     const validated = removeMemberInputSchema.parse(input);
 
-    const currentMember = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.currentUserId);
+    const currentMember = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, currentUserId);
 
     if (!currentMember?.role || !["owner", "admin"].includes(currentMember.role)) {
       throw new Error("Unauthorized");
@@ -214,10 +221,10 @@ export class WorkspaceService {
     return workspaceMemberSchema.parse(removed);
   }
 
-  public async changeMemberRole(input: ChangeMemberRoleInputSchema): Promise<WorkspaceMemberSchema> {
+  public async changeMemberRole(currentUserId: string, input: ChangeMemberRoleInputSchema): Promise<WorkspaceMemberSchema> {
     const validated = changeMemberRoleInputSchema.parse(input);
 
-    const currentMember = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.currentUserId);
+    const currentMember = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, currentUserId);
 
     if (!currentMember || currentMember.role !== "owner") {
       throw new Error("Only owner can change roles");
@@ -254,10 +261,10 @@ export class WorkspaceService {
     return invites.map((invite) => workspaceInviteSchema.parse(invite));
   }
 
-  public async cancelInvite(input: CancelInviteInputSchema): Promise<WorkspaceInviteSchema> {
+  public async cancelInvite(userId: string, input: CancelInviteInputSchema): Promise<WorkspaceInviteSchema> {
     const validated = cancelInviteInputSchema.parse(input);
 
-    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, validated.userId);
+    const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
     if (!member?.role || !["owner", "admin"].includes(member.role)) {
       throw new Error("Unauthorized");

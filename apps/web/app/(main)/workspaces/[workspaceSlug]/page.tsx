@@ -13,80 +13,99 @@ import { Spinner } from "~/components/ui/spinner";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "~/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Suspense } from "react";
+import { useAppSelector } from "~/lib/store";
 
 interface WorkspacePageProps {
-  params: Promise<{ workspaceId: string }>;
+  params: Promise<{ workspaceSlug: string }>;
 }
-
-import { Suspense } from "react";
 
 function WorkspaceContent({ params }: WorkspacePageProps) {
   const resolvedParams = use(params);
-  const workspaceId = resolvedParams.workspaceId;
+  const slug = resolvedParams.workspaceSlug;
   const router = useRouter();
   const searchParams = useSearchParams();
   const utils = trpc.useUtils();
 
   const currentTab = searchParams.get("tab") || "forms";
 
-  const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
-  const userId = userData?.user?.id;
+  const { user, loading: userLoading } = useAppSelector((state) => state.user);
+  const userId = user?.id;
 
-  const { data: workspace, isLoading: workspaceLoading } = trpc.workspace.getWorkspace.useQuery(
-    { workspaceId },
-    { enabled: !!workspaceId }
+  const { data: workspace, isLoading: workspaceLoading } = trpc.workspace.getWorkspaceBySlug.useQuery(
+    { slug },
+    { enabled: !!slug }
   );
 
+  const workspaceId = workspace?.id;
+
   const { data: forms, isLoading: formsLoading } = trpc.form.getFormsByWorkspace.useQuery(
-    { workspaceId },
+    { workspaceId: workspaceId || "" },
     { enabled: currentTab === "forms" && !!workspaceId }
   );
 
   const { data: members, isLoading: membersLoading } = trpc.workspace.getWorkspaceMembers.useQuery(
-    { workspaceId },
+    { workspaceId: workspaceId || "" },
     { enabled: currentTab === "members" && !!workspaceId }
   );
 
   const { data: invites, isLoading: invitesLoading } = trpc.workspace.getWorkspaceInvites.useQuery(
-    { workspaceId },
+    { workspaceId: workspaceId || "" },
     { enabled: currentTab === "members" && !!workspaceId }
   );
 
   const createForm = trpc.form.createForm.useMutation({
     onSuccess: () => {
       router.push(`?tab=forms`);
-      utils.form.getFormsByWorkspace.invalidate({ workspaceId });
+      if (workspaceId) {
+        utils.form.getFormsByWorkspace.invalidate({ workspaceId });
+      }
     },
   });
 
   const inviteMember = trpc.workspace.inviteMember.useMutation({
     onSuccess: () => {
       router.push(`?tab=members`);
-      utils.workspace.getWorkspaceInvites.invalidate({ workspaceId });
+      if (workspaceId) {
+        utils.workspace.getWorkspaceInvites.invalidate({ workspaceId });
+      }
     },
   });
 
   const cancelInvite = trpc.workspace.cancelInvite.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceInvites.invalidate({ workspaceId });
+      if (workspaceId) {
+        utils.workspace.getWorkspaceInvites.invalidate({ workspaceId });
+      }
     },
   });
 
   const removeMember = trpc.workspace.removeMember.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      if (workspaceId) {
+        utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      }
     },
   });
 
   const changeMemberRole = trpc.workspace.changeMemberRole.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      if (workspaceId) {
+        utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      }
     },
   });
 
   const updateWorkspace = trpc.workspace.updateWorkspace.useMutation({
-    onSuccess: () => {
-      utils.workspace.getWorkspace.invalidate({ workspaceId });
+    onSuccess: (data) => {
+      utils.workspace.getWorkspaceBySlug.invalidate({ slug });
+      if (workspaceId) {
+        utils.workspace.getWorkspace.invalidate({ workspaceId });
+      }
+      utils.workspace.getUserWorkspaces.invalidate();
+      if (data?.slug && data.slug !== slug) {
+        router.push(`/workspaces/${data.slug}?tab=settings`);
+      }
     },
   });
 
@@ -105,14 +124,14 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
     );
   }
 
-  if (!userData?.user || !workspace) {
+  if (!user || !workspace) {
     router.push("/auth");
     return null;
   }
 
   const handleCreateForm = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!userId || !workspaceId) return;
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title") as string;
     const slug = formData.get("slug") as string;
@@ -122,20 +141,18 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
       title,
       slug,
       description,
-      createdBy: userId,
       themeConfig: {},
     });
   };
 
   const handleInviteMember = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!userId || !workspaceId) return;
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const role = formData.get("role") as "admin" | "member";
     inviteMember.mutate({
       workspaceId,
-      userId,
       email,
       role,
     });
@@ -143,30 +160,30 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
 
   const handleUpdateWorkspace = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!userId || !workspaceId) return;
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const slug = formData.get("slug") as string;
+    const newSlug = formData.get("slug") as string;
     updateWorkspace.mutate({
       workspaceId,
-      userId,
-      data: { name, slug },
+      data: { name, slug: newSlug },
     });
   };
 
   const handleUploadLogo = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!userId || !workspaceId) return;
     const formData = new FormData(e.currentTarget);
     formData.append("workspaceId", workspaceId);
-    formData.append("userId", userId);
     
     try {
       await fetch("http://localhost:5000/api/workspace/upload-logo", {
         method: "POST",
         body: formData,
       });
+      utils.workspace.getWorkspaceBySlug.invalidate({ slug });
       utils.workspace.getWorkspace.invalidate({ workspaceId });
+      utils.workspace.getUserWorkspaces.invalidate();
     } catch (err) {
       console.error(err);
     }
@@ -215,7 +232,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
           ) : forms && forms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {forms.map((form) => (
-                <Link key={form.id} href={`/workspaces/${workspaceId}/forms/${form.id}`}>
+                <Link key={form.id} href={`/workspaces/${slug}/form/${form.slug}`}>
                   <Card className="bg-zinc-900 border-zinc-800 text-white hover:border-zinc-700 hover:bg-zinc-800/50 transition-all h-full">
                     <CardHeader>
                       <CardTitle className="text-lg font-bold">{form.title}</CardTitle>
@@ -274,8 +291,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
                                 variant="secondary"
                                 onClick={() =>
                                   changeMemberRole.mutate({
-                                    workspaceId,
-                                    currentUserId: userId || "",
+                                    workspaceId: workspaceId!,
                                     targetUserId: member.userId,
                                     role: member.role === "admin" ? "member" : "admin",
                                   })
@@ -288,8 +304,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
                                 variant="destructive"
                                 onClick={() =>
                                   removeMember.mutate({
-                                    workspaceId,
-                                    currentUserId: userId || "",
+                                    workspaceId: workspaceId!,
                                     targetUserId: member.userId,
                                   })
                                 }
@@ -342,8 +357,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
                             variant="destructive"
                             onClick={() =>
                               cancelInvite.mutate({
-                                workspaceId,
-                                userId: userId || "",
+                                workspaceId: workspaceId!,
                                 inviteId: invite.id,
                               })
                             }
@@ -426,7 +440,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
               </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900 border-zinc-800 text-white border-destructive/20">
+            <Card className="bg-zinc-900 border-zinc-800 text-white">
               <CardHeader>
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>
                 <CardDescription className="text-zinc-400">Delete workspace. This is permanent.</CardDescription>
@@ -437,7 +451,7 @@ function WorkspaceContent({ params }: WorkspacePageProps) {
                   className="w-full"
                   onClick={() => {
                     if (confirm("Are you sure you want to delete this workspace?")) {
-                      deleteWorkspace.mutate({ workspaceId, userId: userId || "" });
+                      deleteWorkspace.mutate({ workspaceId: workspaceId! });
                     }
                   }}
                 >

@@ -9,7 +9,6 @@ export type SubmissionAnswerInputSchema = z.infer<typeof submissionAnswerInputSc
 
 export const createSubmissionInputSchema = z.object({
   formId: z.string().uuid(),
-  submittedBy: z.string().uuid().optional(),
   status: z.string().min(1).max(100).optional(),
   answers: z.array(submissionAnswerInputSchema).min(1),
 });
@@ -103,9 +102,7 @@ export const submissionStatsResponseSchema = z.object({
 
 export type SubmissionStatsResponseSchema = z.infer<typeof submissionStatsResponseSchema>;
 
-export const getUserSubmissionsInputSchema = z.object({
-  userId: z.string().uuid(),
-});
+export const getUserSubmissionsInputSchema = z.object({});
 
 export type GetUserSubmissionsInputSchema = z.infer<typeof getUserSubmissionsInputSchema>;
 

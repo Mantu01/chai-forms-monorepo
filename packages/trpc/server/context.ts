@@ -6,7 +6,7 @@ export async function createContext(opts?: Partial<CreateHTTPContextOptions>) {
   const cookieHeader = opts?.req?.headers?.cookie;
   if (cookieHeader) {
     const cookies = parseCookies(cookieHeader);
-    const sessionToken = cookies["session"];
+    const sessionToken = cookies["cookie"];
     if (sessionToken) {
       const payload = verifyToken(sessionToken);
       if (payload) {

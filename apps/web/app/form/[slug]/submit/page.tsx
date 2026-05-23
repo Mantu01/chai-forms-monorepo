@@ -12,26 +12,28 @@ import { Textarea } from "~/components/ui/textarea";
 import { Spinner } from "~/components/ui/spinner";
 
 interface SubmitPageProps {
-  params: Promise<{ formId: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 import { Suspense } from "react";
 
 function SubmitFormContent({ params }: SubmitPageProps) {
-  const { formId } = use(params);
+  const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const { data: userData } = trpc.auth.me.useQuery();
   const userId = userData?.user?.id;
 
-  const { data: form, isLoading: formLoading } = trpc.form.getFormById.useQuery(
-    { formId },
-    { enabled: !!formId }
+  const { data: form, isLoading: formLoading } = trpc.form.getFormBySlug.useQuery(
+    { slug },
+    { enabled: !!slug }
   );
 
+  const formId = form?.id;
+
   const { data: fields, isLoading: fieldsLoading } = trpc.form.getFieldsByForm.useQuery(
-    { formId },
+    { formId: formId || "" },
     { enabled: !!formId }
   );
 
@@ -61,7 +63,7 @@ function SubmitFormContent({ params }: SubmitPageProps) {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!fields) return;
+    if (!fields || !formId) return;
 
     const formData = new FormData(e.currentTarget);
     const answers = fields.map((field) => {
@@ -77,7 +79,6 @@ function SubmitFormContent({ params }: SubmitPageProps) {
 
     createSubmission.mutate({
       formId,
-      submittedBy: userId || undefined,
       answers,
     });
   };

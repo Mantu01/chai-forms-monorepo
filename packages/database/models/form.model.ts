@@ -10,7 +10,7 @@ export const forms = pgTable("forms", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
 
-  slug: varchar("slug", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
   status: formStatusEnum("status").default("draft").notNull(),
   isPublic: boolean("is_public").default(true).notNull(),
   createdBy: uuid("created_by").references(() => users.id).notNull(),
