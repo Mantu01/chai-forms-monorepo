@@ -21,7 +21,7 @@ export const workspaceMembers = pgTable("workspace_members",{
   workspaceId: uuid("workspace_id").references(() => workspaces.id, {onDelete: "cascade",}).notNull(),
 
   userId: uuid("user_id").references(() => users.id, {onDelete: "cascade",}).notNull(),
-
+  name:varchar("name", { length: 255 }).notNull(),
   role: userRoleEnum("role").default("member"),
 
   joinedAt: timestamp("joined_at").defaultNow(),

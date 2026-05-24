@@ -15,6 +15,7 @@ export const workspaceSchema = z.object({
 });
 
 export const workspaceMemberSchema = z.object({
+  name:z.string(),
   workspaceId: z.string().uuid(),
   userId: z.string().uuid(),
   role: workspaceRoleSchema,
@@ -64,6 +65,8 @@ export const inviteMemberInputSchema = z.object({
 });
 
 export const acceptInviteInputSchema = z.object({
+  userId:z.string(),
+  userName:z.string(),
   token: z.string(),
 });
 
@@ -107,6 +110,21 @@ export const getWorkspaceMembersOutputSchema = z.array(workspaceMemberSchema);
 
 export const getWorkspaceInvitesOutputSchema = z.array(workspaceInviteSchema);
 
+export const getWorkspaceMemberDetailsInputSchema = z.object({
+  workspaceId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export const getWorkspaceMemberDetailsOutputSchema = z.object({
+  workspaceId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: workspaceRoleSchema,
+  joinedAt: z.date().nullable(),
+  name: z.string(),
+  email: z.string().email(),
+  profileImageUrl: z.string().nullable(),
+});
+
 export type WorkspaceSchema = z.infer<typeof workspaceSchema>;
 export type WorkspaceMemberSchema = z.infer<typeof workspaceMemberSchema>;
 export type WorkspaceInviteSchema = z.infer<typeof workspaceInviteSchema>;
@@ -126,3 +144,5 @@ export type SuccessResponseSchema = z.infer<typeof successResponseSchema>;
 export type GetUserWorkspacesOutputSchema = z.infer<typeof getUserWorkspacesOutputSchema>;
 export type GetWorkspaceMembersOutputSchema = z.infer<typeof getWorkspaceMembersOutputSchema>;
 export type GetWorkspaceInvitesOutputSchema = z.infer<typeof getWorkspaceInvitesOutputSchema>;
+export type GetWorkspaceMemberDetailsInputSchema = z.infer<typeof getWorkspaceMemberDetailsInputSchema>;
+export type GetWorkspaceMemberDetailsOutputSchema = z.infer<typeof getWorkspaceMemberDetailsOutputSchema>;

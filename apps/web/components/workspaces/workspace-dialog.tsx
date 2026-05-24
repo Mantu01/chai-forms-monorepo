@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -24,6 +24,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Card } from "~/components/ui/card";
+import { env } from "~/env";
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -34,11 +35,8 @@ interface CreateWorkspaceDialogProps {
 export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspaceDialogProps) {
   const router = useRouter();
   const utils = trpc.useUtils();
-
-  const [logo, setLogo] = useState<File | null>(null);
-  const [slugValue, setSlugValue] = useState("");
-  const [slugError, setSlugError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const slugInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createWorkspace = trpc.workspace.createWorkspace.useMutation();
 
@@ -59,8 +57,9 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
       result += chars[Math.floor(Math.random() * chars.length)];
     }
     
-    setSlugValue(result.substring(0, 10));
-    setSlugError("");
+    if (slugInputRef.current) {
+      slugInputRef.current.value = result.substring(0, 10);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -70,32 +69,29 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const slug = slugValue.trim();
+    const slug = slugInputRef.current?.value.trim() || "";
+    const logoFile = fileInputRef.current?.files?.[0] || null;
 
     if (!slug) {
-      setSlugError("Workspace slug is required");
+      toast.error("Workspace slug is required");
       return;
     }
 
-    setIsSubmitting(true);
-    setSlugError("");
-
     try {
-      // 1. Create the workspace directly
       const data = await createWorkspace.mutateAsync({
         name,
         slug,
       });
 
-      // 2. Upload logo if selected
-      if (logo && data?.id) {
+      if (logoFile && data?.id) {
         const logoFormData = new FormData();
         logoFormData.append("workspaceId", data.id);
-        logoFormData.append("logo", logo);
+        logoFormData.append("logo", logoFile);
 
-        const response = await fetch("http://localhost:5000/api/workspace/upload-logo", {
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/workspace/upload-logo`, {
           method: "POST",
           body: logoFormData,
+          credentials:'include'
         });
 
         if (!response.ok) {
@@ -106,24 +102,20 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
       toast.success(`Workspace "${name}" created successfully!`);
       await utils.workspace.getUserWorkspaces.invalidate();
       
-      // Reset form state
-      setLogo(null);
-      setSlugValue("");
+      if (slugInputRef.current) {
+        slugInputRef.current.value = "";
+      }
       onClose();
 
-      // Redirect to the newly created workspace
-      router.push(`/workspaces/${slug}`);
+      router.replace(`/workspaces/${slug}`);
     } catch (error: any) {
       console.error(error);
       const msg = error.message || "";
       if (msg.toLowerCase().includes("slug already exists") || msg.toLowerCase().includes("slug exists")) {
-        setSlugError("This workspace slug is already taken. Please choose a different slug.");
         toast.error("Failed to create workspace: Workspace slug already exists.");
       } else {
         toast.error(msg || "An unexpected error occurred while creating the workspace.");
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -140,6 +132,7 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
               <DialogTitle className="text-xl font-semibold">
                 Create Workspace
               </DialogTitle>
+
 
               <DialogDescription className="text-xs">
                 Create a collaborative workspace for your projects, forms and team members.
@@ -181,19 +174,17 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
                 </div>
 
                 <Input
+                  ref={slugInputRef}
                   name="slug"
                   required
-                  value={slugValue}
-                  onChange={(e) => {
-                    setSlugValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-                    setSlugError("");
-                  }}
                   placeholder="acme-inc"
                   className="h-11 rounded-xl text-sm"
+                  onChange={(e) => {
+                    if (slugInputRef.current) {
+                      slugInputRef.current.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                    }
+                  }}
                 />
-                {slugError && (
-                  <p className="text-[11px] text-red-500 font-medium">{slugError}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -208,19 +199,15 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-medium">
-                      {logo ? logo.name : "Upload workspace logo"}
-                    </p>
-
-                    <p className="text-[11px] text-muted-foreground">
                       PNG, JPG or SVG
                     </p>
                   </div>
 
                   <Input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     className="max-w-45 text-xs"
-                    onChange={(e) => setLogo(e.target.files?.[0] || null)}
                   />
                 </Card>
               </div>
@@ -232,17 +219,17 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
                 variant="ghost"
                 onClick={onClose}
                 className="rounded-xl"
-                disabled={isSubmitting}
+                disabled={createWorkspace.isPending}
               >
                 Cancel
               </Button>
 
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={createWorkspace.isPending}
                 className="rounded-xl"
               >
-                {isSubmitting ? (
+                {createWorkspace.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating

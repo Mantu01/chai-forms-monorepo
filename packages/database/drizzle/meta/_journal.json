@@ -15,6 +15,13 @@
       "when": 1779573742842,
       "tag": "0001_overjoyed_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779608141594,
+      "tag": "0002_nifty_human_torch",
+      "breakpoints": true
     }
   ]
 }

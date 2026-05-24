@@ -1,6 +1,7 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
 import db from "..";
 import {workspaces,workspaceMembers,workspaceInvites,InsertWorkspace,InsertWorkspaceInvite,InsertWorkspaceMember,} from "../models/workspace.model";
+import { users } from "../models/user.model";
 
 export class WorkspaceQuery {
   async createWorkspace(data: InsertWorkspace) {
@@ -95,6 +96,28 @@ export class WorkspaceQuery {
       .select()
       .from(workspaceMembers)
       .where(eq(workspaceMembers.workspaceId, workspaceId));
+  }
+
+  async getWorkspaceMemberDetails(workspaceId: string, userId: string) {
+    const [result] = await db
+      .select({
+        workspaceId: workspaceMembers.workspaceId,
+        userId: workspaceMembers.userId,
+        role: workspaceMembers.role,
+        joinedAt: workspaceMembers.joinedAt,
+        name: users.fullName,
+        email: users.email,
+        profileImageUrl: users.profileImageUrl,
+      })
+      .from(workspaceMembers)
+      .innerJoin(users, eq(workspaceMembers.userId, users.id))
+      .where(
+        and(
+          eq(workspaceMembers.workspaceId, workspaceId),
+          eq(workspaceMembers.userId, userId)
+        )
+      );
+    return result;
   }
 
   async updateWorkspaceMemberRole(

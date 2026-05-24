@@ -7,13 +7,12 @@ import { Toaster } from "~/components/ui/sonner";
 
 import { trpc } from "~/trpc/client";
 import { createTRPCHttpBatchClientClient } from "~/trpc/create-client";
-import { StoreProvider } from "./store-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnMount: true,
-      staleTime: Infinity,
+      refetchOnMount: "always",
+      staleTime: 0,
     },
   },
 });
@@ -33,10 +32,8 @@ export const GlobalProviders: React.FC<{ children: React.ReactNode }> = ({ child
         disableTransitionOnChange
       >
         <trpc.Provider queryClient={queryClient} client={trpcClient}>
-          <StoreProvider>
-            {children}
-            <Toaster />
-          </StoreProvider>
+          {children}
+          <Toaster />
         </trpc.Provider>
       </NextThemesProvider>
     </QueryClientProvider>

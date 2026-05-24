@@ -8,11 +8,11 @@ import { Button } from "~/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "~/components/ui/table";
 import { Spinner } from "~/components/ui/spinner";
-import { useAppSelector } from "~/lib/store";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useAppSelector((state) => state.user);
+  const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
+  const user = userData?.user;
   
   const userId = user?.id;
   const { data: submissions, isLoading: submissionsLoading } = trpc.submission.getUserSubmissions.useQuery(

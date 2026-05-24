@@ -11,14 +11,34 @@ import {
   UpdateFormInputSchema,
   UpdatePageInputSchema,
 } from "./model";
-import { FormQuery } from "@repo/database/queries";
+import { FormQuery, WorkspaceQuery } from "@repo/database/queries";
 
 export class WorkspaceService {
-  constructor(private readonly workspaceQuery = new FormQuery()) {}
+  constructor(
+    private readonly workspaceQuery = new FormQuery(),
+    private readonly workspaceMemberQuery = new WorkspaceQuery()
+  ) {}
+
+  private async checkWorkspaceRole(workspaceId: string, userId: string, allowedRoles: string[]) {
+    const member = await this.workspaceMemberQuery.findWorkspaceMember(workspaceId, userId);
+    if (!member?.role || !allowedRoles.includes(member.role)) {
+      throw new Error("Unauthorized: You do not have permission to perform this action");
+    }
+    return member;
+  }
+
+  private async checkFormWorkspaceRole(formId: string, userId: string, allowedRoles: string[]) {
+    const form = await this.workspaceQuery.getFormById(formId);
+    if (!form) throw new Error("Form not found");
+    await this.checkWorkspaceRole(form.workspaceId, userId, allowedRoles);
+    return form;
+  }
 
   public async createForm(createdBy: string, input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
     const parsed = CreateFormInputSchema.safeParse(input);
     if (!parsed.success) throw new Error("Invalid form input");
+
+    await this.checkWorkspaceRole(parsed.data.workspaceId, createdBy, ["owner", "admin", "member"]);
 
     const existing = await this.workspaceQuery.getFormBySlug(parsed.data.workspaceId, parsed.data.slug);
     if (existing) throw new Error("Form slug already exists");
@@ -32,14 +52,17 @@ export class WorkspaceService {
     return FormResponseSchema.parse(form);
   }
 
-  public async updateForm(formId: string, input: z.infer<typeof UpdateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
+  public async updateForm(userId: string, formId: string, input: z.infer<typeof UpdateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
     if (!formId) throw new Error("Form id is required");
 
     const parsed = UpdateFormInputSchema.safeParse(input);
     if (!parsed.success) throw new Error("Invalid update input");
 
-    const existing = await this.workspaceQuery.getFormById(formId);
-    if (!existing) throw new Error("Form not found");
+    const allowedRoles = parsed.data.status && parsed.data.status !== "draft"
+      ? ["owner", "admin"]
+      : ["owner", "admin", "member"];
+
+    const existing = await this.checkFormWorkspaceRole(formId, userId, allowedRoles);
 
     if (parsed.data.slug && parsed.data.slug !== existing.slug) {
       const slugExists = await this.workspaceQuery.getFormBySlug(existing.workspaceId, parsed.data.slug);
@@ -52,11 +75,10 @@ export class WorkspaceService {
     return FormResponseSchema.parse(updated);
   }
 
-  public async deleteForm(formId: string): Promise<z.infer<typeof FormResponseSchema>> {
+  public async deleteForm(userId: string, formId: string): Promise<z.infer<typeof FormResponseSchema>> {
     if (!formId) throw new Error("Form id is required");
 
-    const existing = await this.workspaceQuery.getFormById(formId);
-    if (!existing) throw new Error("Form not found");
+    await this.checkFormWorkspaceRole(formId, userId, ["owner", "admin", "member"]);
 
     const deleted = await this.workspaceQuery.deleteForm(formId);
     if (!deleted) throw new Error("Failed to delete form");
@@ -100,11 +122,10 @@ export class WorkspaceService {
     return z.array(FormResponseSchema).parse(forms || []);
   }
 
-  public async publishForm(formId: string): Promise<z.infer<typeof FormResponseSchema>> {
+  public async publishForm(userId: string, formId: string): Promise<z.infer<typeof FormResponseSchema>> {
     if (!formId) throw new Error("Form id is required");
 
-    const form = await this.workspaceQuery.getFormById(formId);
-    if (!form) throw new Error("Form not found");
+    const form = await this.checkFormWorkspaceRole(formId, userId, ["owner", "admin"]);
 
     if (form.status === "published") throw new Error("Form already published");
 
@@ -118,11 +139,10 @@ export class WorkspaceService {
     return FormResponseSchema.parse(updated);
   }
 
-  public async archiveForm(formId: string): Promise<z.infer<typeof FormResponseSchema>> {
+  public async archiveForm(userId: string, formId: string): Promise<z.infer<typeof FormResponseSchema>> {
     if (!formId) throw new Error("Form id is required");
 
-    const form = await this.workspaceQuery.getFormById(formId);
-    if (!form) throw new Error("Form not found");
+    const form = await this.checkFormWorkspaceRole(formId, userId, ["owner", "admin"]);
 
     if (form.status === "archived") throw new Error("Form already archived");
 

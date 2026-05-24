@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
-import { useAppSelector } from "~/lib/store";
 import { Spinner } from "~/components/ui/spinner";
 import { WorkspaceCard } from "./workspace-card";
 import { CreateWorkspaceDialog } from "./workspace-dialog";
@@ -11,19 +9,21 @@ import { WorkspaceMembersDialog } from "./members-dialog";
 import { WorkspaceSettingsDialog } from "./settings-dialog";
 import { WorkspaceDeleteDialog } from "./delete-dialog";
 import { Card } from "~/components/ui/card";
+import { trpc } from "~/trpc/client";
 
 export function WorkspacesClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { user, loading: userLoading } = useAppSelector((state) => state.user);
-  const { workspaces, loading: workspacesLoading } = useAppSelector((state) => state.workspace);
+  const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
+  const { data: workspaces, isLoading: workspacesLoading } = trpc.workspace.getUserWorkspaces.useQuery({});
 
+  const user = userData?.user;
   const userId = user?.id;
 
-  const [activeMembersId, setActiveMembersId] = useState<string | null>(null);
-  const [activeSettingsId, setActiveSettingsId] = useState<string | null>(null);
-  const [activeDeleteId, setActiveDeleteId] = useState<string | null>(null);
+  const activeMembersId = searchParams.get("members");
+  const activeSettingsId = searchParams.get("settings");
+  const activeDeleteId = searchParams.get("delete");
 
   const isCreateOpen = searchParams.get("new-workspace") === "true";
 
@@ -36,9 +36,32 @@ export function WorkspacesClient() {
   }
 
   if (!user) {
-    router.push("/auth");
     return null;
   }
+
+  const handleOpenMembers = (id: string | null) => {
+    if (id) {
+      router.push(`?members=${id}`);
+    } else {
+      router.push("/workspaces");
+    }
+  };
+
+  const handleOpenSettings = (id: string | null) => {
+    if (id) {
+      router.push(`?settings=${id}`);
+    } else {
+      router.push("/workspaces");
+    }
+  };
+
+  const handleOpenDelete = (id: string | null) => {
+    if (id) {
+      router.push(`?delete=${id}`);
+    } else {
+      router.push("/workspaces");
+    }
+  };
 
   return (
     <>
@@ -66,9 +89,9 @@ export function WorkspacesClient() {
                   key={item.workspace.id}
                   workspace={item.workspace}
                   role={item.role || "member"}
-                  onOpenMembers={setActiveMembersId}
-                  onOpenSettings={setActiveSettingsId}
-                  onOpenDelete={setActiveDeleteId}
+                  onOpenMembers={handleOpenMembers}
+                  onOpenSettings={handleOpenSettings}
+                  onOpenDelete={handleOpenDelete}
                 />
               ))}
 
@@ -98,26 +121,26 @@ export function WorkspacesClient() {
 
       <CreateWorkspaceDialog
         open={isCreateOpen}
-        onClose={() => router.push("/workspaces")}
+        onClose={() => router.replace("/workspaces")}
         userId={userId}
       />
 
       <WorkspaceMembersDialog
         workspaceId={activeMembersId}
         open={!!activeMembersId}
-        onClose={() => setActiveMembersId(null)}
+        onClose={() => router.replace("/workspaces")}
       />
 
       <WorkspaceSettingsDialog
         workspaceId={activeSettingsId}
         open={!!activeSettingsId}
-        onClose={() => setActiveSettingsId(null)}
+        onClose={() => router.replace("/workspaces")}
       />
 
       <WorkspaceDeleteDialog
         workspaceId={activeDeleteId}
         open={!!activeDeleteId}
-        onClose={() => setActiveDeleteId(null)}
+        onClose={() => router.replace("/workspaces")}
       />
     </>
   );

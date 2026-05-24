@@ -20,8 +20,10 @@ import {
   getUserWorkspacesOutputSchema,
   getWorkspaceMembersOutputSchema,
   getWorkspaceInvitesOutputSchema,
+  getWorkspaceMemberDetailsInputSchema,
+  getWorkspaceMemberDetailsOutputSchema,
 } from "@repo/services/workspace/model";
-import { publicProcedure, protectedProcedure, router } from "../../trpc";
+import {  protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { workspaceService } from "@repo/services";
 
@@ -97,7 +99,7 @@ export const workspaceRouter = router({
     .input(acceptInviteInputSchema)
     .output(successResponseSchema)
     .mutation(async ({ ctx, input }) => {
-      return workspaceService.acceptInvite(ctx.userId, input);
+      return workspaceService.acceptInvite({...input, userId:ctx.userId});
     }),
 
   removeMember: protectedProcedure
@@ -138,5 +140,13 @@ export const workspaceRouter = router({
     .output(workspaceInviteSchema)
     .mutation(async ({ ctx, input }) => {
       return workspaceService.cancelInvite(ctx.userId, input);
+    }),
+
+  getWorkspaceMemberDetails: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/member/details"), tags: TAGS } })
+    .input(getWorkspaceMemberDetailsInputSchema)
+    .output(getWorkspaceMemberDetailsOutputSchema)
+    .query(async ({ input }) => {
+      return workspaceService.getWorkspaceMemberDetails(input);
     }),
 });

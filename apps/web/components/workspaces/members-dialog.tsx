@@ -3,7 +3,7 @@
 import React, { FormEvent } from "react";
 import { trpc } from "~/trpc/client";
 import { toast } from "sonner";
-import { Loader2, Plus, UserMinus } from "lucide-react";
+import { Loader2, UserMinus, MoreVertical, UserCog } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,12 +12,29 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "~/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "~/components/ui/table";
 import { Spinner } from "~/components/ui/spinner";
-import { Card } from "~/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "~/components/ui/dropdown-menu";
 
 interface WorkspaceMembersDialogProps {
   workspaceId: string | null;
@@ -32,29 +49,23 @@ export function WorkspaceMembersDialog({
 }: WorkspaceMembersDialogProps) {
   const utils = trpc.useUtils();
 
-  const { data: members, isLoading: membersLoading } = trpc.workspace.getWorkspaceMembers.useQuery(
-    { workspaceId: workspaceId || "" },
-    { enabled: !!workspaceId && open }
-  );
+  const { data: members, isLoading: membersLoading } =
+    trpc.workspace.getWorkspaceMembers.useQuery(
+      { workspaceId: workspaceId || "" },
+      { enabled: !!workspaceId && open }
+    );
 
-  const { data: invites, isLoading: invitesLoading } = trpc.workspace.getWorkspaceInvites.useQuery(
-    { workspaceId: workspaceId || "" },
-    { enabled: !!workspaceId && open }
-  );
-
-  const inviteMember = trpc.workspace.inviteMember.useMutation({
-    onSuccess: () => {
-      utils.workspace.getWorkspaceInvites.invalidate({ workspaceId: workspaceId! });
-      toast.success("Invitation sent successfully");
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to invite member");
-    },
-  });
+  const { data: invites, isLoading: invitesLoading } =
+    trpc.workspace.getWorkspaceInvites.useQuery(
+      { workspaceId: workspaceId || "" },
+      { enabled: !!workspaceId && open }
+    );
 
   const cancelInvite = trpc.workspace.cancelInvite.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceInvites.invalidate({ workspaceId: workspaceId! });
+      utils.workspace.getWorkspaceInvites.invalidate({
+        workspaceId: workspaceId!,
+      });
       toast.success("Invitation cancelled");
     },
     onError: (err) => {
@@ -64,7 +75,9 @@ export function WorkspaceMembersDialog({
 
   const removeMember = trpc.workspace.removeMember.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceMembers.invalidate({ workspaceId: workspaceId! });
+      utils.workspace.getWorkspaceMembers.invalidate({
+        workspaceId: workspaceId!,
+      });
       toast.success("Member removed from workspace");
     },
     onError: (err) => {
@@ -74,7 +87,9 @@ export function WorkspaceMembersDialog({
 
   const changeMemberRole = trpc.workspace.changeMemberRole.useMutation({
     onSuccess: () => {
-      utils.workspace.getWorkspaceMembers.invalidate({ workspaceId: workspaceId! });
+      utils.workspace.getWorkspaceMembers.invalidate({
+        workspaceId: workspaceId!,
+      });
       toast.success("Role updated successfully");
     },
     onError: (err) => {
@@ -82,96 +97,124 @@ export function WorkspaceMembersDialog({
     },
   });
 
-  const handleInvite = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!workspaceId) return;
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const role = formData.get("role") as "admin" | "member";
-
-    inviteMember.mutate({
-      workspaceId,
-      email,
-      role,
-    });
-    e.currentTarget.reset();
-  };
-
   const isLoading = membersLoading || invitesLoading;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl rounded-3xl p-6 overflow-y-auto max-h-[85vh]">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-xl font-semibold">
-            Manage Members
+      <DialogContent className="sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl w-[95vw] border-accent max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-xl">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="text-xl font-semibold tracking-tight">
+            Workspace members
           </DialogTitle>
-          <DialogDescription className="text-xs">
-            Add team members, manage permissions, and see pending invitations.
+          <DialogDescription className="text-sm text-muted-foreground">
+            Manage members and pending invitations.
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex h-40 items-center justify-center">
+          <div className="flex h-64 items-center justify-center">
             <Spinner />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold border-b pb-2">Active Members</h3>
-                <div className="overflow-x-auto max-h-60 overflow-y-auto border rounded-xl">
+          <div className="space-y-6 p-6">
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Active members
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Users with current workspace access.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   {members && members.length > 0 ? (
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">User ID</TableHead>
-                          <TableHead className="text-xs">Role</TableHead>
-                          <TableHead className="text-xs text-right">Actions</TableHead>
+                        <TableRow className="hover:bg-transparent border-b">
+                          <TableHead className="text-xs h-9">Name</TableHead>
+                          <TableHead className="text-xs h-9">Role</TableHead>
+                          <TableHead className="text-xs h-9 w-12.5"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {members.map((member) => (
-                          <TableRow key={member.userId}>
-                            <TableCell className="font-mono text-[10px] truncate max-w-40">
-                              {member.userId}
+                          <TableRow key={member.userId} className="border-b">
+                            <TableCell className="py-2 text-sm font-medium">
+                              {member.name}
                             </TableCell>
-                            <TableCell className="capitalize text-xs">
-                              {member.role}
+                            <TableCell className="py-2">
+                              <span
+                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium capitalize ${
+                                  member.role === "owner"
+                                    ? "bg-primary/10 text-primary"
+                                    : member.role === "admin"
+                                    ? "bg-blue-500/10 text-blue-500"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {member.role}
+                              </span>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="py-2 text-right">
                               {member.role !== "owner" && (
-                                <div className="inline-flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-[10px] h-7 px-2 rounded-lg"
-                                    onClick={() =>
-                                      changeMemberRole.mutate({
-                                        workspaceId: workspaceId!,
-                                        targetUserId: member.userId,
-                                        role: member.role === "admin" ? "member" : "admin",
-                                      })
-                                    }
-                                  >
-                                    Toggle Admin
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    className="text-[10px] h-7 px-2 rounded-lg gap-1"
-                                    onClick={() =>
-                                      removeMember.mutate({
-                                        workspaceId: workspaceId!,
-                                        targetUserId: member.userId,
-                                      })
-                                    }
-                                  >
-                                    <UserMinus className="h-3 w-3" />
-                                    Remove
-                                  </Button>
-                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40">
+                                    {member.role === "member" && (
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          changeMemberRole.mutate({
+                                            workspaceId: workspaceId!,
+                                            targetUserId: member.userId,
+                                            role: "admin",
+                                          })
+                                        }
+                                        disabled={changeMemberRole.isPending}
+                                      >
+                                        <UserCog className="mr-2 h-4 w-4" />
+                                        Promote to admin
+                                      </DropdownMenuItem>
+                                    )}
+                                    {member.role === "admin" && (
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          changeMemberRole.mutate({
+                                            workspaceId: workspaceId!,
+                                            targetUserId: member.userId,
+                                            role: "member",
+                                          })
+                                        }
+                                        disabled={changeMemberRole.isPending}
+                                      >
+                                        <UserCog className="mr-2 h-4 w-4" />
+                                        Demote to member
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        removeMember.mutate({
+                                          workspaceId: workspaceId!,
+                                          targetUserId: member.userId,
+                                        })
+                                      }
+                                      disabled={removeMember.isPending}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <UserMinus className="mr-2 h-4 w-4" />
+                                      Remove member
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                             </TableCell>
                           </TableRow>
@@ -179,43 +222,59 @@ export function WorkspaceMembersDialog({
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="p-4 text-center text-xs text-muted-foreground">
+                    <div className="py-8 text-center text-sm text-muted-foreground">
                       No members found.
                     </div>
                   )}
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold border-b pb-2">Pending Invites</h3>
-                <div className="overflow-x-auto max-h-40 overflow-y-auto border rounded-xl">
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Pending invites
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Invitations waiting for acceptance.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   {invites && invites.length > 0 ? (
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Email</TableHead>
-                          <TableHead className="text-xs">Role</TableHead>
-                          <TableHead className="text-xs text-right">Action</TableHead>
+                        <TableRow className="hover:bg-transparent border-b">
+                          <TableHead className="text-xs h-9">Email</TableHead>
+                          <TableHead className="text-xs h-9">Role</TableHead>
+                          <TableHead className="text-xs h-9 w-12.5"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {invites.map((invite) => (
-                          <TableRow key={invite.id}>
-                            <TableCell className="text-xs">{invite.email}</TableCell>
-                            <TableCell className="capitalize text-xs">{invite.role}</TableCell>
-                            <TableCell className="text-right">
+                          <TableRow key={invite.id} className="border-b">
+                            <TableCell className="py-2 text-sm">
+                              {invite.email}
+                            </TableCell>
+                            <TableCell className="py-2">
+                              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+                                {invite.role}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-2 text-right">
                               <Button
-                                size="sm"
-                                variant="destructive"
-                                className="text-[10px] h-7 px-2 rounded-lg"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
                                 onClick={() =>
                                   cancelInvite.mutate({
                                     workspaceId: workspaceId!,
                                     inviteId: invite.id,
                                   })
                                 }
+                                disabled={cancelInvite.isPending}
                               >
-                                Cancel
+                                <UserMinus className="h-4 w-4" />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -223,57 +282,12 @@ export function WorkspaceMembersDialog({
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="p-4 text-center text-xs text-muted-foreground">
-                      No pending invitations.
+                    <div className="py-8 text-center text-sm text-muted-foreground">
+                      No pending invites.
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            <Card className="p-4 h-fit border rounded-2xl bg-muted/30">
-              <h3 className="text-sm font-semibold mb-4 border-b pb-2">Invite Member</h3>
-              <form onSubmit={handleInvite} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="invite-email" className="text-xs">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="invite-email"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="teammate@company.com"
-                    className="h-10 rounded-xl text-xs bg-background"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="invite-role" className="text-xs">
-                    Role
-                  </Label>
-                  <Select name="role" defaultValue="member">
-                    <SelectTrigger className="h-10 rounded-xl text-xs bg-background">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="submit"
-                  disabled={inviteMember.isPending}
-                  className="w-full rounded-xl gap-1 text-xs"
-                >
-                  {inviteMember.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" />
-                  )}
-                  Send Invitation
-                </Button>
-              </form>
+              </CardContent>
             </Card>
           </div>
         )}

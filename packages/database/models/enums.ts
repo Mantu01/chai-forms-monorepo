@@ -27,7 +27,6 @@ export const fieldTypeEnum = pgEnum("field_type", [
   "file",
   "rating",
   "url",
-  "signature",
   "matrix",
 ]);
 

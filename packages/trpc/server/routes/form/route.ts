@@ -37,9 +37,9 @@ export const formRouter = router({
       })
     )
     .output(FormResponseSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.updateForm(input.formId, input.data);
+        return await formService.updateForm(ctx.userId, input.formId, input.data);
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -49,9 +49,9 @@ export const formRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/delete"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(FormResponseSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.deleteForm(input.formId);
+        return await formService.deleteForm(ctx.userId, input.formId);
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -97,9 +97,9 @@ export const formRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/publish"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(FormResponseSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.publishForm(input.formId);
+        return await formService.publishForm(ctx.userId, input.formId);
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -109,9 +109,9 @@ export const formRouter = router({
     .meta({ openapi: { method: "POST", path: getPath("/archive"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(FormResponseSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.archiveForm(input.formId);
+        return await formService.archiveForm(ctx.userId, input.formId);
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }

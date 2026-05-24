@@ -51,13 +51,7 @@ const actions = [
   { label: "Delete", icon: Trash2, destructive: true },
 ];
 
-export function WorkspaceCard({
-  workspace,
-  role,
-  onOpenMembers,
-  onOpenSettings,
-  onOpenDelete,
-}: WorkspaceCardProps) {
+export function WorkspaceCard({workspace,role,onOpenMembers,onOpenSettings,onOpenDelete,}: WorkspaceCardProps) {
   const router = useRouter();
 
   const handleActionClick = (label: string) => {
@@ -116,20 +110,22 @@ export function WorkspaceCard({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-44">
-              {actions.map((action) => (
-                <DropdownMenuItem
-                  key={action.label}
-                  onClick={() => handleActionClick(action.label)}
-                  className={`gap-2 text-xs cursor-pointer ${
-                    action.destructive
-                      ? "text-red-500 hover:text-red-650"
-                      : ""
-                  }`}
-                >
-                  <action.icon className="h-3.5 w-3.5" />
-                  {action.label}
-                </DropdownMenuItem>
-              ))}
+              {actions
+                .filter((action) => action.label !== "Delete" || ["owner", "admin"].includes(role))
+                .map((action) => (
+                  <DropdownMenuItem
+                    key={action.label}
+                    onClick={() => handleActionClick(action.label)}
+                    className={`gap-2 text-xs cursor-pointer ${
+                      action.destructive
+                        ? "text-red-500 hover:text-red-650"
+                        : ""
+                    }`}
+                  >
+                    <action.icon className="h-3.5 w-3.5" />
+                    {action.label}
+                  </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

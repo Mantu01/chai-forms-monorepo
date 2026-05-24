@@ -1,0 +1,1 @@
+ALTER TABLE "workspace_members" ADD COLUMN "name" varchar(255) NOT NULL;

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-import { WorkspaceQuery } from "@repo/database/queries";
+import { UserQuery, WorkspaceQuery } from "@repo/database/queries";
 
 import {
   workspaceSchema,
@@ -11,7 +11,6 @@ import {
   updateWorkspaceInputSchema,
   deleteWorkspaceInputSchema,
   getWorkspaceInputSchema,
-  getUserWorkspacesInputSchema,
   inviteMemberInputSchema,
   acceptInviteInputSchema,
   removeMemberInputSchema,
@@ -27,7 +26,6 @@ import {
   UpdateWorkspaceInputSchema,
   DeleteWorkspaceInputSchema,
   GetWorkspaceInputSchema,
-  GetUserWorkspacesInputSchema,
   InviteMemberInputSchema,
   AcceptInviteInputSchema,
   RemoveMemberInputSchema,
@@ -38,10 +36,15 @@ import {
   GetUserWorkspacesOutputSchema,
   GetWorkspaceMembersOutputSchema,
   GetWorkspaceInvitesOutputSchema,
+  getWorkspaceMemberDetailsInputSchema,
+  getWorkspaceMemberDetailsOutputSchema,
+  GetWorkspaceMemberDetailsInputSchema,
+  GetWorkspaceMemberDetailsOutputSchema,
 } from "./model";
 
 export class WorkspaceService {
   private workspaceQuery = new WorkspaceQuery();
+  private userQuery= new UserQuery();
 
   public async createWorkspace(userId: string, input: CreateWorkspaceInputSchema): Promise<WorkspaceSchema> {
     const validated = createWorkspaceInputSchema.parse(input);
@@ -63,7 +66,14 @@ export class WorkspaceService {
       throw new Error("Workspace creation failed");
     }
 
+    const user=await this.userQuery.findUserById(userId);
+
+    if(!user){
+      throw new Error("User does not exist");
+    }
+
     await this.workspaceQuery.addWorkspaceMember({
+      name:user.fullName,
       workspaceId: workspace.id,
       userId: userId,
       role: "owner",
@@ -77,7 +87,7 @@ export class WorkspaceService {
 
     const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
-    if (!member?.role || !["owner", "admin"].includes(member.role)) {
+    if (!member?.role || !["owner", "admin", "member"].includes(member.role)) {
       throw new Error("Unauthorized");
     }
 
@@ -99,8 +109,8 @@ export class WorkspaceService {
 
     const member = await this.workspaceQuery.findWorkspaceMember(validated.workspaceId, userId);
 
-    if (!member?.role || member.role !== "owner") {
-      throw new Error("Only owner can delete workspace");
+    if (!member?.role || !["owner", "admin"].includes(member.role)) {
+      throw new Error("Only admin or owner can delete workspace");
     }
 
     const workspace = await this.workspaceQuery.deleteWorkspace(validated.workspaceId);
@@ -163,7 +173,7 @@ export class WorkspaceService {
     return workspaceInviteSchema.parse(invite);
   }
 
-  public async acceptInvite(userId: string, input: AcceptInviteInputSchema): Promise<SuccessResponseSchema> {
+  public async acceptInvite(input: AcceptInviteInputSchema): Promise<SuccessResponseSchema> {
     const validated = acceptInviteInputSchema.parse(input);
 
     const invite = await this.workspaceQuery.findInviteByToken(validated.token);
@@ -180,15 +190,16 @@ export class WorkspaceService {
       throw new Error("Invite expired");
     }
 
-    const existingMember = await this.workspaceQuery.findWorkspaceMember(invite.workspaceId, userId);
+    const existingMember = await this.workspaceQuery.findWorkspaceMember(invite.workspaceId, validated.userId);
 
     if (existingMember) {
       throw new Error("Already member");
     }
 
     await this.workspaceQuery.addWorkspaceMember({
+      name:validated.userName,
       workspaceId: invite.workspaceId,
-      userId: userId,
+      userId: validated.userId,
       role: invite.role,
     });
 
@@ -273,5 +284,14 @@ export class WorkspaceService {
     const invite = await this.workspaceQuery.deleteInvite(validated.inviteId);
 
     return workspaceInviteSchema.parse(invite);
+  }
+
+  public async getWorkspaceMemberDetails(input: GetWorkspaceMemberDetailsInputSchema): Promise<GetWorkspaceMemberDetailsOutputSchema> {
+    const validated = getWorkspaceMemberDetailsInputSchema.parse(input);
+    const result = await this.workspaceQuery.getWorkspaceMemberDetails(validated.workspaceId, validated.userId);
+    if (!result) {
+      throw new Error("Member not found");
+    }
+    return getWorkspaceMemberDetailsOutputSchema.parse(result);
   }
 }

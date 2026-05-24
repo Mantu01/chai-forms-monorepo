@@ -24,6 +24,7 @@ function getUserIdFromCookie(req: any): string | null {
 
 workspaceRouter.post("/upload-logo", upload.single("logo"), async (req, res) => {
   try {
+    console.log({req})
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
