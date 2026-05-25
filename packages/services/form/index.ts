@@ -56,18 +56,31 @@ export class WorkspaceService {
         bannerUrl: null,
       });
     }
+    const safeTheme = theme || {
+      backgroundColor: "#09090b",
+      formBackgroundColor: "#18181b",
+      headerBackgroundColor: "#27272a",
+      primaryColor: "#3f3f46",
+      buttonTextColor: "#ffffff",
+      textColor: "#ffffff",
+      mutedTextColor: "#a1a1aa",
+      borderColor: "#27272a",
+      inputBackgroundColor: "#27272a",
+      inputTextColor: "#ffffff",
+      bannerUrl: null,
+    };
     form.themeConfig = {
-      backgroundColor: theme.backgroundColor,
-      formBackgroundColor: theme.formBackgroundColor,
-      headerBackgroundColor: theme.headerBackgroundColor,
-      primaryColor: theme.primaryColor,
-      buttonTextColor: theme.buttonTextColor,
-      textColor: theme.textColor,
-      mutedTextColor: theme.mutedTextColor,
-      borderColor: theme.borderColor,
-      inputBackgroundColor: theme.inputBackgroundColor,
-      inputTextColor: theme.inputTextColor,
-      bannerUrl: theme.bannerUrl,
+      backgroundColor: safeTheme.backgroundColor,
+      formBackgroundColor: safeTheme.formBackgroundColor,
+      headerBackgroundColor: safeTheme.headerBackgroundColor,
+      primaryColor: safeTheme.primaryColor,
+      buttonTextColor: safeTheme.buttonTextColor,
+      textColor: safeTheme.textColor,
+      mutedTextColor: safeTheme.mutedTextColor,
+      borderColor: safeTheme.borderColor,
+      inputBackgroundColor: safeTheme.inputBackgroundColor,
+      inputTextColor: safeTheme.inputTextColor,
+      bannerUrl: safeTheme.bannerUrl,
     };
     return form;
   }
@@ -84,6 +97,7 @@ export class WorkspaceService {
     const form = await this.workspaceQuery.createForm({
       ...parsed.data,
       createdBy,
+      themeConfig: parsed.data.themeConfig || {},
     });
     if (!form) throw new Error("Failed to create form");
 
@@ -273,7 +287,7 @@ export class WorkspaceService {
       if (!pageExists) throw new Error("Page not found");
     }
 
-    const field = await this.workspaceQuery.createField(parsed.data);
+    const field = await this.workspaceQuery.createField(parsed.data as any);
     if (!field) throw new Error("Failed to create field");
 
     return FieldResponseSchema.parse(field);
@@ -288,7 +302,7 @@ export class WorkspaceService {
     const existing = await this.workspaceQuery.getFieldById(fieldId);
     if (!existing) throw new Error("Field not found");
 
-    const updated = await this.workspaceQuery.updateField(fieldId, parsed.data);
+    const updated = await this.workspaceQuery.updateField(fieldId, parsed.data as any);
     if (!updated) throw new Error("Failed to update field");
 
     return FieldResponseSchema.parse(updated);

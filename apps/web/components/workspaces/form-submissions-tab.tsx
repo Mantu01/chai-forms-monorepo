@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "~/components/ui/table";
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -15,6 +16,24 @@ interface FormSubmissionsTabProps {
   formId: string;
 }
 
+function useCacheState<T>(key: any[], defaultValue: T): [T, (val: T | ((prev: T) => T)) => void] {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
+    queryKey: key,
+    queryFn: () => defaultValue,
+    initialData: defaultValue,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  const setState = (val: T | ((prev: T) => T)) => {
+    queryClient.setQueryData(key, (prev: any) => {
+      const next = typeof val === "function" ? (val as Function)(prev ?? defaultValue) : val;
+      return next;
+    });
+  };
+  return [data as T, setState];
+}
+
 export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -23,7 +42,7 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
   const sortBy = searchParams.get("sortBySub") || "newest";
   const activeDetailId = searchParams.get("view-submission");
 
-  const [exporting, setExporting] = React.useState(false);
+  const [exporting, setExporting] = useCacheState(["formSubmissionsExporting", formId], false);
 
   const { data: submissionsData, isLoading: submissionsLoading } = trpc.submission.getFormSubmissions.useQuery(
     { formId, page: 1, limit: 100 },

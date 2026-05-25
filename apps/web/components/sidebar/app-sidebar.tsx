@@ -134,23 +134,6 @@ const data = {
       icon: IconSearch,
     },
   ],
-  documents: [
-    {
-      name: "Feedback Submissions Export.csv",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Lead Form Responses.xlsx",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Contact Form Logs.csv",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -160,6 +143,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: userData } = trpc.auth.me.useQuery();
   const user = userData?.user;
+
+  const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery(
+    {},
+    { enabled: !!user }
+  );
+  const activeWorkspace = workspaces?.[0]?.workspace;
+  const activeWorkspaceId = activeWorkspace?.id;
+  const activeWorkspaceSlug = activeWorkspace?.slug;
+
+  const { data: workspaceForms } = trpc.form.getFormsByWorkspace.useQuery(
+    { workspaceId: activeWorkspaceId || "" },
+    { enabled: !!activeWorkspaceId }
+  );
+
+  const dynamicDocuments = React.useMemo(() => {
+    const list = [];
+    if (activeWorkspace) {
+      list.push({
+        name: `${activeWorkspace.name} Report`,
+        url: `/workspaces/${activeWorkspaceSlug}`,
+        icon: IconReport,
+      });
+    }
+    if (workspaceForms) {
+      workspaceForms.forEach((form) => {
+        list.push({
+          name: `${form.title} CSV`,
+          url: `/workspaces/${activeWorkspaceSlug}/form/${form.slug}?tab=submissions`,
+          icon: IconDatabase,
+        });
+      });
+    }
+    return list;
+  }, [workspaceForms, activeWorkspace, activeWorkspaceSlug]);
 
   const { data: invites } = trpc.workspace.getPendingInvites.useQuery(undefined, {
     enabled: !!user,
@@ -237,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
         
 
-        <NavDocuments items={data.documents} />
+        <NavDocuments items={dynamicDocuments} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={currentUser} />
