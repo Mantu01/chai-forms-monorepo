@@ -14,6 +14,8 @@ import {
 } from "./model";
 import { FormQuery, WorkspaceQuery } from "@repo/database/queries";
 import { uploadImage } from "../clients/cloudinary";
+import { and, eq, desc } from "drizzle-orm";
+import { db, forms as dbForms, formThemes as dbFormThemes, archivedTemplates as dbArchivedTemplates, workspaces as dbWorkspaces } from "@repo/database";
 
 export class WorkspaceService {
   constructor(
@@ -36,6 +38,40 @@ export class WorkspaceService {
     return form;
   }
 
+  private async attachThemeToForm(form: any) {
+    if (!form) return form;
+    let theme = await this.workspaceQuery.getFormTheme(form.id);
+    if (!theme) {
+      theme = await this.workspaceQuery.upsertFormTheme(form.id, {
+        backgroundColor: "#09090b",
+        formBackgroundColor: "#18181b",
+        headerBackgroundColor: "#27272a",
+        primaryColor: "#3f3f46",
+        buttonTextColor: "#ffffff",
+        textColor: "#ffffff",
+        mutedTextColor: "#a1a1aa",
+        borderColor: "#27272a",
+        inputBackgroundColor: "#27272a",
+        inputTextColor: "#ffffff",
+        bannerUrl: null,
+      });
+    }
+    form.themeConfig = {
+      backgroundColor: theme.backgroundColor,
+      formBackgroundColor: theme.formBackgroundColor,
+      headerBackgroundColor: theme.headerBackgroundColor,
+      primaryColor: theme.primaryColor,
+      buttonTextColor: theme.buttonTextColor,
+      textColor: theme.textColor,
+      mutedTextColor: theme.mutedTextColor,
+      borderColor: theme.borderColor,
+      inputBackgroundColor: theme.inputBackgroundColor,
+      inputTextColor: theme.inputTextColor,
+      bannerUrl: theme.bannerUrl,
+    };
+    return form;
+  }
+
   public async createForm(createdBy: string, input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
     const parsed = CreateFormInputSchema.safeParse(input);
     if (!parsed.success) throw new Error("Invalid form input");
@@ -51,7 +87,10 @@ export class WorkspaceService {
     });
     if (!form) throw new Error("Failed to create form");
 
-    return FormResponseSchema.parse(form);
+    await this.workspaceQuery.upsertFormTheme(form.id, parsed.data.themeConfig || {});
+
+    const formWithTheme = await this.attachThemeToForm(form);
+    return FormResponseSchema.parse(formWithTheme);
   }
 
   public async updateForm(userId: string, formId: string, input: z.infer<typeof UpdateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
@@ -74,7 +113,12 @@ export class WorkspaceService {
     const updated = await this.workspaceQuery.updateForm(formId, parsed.data);
     if (!updated) throw new Error("Failed to update form");
 
-    return FormResponseSchema.parse(updated);
+    if (parsed.data.themeConfig) {
+      await this.workspaceQuery.upsertFormTheme(formId, parsed.data.themeConfig);
+    }
+
+    const formWithTheme = await this.attachThemeToForm(updated);
+    return FormResponseSchema.parse(formWithTheme);
   }
 
   public async deleteForm(userId: string, formId: string): Promise<z.infer<typeof FormResponseSchema>> {
@@ -94,7 +138,8 @@ export class WorkspaceService {
     const form = await this.workspaceQuery.getFormById(formId);
     if (!form) throw new Error("Form not found");
 
-    return FormResponseSchema.parse(form);
+    const formWithTheme = await this.attachThemeToForm(form);
+    return FormResponseSchema.parse(formWithTheme);
   }
 
   public async getFormBySlug(workspaceId: string | undefined, slug: string): Promise<z.infer<typeof FormResponseSchema>> {
@@ -106,14 +151,16 @@ export class WorkspaceService {
 
     if (!form) throw new Error("Form not found");
 
-    return FormResponseSchema.parse(form);
+    const formWithTheme = await this.attachThemeToForm(form);
+    return FormResponseSchema.parse(formWithTheme);
   }
 
   public async getFormsByWorkspace(workspaceId: string): Promise<ReadonlyArray<z.infer<typeof FormResponseSchema>>> {
     if (!workspaceId) throw new Error("Workspace id is required");
 
     const forms = await this.workspaceQuery.getFormsByWorkspace(workspaceId);
-    return z.array(FormResponseSchema).parse(forms || []);
+    const formsWithThemes = await Promise.all((forms || []).map(f => this.attachThemeToForm(f)));
+    return z.array(FormResponseSchema).parse(formsWithThemes || []);
   }
 
   public async searchForms(workspaceId: string, search: string): Promise<ReadonlyArray<z.infer<typeof FormResponseSchema>>> {
@@ -121,7 +168,8 @@ export class WorkspaceService {
     if (!search?.trim()) return [];
 
     const forms = await this.workspaceQuery.searchForms(workspaceId, search);
-    return z.array(FormResponseSchema).parse(forms || []);
+    const formsWithThemes = await Promise.all((forms || []).map(f => this.attachThemeToForm(f)));
+    return z.array(FormResponseSchema).parse(formsWithThemes || []);
   }
 
   public async publishForm(userId: string, formId: string): Promise<z.infer<typeof FormResponseSchema>> {
@@ -287,11 +335,167 @@ export class WorkspaceService {
   public async getFormsWithStats(workspaceId: string): Promise<ReadonlyArray<z.infer<typeof FormWithStatsResponseSchema>>> {
     if (!workspaceId) throw new Error("Workspace id is required");
     const formsWithStats = await this.workspaceQuery.getFormsWithStats(workspaceId);
-    return z.array(FormWithStatsResponseSchema).parse(formsWithStats || []);
+    const formsWithThemes = await Promise.all((formsWithStats || []).map(f => this.attachThemeToForm(f)));
+    return z.array(FormWithStatsResponseSchema).parse(formsWithThemes || []);
   }
 
   public async uploadFile(fileData: string, folderName: string): Promise<string> {
     if (!fileData) throw new Error("File data is required");
     return uploadImage(fileData, folderName || "forms");
+  }
+
+  public async cloneFormTemplate(userId: string, formId: string, targetWorkspaceId: string): Promise<z.infer<typeof FormResponseSchema>> {
+    const originalForm = await this.workspaceQuery.getFormById(formId);
+    if (!originalForm) throw new Error("Original form not found");
+
+    await this.checkWorkspaceRole(targetWorkspaceId, userId, ["owner", "admin", "member"]);
+
+    const newSlug = `clone-${originalForm.slug}-${Math.random().toString(36).substring(2, 7)}`;
+    const newForm = await this.workspaceQuery.createForm({
+      workspaceId: targetWorkspaceId,
+      title: `${originalForm.title} (Clone)`,
+      description: originalForm.description,
+      slug: newSlug,
+      status: "draft",
+      isPublic: originalForm.isPublic,
+      accessLevel: originalForm.accessLevel,
+      createdBy: userId,
+      allowMultipleSubmissions: originalForm.allowMultipleSubmissions,
+      requireAuth: originalForm.requireAuth,
+      maxSubmissions: originalForm.maxSubmissions,
+      redirectUrl: originalForm.redirectUrl,
+      themeConfig: originalForm.themeConfig || {},
+      isTemplate: false,
+    });
+    if (!newForm) throw new Error("Failed to clone form");
+
+    const originalTheme = await this.workspaceQuery.getFormTheme(formId);
+    if (originalTheme) {
+      await this.workspaceQuery.upsertFormTheme(newForm.id, {
+        backgroundColor: originalTheme.backgroundColor,
+        formBackgroundColor: originalTheme.formBackgroundColor,
+        headerBackgroundColor: originalTheme.headerBackgroundColor,
+        primaryColor: originalTheme.primaryColor,
+        buttonTextColor: originalTheme.buttonTextColor,
+        textColor: originalTheme.textColor,
+        mutedTextColor: originalTheme.mutedTextColor,
+        borderColor: originalTheme.borderColor,
+        inputBackgroundColor: originalTheme.inputBackgroundColor,
+        inputTextColor: originalTheme.inputTextColor,
+        bannerUrl: originalTheme.bannerUrl,
+      });
+    }
+
+    const originalPages = await this.workspaceQuery.getPagesByForm(formId);
+    const pageIdMapping: Record<string, string> = {};
+    for (const page of originalPages) {
+      const newPage = await this.workspaceQuery.createPage({
+        formId: newForm.id,
+        title: page.title,
+        description: page.description,
+        order: page.order,
+      });
+      if (newPage) {
+        pageIdMapping[page.id] = newPage.id;
+      }
+    }
+
+    const originalFields = await this.workspaceQuery.getFieldsByForm(formId);
+    for (const field of originalFields) {
+      const targetPageId = field.pageId ? pageIdMapping[field.pageId] : null;
+      await this.workspaceQuery.createField({
+        formId: newForm.id,
+        pageId: targetPageId,
+        label: field.label,
+        placeholder: field.placeholder,
+        helperText: field.helperText,
+        type: field.type,
+        fieldKey: field.fieldKey,
+        defaultValue: field.defaultValue,
+        isRequired: field.isRequired,
+        order: field.order,
+        config: field.config,
+      });
+    }
+
+    const formWithTheme = await this.attachThemeToForm(newForm);
+    return FormResponseSchema.parse(formWithTheme);
+  }
+
+  public async getPublicTemplates(): Promise<ReadonlyArray<any>> {
+    const list = await db
+      .select({
+        form: dbForms,
+        workspace: {
+          name: dbWorkspaces.name,
+          logoUrl: dbWorkspaces.logoUrl,
+        },
+      })
+      .from(dbForms)
+      .innerJoin(dbWorkspaces, eq(dbForms.workspaceId, dbWorkspaces.id))
+      .where(and(eq(dbForms.isTemplate, true), eq(dbForms.status, "published")))
+      .orderBy(desc(dbForms.createdAt));
+
+    const formsWithThemes = await Promise.all((list || []).map(async (item) => {
+      const formWithTheme = await this.attachThemeToForm(item.form);
+      return {
+        form: formWithTheme,
+        workspace: item.workspace,
+      };
+    }));
+
+    return formsWithThemes;
+  }
+
+  public async archiveTemplate(userId: string, formId: string): Promise<void> {
+    const existing = await db
+      .select()
+      .from(dbArchivedTemplates)
+      .where(and(eq(dbArchivedTemplates.userId, userId), eq(dbArchivedTemplates.formId, formId)));
+
+    if (existing.length === 0) {
+      await db.insert(dbArchivedTemplates).values({ userId, formId });
+    }
+  }
+
+  public async unarchiveTemplate(userId: string, formId: string): Promise<void> {
+    await db
+      .delete(dbArchivedTemplates)
+      .where(and(eq(dbArchivedTemplates.userId, userId), eq(dbArchivedTemplates.formId, formId)));
+  }
+
+  public async getArchivedTemplates(userId: string): Promise<ReadonlyArray<any>> {
+    const list = await db
+      .select({
+        form: dbForms,
+        workspace: {
+          name: dbWorkspaces.name,
+          logoUrl: dbWorkspaces.logoUrl,
+        },
+      })
+      .from(dbArchivedTemplates)
+      .innerJoin(dbForms, eq(dbArchivedTemplates.formId, dbForms.id))
+      .innerJoin(dbWorkspaces, eq(dbForms.workspaceId, dbWorkspaces.id))
+      .where(eq(dbArchivedTemplates.userId, userId))
+      .orderBy(desc(dbArchivedTemplates.createdAt));
+
+    const formsWithThemes = await Promise.all((list || []).map(async (item) => {
+      const formWithTheme = await this.attachThemeToForm(item.form);
+      return {
+        form: formWithTheme,
+        workspace: item.workspace,
+      };
+    }));
+
+    return formsWithThemes;
+  }
+
+  public async isTemplateArchived(userId: string, formId: string): Promise<boolean> {
+    const existing = await db
+      .select()
+      .from(dbArchivedTemplates)
+      .where(and(eq(dbArchivedTemplates.userId, userId), eq(dbArchivedTemplates.formId, formId)));
+
+    return existing.length > 0;
   }
 }

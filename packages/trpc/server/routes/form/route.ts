@@ -272,4 +272,66 @@ export const formRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
     }),
+
+  getPublicTemplates: publicProcedure
+    .query(async () => {
+      try {
+        return await formService.getPublicTemplates();
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  cloneFormTemplate: protectedProcedure
+    .input(z.object({ formId: z.string().uuid(), workspaceId: z.string().uuid() }))
+    .output(FormResponseSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await formService.cloneFormTemplate(ctx.userId, input.formId, input.workspaceId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  archiveTemplate: protectedProcedure
+    .input(z.object({ formId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await formService.archiveTemplate(ctx.userId, input.formId);
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  unarchiveTemplate: protectedProcedure
+    .input(z.object({ formId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await formService.unarchiveTemplate(ctx.userId, input.formId);
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  getArchivedTemplates: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        return await formService.getArchivedTemplates(ctx.userId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  isTemplateArchived: protectedProcedure
+    .input(z.object({ formId: z.string().uuid() }))
+    .output(z.boolean())
+    .query(async ({ ctx, input }) => {
+      try {
+        return await formService.isTemplateArchived(ctx.userId, input.formId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
 });

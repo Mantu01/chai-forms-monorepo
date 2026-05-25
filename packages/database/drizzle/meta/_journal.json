@@ -22,6 +22,13 @@
       "when": 1779608141594,
       "tag": "0002_nifty_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779695329754,
+      "tag": "0003_little_korath",
+      "breakpoints": true
     }
   ]
 }

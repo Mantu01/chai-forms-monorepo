@@ -3,12 +3,14 @@ import { authRouter } from "./routes/auth/route";
 import { workspaceRouter } from "./routes/workspace/route";
 import { submissionRouter } from "./routes/submission/route";
 import { formRouter } from "./routes/form/route";
+import { commentRouter } from "./routes/comment/route";
 
 export const serverRouter = router({
   auth: authRouter,
   workspace: workspaceRouter,
   submission: submissionRouter,
   form: formRouter,
+  comment: commentRouter,
 });
 
 export { createContext } from "./context";

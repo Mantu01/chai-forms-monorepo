@@ -19,6 +19,7 @@ import {
 import { publicProcedure, protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { submissionService } from "@repo/services";
+import z from "zod";
 
 const TAGS = ["Submission"];
 const getPath = generatePath("/submission");
@@ -154,6 +155,20 @@ export const submissionRouter = router({
     .query(async ({ input }) => {
       try {
         return await submissionService.getRecentSubmissions(input);
+      } catch (error: any) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error.message,
+        });
+      }
+    }),
+
+  getExportSubmissions: protectedProcedure
+    .input(z.object({ formId: z.string().uuid() }))
+    .output(z.array(z.any()))
+    .query(async ({ input }) => {
+      try {
+        return await submissionService.getExportSubmissions(input.formId);
       } catch (error: any) {
         throw new TRPCError({
           code: "BAD_REQUEST",

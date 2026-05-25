@@ -319,4 +319,18 @@ export class SubmissionService {
     const result = await this.submissionQuery.getRecentSubmissions(payload.formId, payload.limit);
     return recentSubmissionsResponseSchema.parse(result);
   }
+
+  public async getExportSubmissions(formId: string): Promise<Array<any>> {
+    const list = await this.submissionQuery.getFormSubmissions({ formId, page: 1, limit: 5000 });
+    const submissionsWithAnswers = await Promise.all(
+      list.data.map(async (sub) => {
+        const answers = await this.submissionQuery.getSubmissionAnswers(sub.id);
+        return {
+          submission: sub,
+          answers,
+        };
+      })
+    );
+    return submissionsWithAnswers;
+  }
 }

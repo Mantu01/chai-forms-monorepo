@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, ilike, inArray } from "drizzle-orm";
 import db from "..";
 import { formFields, formPages, forms, InsertForm, InsertFormField, InsertFormPage, SelectForm, SelectFormField, SelectFormPage } from "../models/form.model";
 import { submissions } from "../models/submission.model";
+import { formThemes } from "../models/theme.model";
 
 export class FormQuery {
   public async createForm(data: InsertForm): Promise<SelectForm | undefined> {
@@ -136,5 +137,21 @@ export class FormQuery {
       })
     );
     return stats;
+  }
+
+  public async getFormTheme(formId: string) {
+    const [theme] = await db.select().from(formThemes).where(eq(formThemes.formId, formId));
+    return theme;
+  }
+
+  public async upsertFormTheme(formId: string, data: any) {
+    const existing = await this.getFormTheme(formId);
+    if (existing) {
+      const [updated] = await db.update(formThemes).set(data).where(eq(formThemes.formId, formId)).returning();
+      return updated;
+    } else {
+      const [inserted] = await db.insert(formThemes).values({ ...data, formId }).returning();
+      return inserted;
+    }
   }
 }

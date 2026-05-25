@@ -15,6 +15,7 @@ export const FormResponseSchema = z.object({
   maxSubmissions: z.number().nullable(),
   redirectUrl: z.string().nullable(),
   themeConfig: z.any(),
+  isTemplate: z.boolean(),
   closeAt: z.date().nullable(),
   publishedAt: z.date().nullable(),
   createdAt: z.date(),
@@ -23,6 +24,41 @@ export const FormResponseSchema = z.object({
 
 export const FormWithStatsResponseSchema = FormResponseSchema.extend({
   submissionCount: z.number(),
+});
+
+export const FormThemeSchema = z.object({
+  id: z.string().uuid(),
+  formId: z.string().uuid(),
+  backgroundColor: z.string(),
+  formBackgroundColor: z.string(),
+  headerBackgroundColor: z.string(),
+  primaryColor: z.string(),
+  buttonTextColor: z.string(),
+  textColor: z.string(),
+  mutedTextColor: z.string(),
+  borderColor: z.string(),
+  inputBackgroundColor: z.string(),
+  inputTextColor: z.string(),
+  bannerUrl: z.string().nullable(),
+});
+
+export const CommentResponseSchema = z.object({
+  id: z.string().uuid(),
+  formId: z.string().uuid(),
+  userId: z.string().uuid().nullable(),
+  userFullName: z.string().nullable().optional(),
+  userProfileImageUrl: z.string().nullable().optional(),
+  guestName: z.string().nullable(),
+  content: z.string(),
+  parentId: z.string().uuid().nullable(),
+  createdAt: z.date(),
+});
+
+export const CreateCommentInputSchema = z.object({
+  formId: z.string().uuid(),
+  content: z.string().min(1),
+  parentId: z.string().uuid().optional(),
+  guestName: z.string().optional(),
 });
 
 export const PageResponseSchema = z.object({
@@ -54,12 +90,13 @@ export const CreateFormInputSchema = z.object({
   description: z.string().optional(),
   slug: z.string().min(1),
   isPublic: z.boolean().optional(),
+  isTemplate: z.boolean().optional(),
   accessLevel: z.string().optional(),
   allowMultipleSubmissions: z.boolean().optional(),
   requireAuth: z.boolean().optional(),
   maxSubmissions: z.number().optional(),
   redirectUrl: z.string().optional(),
-  themeConfig: z.any(),
+  themeConfig: z.any().optional(),
   status: z.enum(["draft", "published", "archived"]).optional(),
   closeAt: z.date().optional(),
 });

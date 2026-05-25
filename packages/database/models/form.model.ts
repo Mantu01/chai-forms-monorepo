@@ -21,6 +21,7 @@ export const forms = pgTable("forms", {
   maxSubmissions: integer("max_submissions"),
   redirectUrl: text("redirect_url"),
   themeConfig: jsonb("theme_config").notNull(),
+  isTemplate: boolean("is_template").default(false).notNull(),
   
   closeAt: timestamp("close_at"),
   publishedAt: timestamp("published_at"),

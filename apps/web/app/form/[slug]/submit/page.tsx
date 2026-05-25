@@ -353,8 +353,19 @@ function SubmitFormContent({ params }: SubmitPageProps) {
     <div className="flex min-h-screen items-center justify-center p-6" style={{ backgroundColor: bgColor, color: textColor }}>
       <Card className="max-w-xl w-full border" style={{ backgroundColor: formBgColor, borderColor: borderColor }}>
         <form onSubmit={handleSubmit}>
+          {currentPageIndex === 0 && (
+            theme.bannerUrl ? (
+              <div className="h-36 w-full overflow-hidden rounded-t-xl border-b" style={{ borderColor }}>
+                <img src={theme.bannerUrl} alt="Form Banner" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="h-24 w-full rounded-t-xl border-b bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden" style={{ borderColor }}>
+                <span className="text-[10px] font-bold font-mono tracking-widest text-zinc-600 uppercase">ChaiForm Premium</span>
+              </div>
+            )
+          )}
           <CardHeader style={{ backgroundColor: headerBgColor }}>
-            {hasPages && (
+            {currentPageIndex > 0 && hasPages && (
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-medium font-mono" style={{ color: mutedTextColor }}>
                   Page {currentPageIndex + 1} of {pages.length}
@@ -366,17 +377,22 @@ function SubmitFormContent({ params }: SubmitPageProps) {
                 </div>
               </div>
             )}
-            <CardTitle className="text-2xl font-bold" style={{ color: textColor }}>{form.title}</CardTitle>
-            {form.description && (
-              <CardDescription style={{ color: mutedTextColor }}>{form.description}</CardDescription>
-            )}
-            {activePage && activePage.title && (
-              <div className="pt-2 border-t mt-3" style={{ borderColor: borderColor }}>
-                <h3 className="text-xs font-semibold" style={{ color: textColor }}>{activePage.title}</h3>
-                {activePage.description && (
-                  <p className="text-3xs mt-0.5" style={{ color: mutedTextColor }}>{activePage.description}</p>
+            {currentPageIndex === 0 ? (
+              <div className="space-y-1">
+                <CardTitle className="text-2xl font-extrabold tracking-tight" style={{ color: textColor }}>{form.title}</CardTitle>
+                {form.description && (
+                  <CardDescription style={{ color: mutedTextColor }} className="text-xs leading-relaxed">{form.description}</CardDescription>
                 )}
               </div>
+            ) : (
+              activePage && activePage.title && (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold" style={{ color: textColor }}>{activePage.title}</h3>
+                  {activePage.description && (
+                    <p className="text-3xs leading-relaxed" style={{ color: mutedTextColor }}>{activePage.description}</p>
+                  )}
+                </div>
+              )
             )}
           </CardHeader>
 

@@ -782,6 +782,17 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
             </div>
           ) : pages && pages.length > 0 ? (
             <form onSubmit={handlePreviewSubmit} className="flex-1 flex flex-col justify-between p-4 rounded-2xl border" style={{ backgroundColor: (form?.themeConfig as any)?.formBackgroundColor || "#18181b", borderColor: (form?.themeConfig as any)?.borderColor || "#27272a" }}>
+              {previewPage === 0 && (
+                (form?.themeConfig as any)?.bannerUrl ? (
+                  <div className="h-28 w-full overflow-hidden rounded-t-xl border-b -mt-4 mb-4" style={{ borderColor: (form?.themeConfig as any)?.borderColor || "#27272a" }}>
+                    <img src={(form?.themeConfig as any)?.bannerUrl} alt="Form Banner" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="h-16 w-full rounded-t-xl border-b -mt-4 mb-4 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden" style={{ borderColor: (form?.themeConfig as any)?.borderColor || "#27272a" }}>
+                    <span className="text-[9px] font-bold font-mono tracking-widest text-zinc-650 uppercase">ChaiForm Premium</span>
+                  </div>
+                )
+              )}
               <div className="space-y-5 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-medium font-mono" style={{ color: (form?.themeConfig as any)?.mutedTextColor || "#a1a1aa" }}>
@@ -796,9 +807,20 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
 
                 {activePreviewPage && (
                   <div className="space-y-0.5 border-b pb-3" style={{ borderColor: (form?.themeConfig as any)?.borderColor || "#27272a" }}>
-                    <h4 className="text-sm font-semibold" style={{ color: (form?.themeConfig as any)?.textColor || "#ffffff" }}>{activePreviewPage.title || "Untitled Page"}</h4>
-                    {activePreviewPage.description && (
-                      <p className="text-3xs" style={{ color: (form?.themeConfig as any)?.mutedTextColor || "#a1a1aa" }}>{activePreviewPage.description}</p>
+                    {previewPage === 0 ? (
+                      <>
+                        <h4 className="text-base font-extrabold tracking-tight" style={{ color: (form?.themeConfig as any)?.textColor || "#ffffff" }}>{form.title}</h4>
+                        {form.description && (
+                          <p className="text-3xs" style={{ color: (form?.themeConfig as any)?.mutedTextColor || "#a1a1aa" }}>{form.description}</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <h4 className="text-sm font-semibold" style={{ color: (form?.themeConfig as any)?.textColor || "#ffffff" }}>{activePreviewPage.title || "Untitled Page"}</h4>
+                        {activePreviewPage.description && (
+                          <p className="text-3xs" style={{ color: (form?.themeConfig as any)?.mutedTextColor || "#a1a1aa" }}>{activePreviewPage.description}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { trpc } from "~/trpc/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -10,9 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import { Eye, Copy, Star, ChevronLeft, ChevronRight, CornerDownRight, MessageSquare, Download, FolderHeart, Archive, Send, Sparkles } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Archive, Send, Sparkles, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Spinner } from "~/components/ui/spinner";
@@ -202,19 +199,14 @@ function FormComments({ formId }: FormCommentsProps) {
   );
 }
 
-export default function TemplatesPage() {
-  const queryClient = useQueryClient();
-  const { data: templates, isLoading } = trpc.form.getPublicTemplates.useQuery();
+export default function ArchivedPage() {
+  const { data: archivedTemplates, isLoading, refetch } = trpc.form.getArchivedTemplates.useQuery();
   const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery();
-  const { data: archivedTemplates, refetch: refetchArchives } = trpc.form.getArchivedTemplates.useQuery();
-
   const cloneTemplate = trpc.form.cloneFormTemplate.useMutation();
-  const archiveTemplate = trpc.form.archiveTemplate.useMutation();
   const unarchiveTemplate = trpc.form.unarchiveTemplate.useMutation();
 
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [previewPage, setPreviewPage] = useState(0);
-  const [previewAnswers, setPreviewAnswers] = useState<Record<string, any>>({});
   const [cloneTargetWorkspace, setCloneTargetWorkspace] = useState("");
   const [cloningFormId, setCloningFormId] = useState("");
 
@@ -225,7 +217,7 @@ export default function TemplatesPage() {
         formId: cloningFormId,
         workspaceId: cloneTargetWorkspace,
       });
-      toast.success("Template cloned to your workspace successfully");
+      toast.success("Template cloned successfully");
       setCloningFormId("");
       setCloneTargetWorkspace("");
     } catch (err: any) {
@@ -233,27 +225,14 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleArchiveToggle = async (formId: string) => {
-    const isArchived = archivedTemplates?.some((a) => a.form.id === formId);
+  const handleRemoveArchive = async (formId: string) => {
     try {
-      if (isArchived) {
-        await unarchiveTemplate.mutateAsync({ formId });
-        toast.success("Removed template from archived items");
-      } else {
-        await archiveTemplate.mutateAsync({ formId });
-        toast.success("Template archived successfully");
-      }
-      refetchArchives();
+      await unarchiveTemplate.mutateAsync({ formId });
+      toast.success("Removed template from archived items");
+      refetch();
     } catch (err) {
-      toast.error("Failed to archive template");
+      toast.error("Failed to remove template");
     }
-  };
-
-  const handleFieldChange = (fieldKey: string, val: any) => {
-    setPreviewAnswers((prev) => ({
-      ...prev,
-      [fieldKey]: val,
-    }));
   };
 
   if (isLoading) {
@@ -266,25 +245,30 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1">
-          <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-            <Sparkles className="h-3 w-3" />
-            Discover Templates
-          </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-            ChaiForm Public Store
-          </h1>
-          <p className="text-zinc-400 text-sm leading-relaxed max-w-lg">
-            Choose from custom-built, shareable form structures created by other organizations. Deploy or preview instantly.
-          </p>
-        </div>
+      <div className="space-y-1">
+        <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+          <Sparkles className="h-3 w-3" />
+          Archived Templates
+        </Badge>
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          My Saved Templates
+        </h1>
+        <p className="text-zinc-400 text-sm leading-relaxed max-w-lg">
+          These form templates are archived by you. You can preview, clone or remove them at any time.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {templates?.map(({ form, workspace }) => {
-          const isArchived = archivedTemplates?.some((a) => a.form.id === form.id);
-          return (
+      {archivedTemplates?.length === 0 ? (
+        <div className="text-center py-20 border border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-4 bg-zinc-900/10">
+          <Archive className="h-10 w-10 text-zinc-600" />
+          <div>
+            <p className="text-sm font-semibold text-zinc-300">No archived templates found</p>
+            <p className="text-xs text-zinc-500 mt-1">Go to templates directory and save some form presets.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {archivedTemplates?.map(({ form, workspace }) => (
             <Card key={form.id} className="border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:shadow-xl transition-all duration-300">
               <CardHeader className="space-y-3 pb-4 border-b border-zinc-800/60">
                 <div className="flex items-center gap-3">
@@ -326,7 +310,6 @@ export default function TemplatesPage() {
                     onClick={() => {
                       setPreviewTemplate(form);
                       setPreviewPage(0);
-                      setPreviewAnswers({});
                     }}
                     className="h-8 text-2xs gap-1"
                   >
@@ -336,11 +319,10 @@ export default function TemplatesPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleArchiveToggle(form.id)}
-                    className={`h-8 text-2xs gap-1 ${isArchived ? "text-primary hover:text-primary/95" : "text-zinc-400 hover:text-white"}`}
+                    onClick={() => handleRemoveArchive(form.id)}
+                    className="h-8 text-2xs gap-1 text-red-400 hover:text-red-300"
                   >
-                    <Archive className="h-3 w-3" />
-                    {isArchived ? "Archived" : "Archive"}
+                    Remove
                   </Button>
                 </div>
 
@@ -364,9 +346,9 @@ export default function TemplatesPage() {
                 </Select>
               </CardFooter>
             </Card>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       <Dialog open={!!cloningFormId} onOpenChange={(open) => { if (!open) setCloningFormId(""); }}>
         <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-sm">
@@ -441,7 +423,7 @@ export default function TemplatesPage() {
 
                 <div className="space-y-4">
                   <p className="text-2xs text-zinc-400 italic">
-                    Mock fields preview window. Buttons below navigate page boundaries.
+                    Mock fields preview window. Buttons navigate page boundaries.
                   </p>
                   <div className="flex gap-2 justify-between border-t border-zinc-800 pt-4 mt-6">
                     <Button

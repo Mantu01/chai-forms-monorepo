@@ -8,6 +8,7 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import { ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
@@ -20,6 +21,7 @@ interface FormSettingsTabProps {
     description?: string | null;
     status: "draft" | "published" | "archived";
     isPublic: boolean;
+    isTemplate: boolean;
     accessLevel: string;
     themeConfig?: any;
   };
@@ -61,6 +63,30 @@ export function FormSettingsTab({
     },
   });
 
+  const [isTemplateState, setIsTemplateState] = React.useState(form.isTemplate || false);
+  const [bannerUrlState, setBannerUrlState] = React.useState((form.themeConfig as any)?.bannerUrl || "");
+
+  const uploadFile = trpc.form.uploadFile.useMutation();
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const res = await uploadFile.mutateAsync({
+          fileData: reader.result as string,
+          folder: "banners",
+        });
+        setBannerUrlState(res.url);
+        toast.success("Banner image uploaded");
+      } catch (err) {
+        toast.error("Failed to upload banner image");
+      }
+    };
+  };
+
   const handleUpdateForm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -82,6 +108,7 @@ export function FormSettingsTab({
       borderColor: formData.get("borderColor") as string,
       inputBackgroundColor: formData.get("inputBackgroundColor") as string,
       inputTextColor: formData.get("inputTextColor") as string,
+      bannerUrl: bannerUrlState,
     };
 
     updateForm.mutate({
@@ -94,6 +121,7 @@ export function FormSettingsTab({
         accessLevel,
         status,
         themeConfig,
+        isTemplate: isTemplateState,
       },
     });
   };
@@ -186,9 +214,55 @@ export function FormSettingsTab({
               </div>
             </div>
 
+            <div className="flex items-center justify-between p-3 border border-border/80 rounded-xl bg-zinc-900/40">
+              <div className="space-y-0.5">
+                <Label htmlFor="form-is-template" className="text-xs font-semibold">Make Public Template</Label>
+                <p className="text-[10px] text-muted-foreground">Feature this form in the community templates page for anyone to use.</p>
+              </div>
+              <Switch
+                id="form-is-template"
+                checked={isTemplateState}
+                onCheckedChange={setIsTemplateState}
+              />
+            </div>
+
             <div className="border-t border-border/80 pt-6 mt-6">
               <h3 className="text-sm font-semibold mb-1 text-white font-sans">Form Custom Theme Styling</h3>
-              <p className="text-2xs text-muted-foreground mb-4">Design the look & feel of your form by picking custom color highlights.</p>
+              <p className="text-2xs text-muted-foreground mb-4">Design the look & feel of your form by picking custom color highlights and banner header.</p>
+
+              <div className="space-y-2 mb-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/40">
+                <Label className="text-xs font-bold text-white">Custom Header Banner Image</Label>
+                <p className="text-4xs text-zinc-500">Upload a banner image to display on the first page of your form.</p>
+                {bannerUrlState && (
+                  <div className="relative h-24 w-full overflow-hidden rounded-lg border border-zinc-800 mb-2">
+                    <img src={bannerUrlState} alt="Form Banner" className="h-full w-full object-cover" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBannerUrlState("")}
+                      className="absolute right-2 top-2 h-7 px-2 text-2xs rounded-lg"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                    className="text-xs file:bg-zinc-800 file:text-white file:border-0 h-9 rounded-lg"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Or paste banner image URL"
+                    value={bannerUrlState}
+                    onChange={(e) => setBannerUrlState(e.target.value)}
+                    className="text-xs h-9 rounded-lg flex-1"
+                  />
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

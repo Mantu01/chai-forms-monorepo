@@ -7,7 +7,8 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { ArrowUpDown, Eye, Download } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
 
 interface FormSubmissionsTabProps {
@@ -17,9 +18,12 @@ interface FormSubmissionsTabProps {
 export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const utils = trpc.useUtils();
 
   const sortBy = searchParams.get("sortBySub") || "newest";
   const activeDetailId = searchParams.get("view-submission");
+
+  const [exporting, setExporting] = React.useState(false);
 
   const { data: submissionsData, isLoading: submissionsLoading } = trpc.submission.getFormSubmissions.useQuery(
     { formId, page: 1, limit: 100 },
@@ -35,6 +39,60 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
     { formId },
     { enabled: !!formId }
   );
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const res = await utils.submission.getExportSubmissions.fetch({ formId });
+      if (!res || res.length === 0) {
+        toast.error("No submissions found to export");
+        setExporting(false);
+        return;
+      }
+      const headerKeys = ["Submission No.", "Submitted At", "Status"];
+      const fieldList = fields || [];
+      fieldList.forEach((f) => {
+        headerKeys.push(f.label);
+      });
+      const csvRows = [headerKeys.join(",")];
+      res.forEach((row: any) => {
+        const sub = row.submission;
+        const answers = row.answers;
+        const rowVals = [
+          `#${sub.submissionNumber}`,
+          sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : "N/A",
+          sub.status || "completed"
+        ];
+        fieldList.forEach((f) => {
+          const ans = answers.find((a: any) => a.fieldId === f.id);
+          let valStr = "";
+          if (ans && ans.value !== undefined && ans.value !== null) {
+            if (typeof ans.value === "object") {
+              valStr = JSON.stringify(ans.value);
+            } else {
+              valStr = String(ans.value);
+            }
+          }
+          const escaped = valStr.replace(/"/g, '""');
+          rowVals.push(`"${escaped}"`);
+        });
+        csvRows.push(rowVals.join(","));
+      });
+      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `submissions_export_${formId}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("CSV export completed");
+    } catch (err) {
+      toast.error("Failed to export CSV data");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const sortedSubmissions = React.useMemo(() => {
     if (!submissionsData) return [];
@@ -73,6 +131,16 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
           <p className="text-xs text-muted-foreground">Total records found: {submissionsData?.total || 0}</p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            className="h-9 gap-1.5"
+          >
+            <Download className="h-4 w-4" />
+            <span>{exporting ? "Exporting..." : "Export CSV"}</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
