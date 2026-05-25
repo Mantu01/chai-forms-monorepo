@@ -15,7 +15,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_API_URL: z.string().optional(),
-    NEXT_PUBLIC_TAMBO_API_KEY: z.string().default("mock_tambo_key_for_build"),
+    NEXT_PUBLIC_TAMBO_API_KEY:z.string(),
   },
 
   /**

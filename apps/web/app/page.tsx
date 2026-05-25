@@ -1,133 +1,134 @@
-import { Sparkles, MousePointerClick, GitBranch, Users, BarChart3, LayoutTemplate, CheckCircle2, Zap, ShieldCheck } from "lucide-react";
+import {Sparkles,MousePointerClick,GitBranch,Users,BarChart3,LayoutTemplate,CheckCircle2,Zap,} from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import VideoPreview from "~/components/home/video-preview";
 import ActionButton from "~/components/home/action-button";
-import Header from "~/components/layout/header";
-import Footer from "~/components/layout/footer";
+import Header from '~/components/layout/header';
+import Footer from '~/components/layout/footer';
 
 const VIDEO_URL = "https://res.cloudinary.com/dqznmhhtv/video/upload/v1779300873/samples/dance-2.mp4";
+
 
 const features = [
   {
     icon: Sparkles,
-    title: "Tambo AI Builder",
-    description: "Describe your requirements. AI formats fields, inserts pages, and designs accent themes in real-time.",
+    title: "AI Form Generator",
+    description: "Describe your form in plain text. AI builds the entire structure, fields, and logic in seconds.",
     badge: "AI-Powered",
     highlight: true,
   },
   {
-    icon: Users,
-    title: "Team Collaboration",
-    description: "Work side-by-side with workspace members. Co-manage templates, reviews, and dynamic boards.",
-    badge: "Real-time",
-    highlight: false,
-  },
-  {
-    icon: ShieldCheck,
-    title: "RBAC Security",
-    description: "Control access level rights. Assign Owner, Admin, and Member roles with secure private views.",
-    badge: "Enterprise",
-    highlight: false,
-  },
-  {
     icon: MousePointerClick,
-    title: "Clean Visual Setup",
-    description: "Construct questions, format choices, and preview responses on our mock layout panels.",
+    title: "Drag & Drop Builder",
+    description: "Intuitive visual editor. Rearrange fields, configure options, and preview in real time.",
     badge: null,
     highlight: false,
   },
   {
     icon: GitBranch,
-    title: "Conditional Paging",
-    description: "Branch form fields dynamically. Hide or show pages based on current collected answers.",
+    title: "Conditional Logic",
+    description: "Show or hide fields dynamically. Build smart branching workflows without writing code.",
+    badge: null,
+    highlight: false,
+  },
+  {
+    icon: Users,
+    title: "Team Collaboration",
+    description: "Invite teammates, assign roles, and co-edit forms with real-time sync.",
     badge: null,
     highlight: false,
   },
   {
     icon: BarChart3,
-    title: "Deep Analytics",
-    description: "Filter workspaces and specific forms. View monthly conversion trends and export CSV logs.",
-    badge: "New",
+    title: "Analytics",
+    description: "Track completion rates, drop-offs, and response trends with built-in dashboards.",
+    badge: null,
+    highlight: false,
+  },
+  {
+    icon: LayoutTemplate,
+    title: "Templates",
+    description: "Start from 100+ professionally designed templates across every industry and use case.",
+    badge: "100+",
     highlight: false,
   },
 ];
 
 const stats = [
-  { value: "10k+", label: "Forms Generated" },
-  { value: "99.99%", label: "Platform Uptime" },
-  { value: "4.9★", label: "G2 User Rating" },
-  { value: "Instant", label: "Deployment Speed" },
+  { value: "10k+", label: "Forms Created" },
+  { value: "99.9%", label: "Uptime" },
+  { value: "50+", label: "Integrations" },
+  { value: "4.9★", label: "User Rating" },
 ];
 
 const proofPoints = [
   "No credit card required",
   "Free plan available",
-  "Tambo AI builder integration",
-  "GDPR compliant logs",
+  "Create in under a minute",
+  "GDPR compliant",
 ];
 
 export default function HomePage() {
   return (
-    <div className="w-full overflow-x-hidden bg-zinc-950 text-white [background:radial-gradient(ellipse_60%_50%_at_50%_0%,#18181b,transparent),radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.12),transparent)]">
-      <Header />
-      
+    <div className="w-full overflow-x-hidden">
+      <Header/>
       <div className="w-full max-w-7xl mx-auto px-4 pt-10 sm:px-6 lg:px-8">
+
         <section className="py-16 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-zinc-900 border-zinc-800 text-zinc-350">
-                  <Zap className="w-3 h-3 text-primary animate-pulse" />
-                  AI & Collaboration Powered
+                <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-xs font-medium rounded-full">
+                  <Zap className="w-3 h-3" />
+                  AI-Powered Form Builder
                 </Badge>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] xl:text-5xl font-bold leading-[1.15] tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-                Create Smart Forms.
-                <p className="text-primary mt-1">Co-Edit in Real-Time.</p>
+              <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] xl:text-5xl font-bold leading-[1.15] tracking-tight">
+                Build Smart Forms.
+                <p className="text-primary">Collect Better Data.</p>
                 Automate Everything.
               </h1>
 
-              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-lg">
-                Build sophisticated, premium forms in seconds with the Tambo AI Builder. Co-edit form rules with workspace colleagues, assign roles, track conversion rates, and export submissions instantly.
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg">
+                Create powerful forms in seconds using AI. From lead capture to complex surveys — with conditional logic, real-time analytics, and seamless integrations built in.
               </p>
 
               <ActionButton variant="hero" />
             </div>
 
-            <div className="w-full border border-zinc-800 rounded-2xl overflow-hidden bg-zinc-900/10 backdrop-blur-xs">
+            <div className="w-full">
               <VideoPreview videoUrl={VIDEO_URL} />
             </div>
           </div>
         </section>
 
-        <Separator className="opacity-10 bg-zinc-700" />
+        <Separator className="opacity-50" />
 
-        <section className="py-12">
+        <section className="py-10">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {stats.map(({ value, label }) => (
-              <div key={label} className="flex flex-col items-center gap-1 text-center">
-                <span className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-b from-white to-zinc-450 bg-clip-text text-transparent">{value}</span>
-                <span className="text-[11px] font-mono text-zinc-550 uppercase tracking-wider">{label}</span>
+              <div key={label} className="flex flex-col items-center gap-0.5 text-center">
+                <span className="text-2xl sm:text-3xl font-bold tracking-tight">{value}</span>
+                <span className="text-xs text-muted-foreground">{label}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <Separator className="opacity-10 bg-zinc-700" />
+        <Separator className="opacity-50" />
 
         <section className="py-16 md:py-20">
           <div className="flex flex-col items-center gap-3 text-center mb-12">
-            <Badge variant="outline" className="text-xs rounded-full px-3 border-zinc-800 text-zinc-400 bg-zinc-900/40">
-              Integrated Workspace Suite
+            <Badge variant="outline" className="text-xs rounded-full px-3">
+              Everything you need
             </Badge>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Powerful features. Zero coding.
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Powerful features. Zero complexity.
             </h2>
-            <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
-              Every tool you need to generate layouts, evaluate conditional branches, assign member roles, and review feedback.
+            <p className="text-sm text-muted-foreground max-w-md">
+              Every tool you need to build, deploy, and analyze forms — without the learning curve.
             </p>
           </div>
 
@@ -135,11 +136,11 @@ export default function HomePage() {
             {features.map(({ icon: Icon, title, description, badge, highlight }) => (
               <Card
                 key={title}
-                className={`group border transition-all duration-300 hover:border-zinc-700/60 ${highlight ? "border-primary/40 bg-primary/5 shadow-sm shadow-primary/10" : "border-zinc-850 bg-zinc-900/20 backdrop-blur-md"}`}
+                className={`group border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${highlight ? "border-primary/30 bg-primary/5 shadow-sm shadow-primary/10" : "border-border/60 bg-card/60"}`}
               >
                 <CardContent className="p-5 flex flex-col gap-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className={`p-2 rounded-lg w-fit ${highlight ? "bg-primary/20 text-primary" : "bg-zinc-950 text-zinc-400 group-hover:text-white transition-colors"}`}>
+                    <div className={`p-2 rounded-lg w-fit ${highlight ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground group-hover:text-foreground transition-colors"}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     {badge && (
@@ -152,8 +153,8 @@ export default function HomePage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-bold leading-tight text-zinc-150">{title}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{description}</p>
+                    <h3 className="text-sm font-semibold leading-tight">{title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -162,21 +163,21 @@ export default function HomePage() {
         </section>
 
         <section className="py-12 md:py-16 mb-8">
-          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/10 backdrop-blur-md overflow-hidden">
+          <div className="rounded-2xl border border-border/60 bg-muted/30 backdrop-blur-sm overflow-hidden">
             <div className="px-6 sm:px-10 py-10 sm:py-14 flex flex-col items-center gap-6 text-center">
-              <Badge variant="secondary" className="rounded-full px-3 text-xs bg-zinc-950 border-zinc-800 text-zinc-400">
+              <Badge variant="secondary" className="rounded-full px-3 text-xs">
                 Start for free
               </Badge>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight max-w-lg bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-                Ready to collect better data?
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight max-w-lg">
+                Ready to build forms that actually convert?
               </h2>
-              <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-                Join modern product teams using ChaiForm to build smarter flows, control RBAC access, and analyze results.
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Join thousands of teams using AI to build smarter forms and collect better data.
               </p>
               <ActionButton variant="section" />
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
                 {proofPoints.map((point) => (
-                  <span key={point} className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <span key={point} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                     {point}
                   </span>
@@ -185,9 +186,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-      </div>
 
-      <Footer />
+      </div>
     </div>
   );
 }

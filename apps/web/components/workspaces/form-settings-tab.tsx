@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
@@ -29,24 +28,6 @@ interface FormSettingsTabProps {
   workspaceId: string;
   workspaceSlug: string;
   isAdminOrOwner: boolean;
-}
-
-function useCacheState<T>(key: any[], defaultValue: T): [T, (val: T | ((prev: T) => T)) => void] {
-  const queryClient = useQueryClient();
-  const { data } = useQuery({
-    queryKey: key,
-    queryFn: () => defaultValue,
-    initialData: defaultValue,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-  const setState = (val: T | ((prev: T) => T)) => {
-    queryClient.setQueryData(key, (prev: any) => {
-      const next = typeof val === "function" ? (val as Function)(prev ?? defaultValue) : val;
-      return next;
-    });
-  };
-  return [data as T, setState];
 }
 
 export function FormSettingsTab({
@@ -82,8 +63,8 @@ export function FormSettingsTab({
     },
   });
 
-  const [isTemplateState, setIsTemplateState] = useCacheState(["formSettingsIsTemplate", form.id], form.isTemplate || false);
-  const [bannerUrlState, setBannerUrlState] = useCacheState(["formSettingsBannerUrl", form.id], (form.themeConfig as any)?.bannerUrl || "");
+  const [isTemplateState, setIsTemplateState] = React.useState(form.isTemplate || false);
+  const [bannerUrlState, setBannerUrlState] = React.useState((form.themeConfig as any)?.bannerUrl || "");
 
   const uploadFile = trpc.form.uploadFile.useMutation();
 
@@ -162,7 +143,7 @@ export function FormSettingsTab({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card className="md:col-span-2 bg-zinc-900/20 backdrop-blur-md border-zinc-800">
+      <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle>Form Settings</CardTitle>
           <CardDescription>Update general properties of your form</CardDescription>
@@ -176,7 +157,7 @@ export function FormSettingsTab({
                 name="title"
                 defaultValue={form.title}
                 required
-                className="h-10 rounded-xl bg-zinc-950 border-zinc-850"
+                className="h-10 rounded-xl"
               />
             </div>
 
@@ -186,7 +167,7 @@ export function FormSettingsTab({
                 id="form-desc"
                 name="description"
                 defaultValue={form.description || ""}
-                className="rounded-xl bg-zinc-950 border-zinc-850"
+                className="rounded-xl"
               />
             </div>
 
@@ -197,7 +178,7 @@ export function FormSettingsTab({
                 name="slug"
                 defaultValue={form.slug}
                 required
-                className="h-10 rounded-xl bg-zinc-950 border-zinc-850"
+                className="h-10 rounded-xl"
               />
             </div>
 
@@ -205,10 +186,10 @@ export function FormSettingsTab({
               <div className="space-y-1.5">
                 <Label htmlFor="form-status" className="text-xs">Status</Label>
                 <Select name="status" defaultValue={form.status} disabled={!isAdminOrOwner}>
-                  <SelectTrigger className="rounded-xl bg-zinc-950 border-zinc-850">
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border-zinc-850 text-white">
+                  <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="published">Published</SelectItem>
                   </SelectContent>
@@ -221,10 +202,10 @@ export function FormSettingsTab({
               <div className="space-y-1.5">
                 <Label htmlFor="form-access" className="text-xs">Access Level</Label>
                 <Select name="accessLevel" defaultValue={form.accessLevel || "public"}>
-                  <SelectTrigger className="rounded-xl bg-zinc-950 border-zinc-850">
+                  <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select access" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-950 border-zinc-850 text-white">
+                  <SelectContent>
                     <SelectItem value="public">Public (anyone can submit)</SelectItem>
                     <SelectItem value="unlisted">Unlisted (access with link)</SelectItem>
                     <SelectItem value="private">Private (only workspace members)</SelectItem>
@@ -251,18 +232,18 @@ export function FormSettingsTab({
 
               <div className="space-y-2 mb-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/40">
                 <Label className="text-xs font-bold text-white">Custom Header Banner Image</Label>
-                <p className="text-4xs text-zinc-550">Upload a banner image to display on the first page of your form.</p>
+                <p className="text-4xs text-zinc-500">Upload a banner image to display on the first page of your form.</p>
                 {bannerUrlState && (
-                  <div className="flex flex-col sm:flex-row items-center gap-4 p-3 border border-zinc-850 rounded-xl bg-zinc-950/40 mb-2">
-                    <img src={bannerUrlState} alt="Form Banner" className="h-16 w-32 object-cover rounded-lg" />
+                  <div className="relative h-24 w-full overflow-hidden rounded-lg border border-zinc-800 mb-2">
+                    <img src={bannerUrlState} alt="Form Banner" className="h-full w-full object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
                       onClick={() => setBannerUrlState("")}
-                      className="h-8 px-3 text-2xs rounded-lg"
+                      className="absolute right-2 top-2 h-7 px-2 text-2xs rounded-lg"
                     >
-                      Remove Banner
+                      Remove
                     </Button>
                   </div>
                 )}
@@ -278,7 +259,7 @@ export function FormSettingsTab({
                     placeholder="Or paste banner image URL"
                     value={bannerUrlState}
                     onChange={(e) => setBannerUrlState(e.target.value)}
-                    className="text-xs h-9 rounded-lg flex-1 bg-zinc-950 border-zinc-850"
+                    className="text-xs h-9 rounded-lg flex-1"
                   />
                 </div>
               </div>
@@ -291,7 +272,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-bg") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-bg" name="backgroundColor" defaultValue={(form.themeConfig as any)?.backgroundColor || "#09090b"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-bg" name="backgroundColor" defaultValue={(form.themeConfig as any)?.backgroundColor || "#09090b"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -302,7 +283,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-form-bg") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-form-bg" name="formBackgroundColor" defaultValue={(form.themeConfig as any)?.formBackgroundColor || "#18181b"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-form-bg" name="formBackgroundColor" defaultValue={(form.themeConfig as any)?.formBackgroundColor || "#18181b"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -313,7 +294,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-header-bg") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-header-bg" name="headerBackgroundColor" defaultValue={(form.themeConfig as any)?.headerBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-header-bg" name="headerBackgroundColor" defaultValue={(form.themeConfig as any)?.headerBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -324,7 +305,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-primary") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-primary" name="primaryColor" defaultValue={(form.themeConfig as any)?.primaryColor || "#3f3f46"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-primary" name="primaryColor" defaultValue={(form.themeConfig as any)?.primaryColor || "#3f3f46"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -335,7 +316,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-btn-txt") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-btn-txt" name="buttonTextColor" defaultValue={(form.themeConfig as any)?.buttonTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-btn-txt" name="buttonTextColor" defaultValue={(form.themeConfig as any)?.buttonTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -346,7 +327,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-txt") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-txt" name="textColor" defaultValue={(form.themeConfig as any)?.textColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-txt" name="textColor" defaultValue={(form.themeConfig as any)?.textColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -357,7 +338,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-muted-txt") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-muted-txt" name="mutedTextColor" defaultValue={(form.themeConfig as any)?.mutedTextColor || "#a1a1aa"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-muted-txt" name="mutedTextColor" defaultValue={(form.themeConfig as any)?.mutedTextColor || "#a1a1aa"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -368,7 +349,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-border") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-border" name="borderColor" defaultValue={(form.themeConfig as any)?.borderColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-border" name="borderColor" defaultValue={(form.themeConfig as any)?.borderColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -379,7 +360,7 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-input-bg") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-input-bg" name="inputBackgroundColor" defaultValue={(form.themeConfig as any)?.inputBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-input-bg" name="inputBackgroundColor" defaultValue={(form.themeConfig as any)?.inputBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
 
@@ -390,13 +371,13 @@ export function FormSettingsTab({
                       const input = document.getElementById("theme-input-txt") as HTMLInputElement;
                       if (input) input.value = e.target.value;
                     }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
-                    <Input id="theme-input-txt" name="inputTextColor" defaultValue={(form.themeConfig as any)?.inputTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono bg-zinc-950 border-zinc-850" />
+                    <Input id="theme-input-txt" name="inputTextColor" defaultValue={(form.themeConfig as any)?.inputTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <Button type="submit" disabled={updateForm.isPending} className="rounded-xl mt-2 bg-primary hover:bg-primary/90 text-white">
+            <Button type="submit" disabled={updateForm.isPending} className="rounded-xl mt-2">
               {updateForm.isPending ? "Saving Changes..." : "Save Changes"}
             </Button>
           </form>
@@ -404,13 +385,13 @@ export function FormSettingsTab({
       </Card>
 
       <div className="space-y-6 md:col-span-1">
-        <Card className="bg-zinc-900/20 backdrop-blur-md border-zinc-800">
+        <Card>
           <CardHeader>
             <CardTitle>Sharing Links</CardTitle>
             <CardDescription>Share form with users to accept replies</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full bg-zinc-950 border-zinc-850" onClick={copyShareLink}>
+            <Button variant="outline" className="w-full" onClick={copyShareLink}>
               <Copy className="h-4 w-4 mr-2" />
               Copy Public Url
             </Button>
@@ -424,7 +405,7 @@ export function FormSettingsTab({
         </Card>
 
         {isAdminOrOwner && (
-          <Card className="bg-zinc-900/20 backdrop-blur-md border-zinc-800">
+          <Card>
             <CardHeader>
               <CardTitle className="text-destructive font-bold">Danger Zone</CardTitle>
               <CardDescription>Permanently delete this form and all response logs</CardDescription>
@@ -445,4 +426,3 @@ export function FormSettingsTab({
     </div>
   );
 }
-

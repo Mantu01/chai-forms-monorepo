@@ -1,4 +1,4 @@
-import { AnyPgColumn, pgTable, uuid, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp } from "drizzle-orm/pg-core";
 import { forms } from "./form.model";
 import { users } from "./user.model";
 
@@ -8,7 +8,7 @@ export const formComments = pgTable("form_comments", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   guestName: varchar("guest_name", { length: 255 }),
   content: text("content").notNull(),
-  parentId: uuid("parent_id").references((): AnyPgColumn => formComments.id, { onDelete: "cascade" }),
+  parentId: uuid("parent_id").references(() => formComments.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

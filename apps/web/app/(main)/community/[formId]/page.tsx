@@ -1,34 +1,15 @@
 "use client";
 
-import React, { use } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState, use } from "react";
 import Link from "next/link";
 import { trpc } from "~/trpc/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
-import { ArrowLeft, MessageSquare, Trash2 } from "lucide-react";
+import { ArrowLeft, MessageSquare, ChevronDown, Sparkles, Building, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
-
-function useCacheState<T>(key: any[], defaultValue: T): [T, (val: T | ((prev: T) => T)) => void] {
-  const queryClient = useQueryClient();
-  const { data } = useQuery({
-    queryKey: key,
-    queryFn: () => defaultValue,
-    initialData: defaultValue,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-  const setState = (val: T | ((prev: T) => T)) => {
-    queryClient.setQueryData(key, (prev: any) => {
-      const next = typeof val === "function" ? (val as Function)(prev ?? defaultValue) : val;
-      return next;
-    });
-  };
-  return [data as T, setState];
-}
 
 interface CommunityDetailPageProps {
   params: Promise<{ formId: string }>;
@@ -115,7 +96,7 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
   const { data: comments, refetch } = trpc.comment.getCommentsByForm.useQuery({ formId });
   const { data: userData } = trpc.auth.me.useQuery();
 
-  const [sortOrder, setSortOrder] = useCacheState<"newest" | "oldest">(["communityDetailSortOrder", formId], "newest");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   const deleteComment = trpc.comment.deleteComment.useMutation({
     onSuccess: () => {

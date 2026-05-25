@@ -1,20 +1,18 @@
 "use client";
 
-import React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState } from "react";
 import { trpc } from "~/trpc/client";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Eye, Archive, Send, Sparkles, MessageSquare } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Archive, Send, Sparkles, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { Spinner } from "~/components/ui/spinner";
-import { FormRenderer } from "~/components/form/form-renderer";
 
 interface CommentNodeProps {
   comment: any;
@@ -23,28 +21,10 @@ interface CommentNodeProps {
   onReplyAdded: () => void;
 }
 
-function useCacheState<T>(key: any[], defaultValue: T): [T, (val: T | ((prev: T) => T)) => void] {
-  const queryClient = useQueryClient();
-  const { data } = useQuery({
-    queryKey: key,
-    queryFn: () => defaultValue,
-    initialData: defaultValue,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-  const setState = (val: T | ((prev: T) => T)) => {
-    queryClient.setQueryData(key, (prev: any) => {
-      const next = typeof val === "function" ? (val as Function)(prev ?? defaultValue) : val;
-      return next;
-    });
-  };
-  return [data as T, setState];
-}
-
 function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNodeProps) {
-  const [replyText, setReplyText] = useCacheState(["commentReplyText", comment.id], "");
-  const [showReplyForm, setShowReplyForm] = useCacheState(["showCommentReplyForm", comment.id], false);
-  const [guestName, setGuestName] = useCacheState(["commentReplyGuestName", comment.id], "");
+  const [replyText, setReplyText] = useState("");
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [guestName, setGuestName] = useState("");
   const { data: userData } = trpc.auth.me.useQuery();
   const createComment = trpc.comment.createComment.useMutation();
 
@@ -102,7 +82,7 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
       </div>
 
       {showReplyForm && (
-        <form onSubmit={handleReplySubmit} className="space-y-2 mt-2 bg-zinc-955 p-3 rounded-lg border border-zinc-800">
+        <form onSubmit={handleReplySubmit} className="space-y-2 mt-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
           {!userData?.user && (
             <Input
               type="text"
@@ -145,8 +125,8 @@ interface FormCommentsProps {
 
 function FormComments({ formId }: FormCommentsProps) {
   const { data: comments, refetch } = trpc.comment.getCommentsByForm.useQuery({ formId });
-  const [commentText, setCommentText] = useCacheState(["formCommentsText", formId], "");
-  const [guestName, setGuestName] = useCacheState(["formCommentsGuestName", formId], "");
+  const [commentText, setCommentText] = useState("");
+  const [guestName, setGuestName] = useState("");
   const { data: userData } = trpc.auth.me.useQuery();
   const createComment = trpc.comment.createComment.useMutation();
 
@@ -183,7 +163,7 @@ function FormComments({ formId }: FormCommentsProps) {
             placeholder="Your Name (Guest)"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
-            className="text-xs h-9 bg-zinc-955 border-zinc-800 max-w-xs"
+            className="text-xs h-9 bg-zinc-950 border-zinc-800 max-w-xs"
           />
         )}
         <div className="flex gap-2">
@@ -191,7 +171,7 @@ function FormComments({ formId }: FormCommentsProps) {
             placeholder="Share your thoughts about this template..."
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            className="text-xs bg-zinc-955 border-zinc-800 min-h-[60px]"
+            className="text-xs bg-zinc-950 border-zinc-800 min-h-[60px]"
           />
           <Button type="submit" className="h-10 self-end px-4 gap-1">
             <Send className="h-3 w-3" />
@@ -200,7 +180,7 @@ function FormComments({ formId }: FormCommentsProps) {
         </div>
       </form>
 
-      <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
         {rootComments.length === 0 ? (
           <p className="text-xs text-zinc-500 text-center py-4">No discussions yet. Be the first to share your feedback!</p>
         ) : (
@@ -221,23 +201,14 @@ function FormComments({ formId }: FormCommentsProps) {
 
 export default function ArchivedPage() {
   const { data: archivedTemplates, isLoading, refetch } = trpc.form.getArchivedTemplates.useQuery();
-  const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery({});
+  const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery();
   const cloneTemplate = trpc.form.cloneFormTemplate.useMutation();
   const unarchiveTemplate = trpc.form.unarchiveTemplate.useMutation();
 
-  const [previewTemplate, setPreviewTemplate] = useCacheState<any>(["archivedPreviewTemplate"], null);
-  const [cloneTargetWorkspace, setCloneTargetWorkspace] = useCacheState(["archivedCloneTargetWorkspace"], "");
-  const [cloningFormId, setCloningFormId] = useCacheState(["archivedCloningFormId"], "");
-
-  const { data: previewFields = [] } = trpc.form.getFieldsByForm.useQuery(
-    { formId: previewTemplate?.id || "" },
-    { enabled: !!previewTemplate?.id }
-  );
-
-  const { data: previewPages = [] } = trpc.form.getPagesByForm.useQuery(
-    { formId: previewTemplate?.id || "" },
-    { enabled: !!previewTemplate?.id }
-  );
+  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
+  const [previewPage, setPreviewPage] = useState(0);
+  const [cloneTargetWorkspace, setCloneTargetWorkspace] = useState("");
+  const [cloningFormId, setCloningFormId] = useState("");
 
   const handleClone = async () => {
     if (!cloningFormId || !cloneTargetWorkspace) return;
@@ -264,10 +235,6 @@ export default function ArchivedPage() {
     }
   };
 
-  const handleOpenPreview = (form: any) => {
-    setPreviewTemplate(form);
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950">
@@ -277,74 +244,74 @@ export default function ArchivedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">
+    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-8">
       <div className="space-y-1">
         <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2">
           <Sparkles className="h-3 w-3" />
           Archived Templates
         </Badge>
-        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
           My Saved Templates
         </h1>
-        <p className="text-zinc-450 text-xs leading-relaxed max-w-lg">
-          These form presets are archived by you. You can preview, clone, or delete them safely.
+        <p className="text-zinc-400 text-sm leading-relaxed max-w-lg">
+          These form templates are archived by you. You can preview, clone or remove them at any time.
         </p>
       </div>
 
       {archivedTemplates?.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-3 bg-zinc-900/10">
-          <Archive className="h-8 w-8 text-zinc-650" />
+        <div className="text-center py-20 border border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-4 bg-zinc-900/10">
+          <Archive className="h-10 w-10 text-zinc-600" />
           <div>
-            <p className="text-xs font-semibold text-zinc-300">No saved templates found</p>
-            <p className="text-3xs text-zinc-550 mt-0.5">Explore the templates directory to save form configurations.</p>
+            <p className="text-sm font-semibold text-zinc-300">No archived templates found</p>
+            <p className="text-xs text-zinc-500 mt-1">Go to templates directory and save some form presets.</p>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {archivedTemplates?.map(({ form, workspace }) => (
-            <Card key={form.id} className="border-zinc-800/80 bg-zinc-900/20 backdrop-blur-md hover:border-zinc-700/60 transition-all duration-300">
-              <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
-                  <Avatar className="h-10 w-10 ring-1 ring-zinc-700 shrink-0">
+            <Card key={form.id} className="border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:shadow-xl transition-all duration-300">
+              <CardHeader className="space-y-3 pb-4 border-b border-zinc-800/60">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 ring-1 ring-zinc-700">
                     {workspace.logoUrl && <AvatarImage src={workspace.logoUrl} />}
-                    <AvatarFallback className="text-xs bg-zinc-850 text-zinc-300">
+                    <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-300">
                       {workspace.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-bold text-white truncate">{form.title}</h3>
-                      <span className="text-[10px] text-zinc-550 font-mono">By {workspace.name}</span>
-                    </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-1">
-                      {form.description || "No description provided."}
-                    </p>
+                  <div>
+                    <h4 className="text-xs font-semibold text-zinc-300">{workspace.name}</h4>
+                    <p className="text-[9px] text-zinc-500 font-mono">Owner Org</p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 text-3xs text-zinc-450 flex-wrap">
-                  <div className="flex flex-col">
-                    <span className="text-zinc-550 font-mono">ACCESS LEVEL</span>
-                    <span className="font-semibold text-zinc-350 capitalize">{form.accessLevel}</span>
-                  </div>
-                  <div className="flex flex-col border-l border-zinc-800/80 pl-3">
-                    <span className="text-zinc-550 font-mono">STYLING</span>
-                    <span className="font-semibold text-zinc-350 font-sans">
-                      {(form.themeConfig as any)?.backgroundColor ? "Custom theme" : "Default theme"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col border-l border-zinc-800/80 pl-3">
-                    <span className="text-zinc-550 font-mono">CREATED DATE</span>
-                    <span className="font-semibold text-zinc-350">{new Date(form.createdAt).toLocaleDateString()}</span>
-                  </div>
+                <div className="space-y-1">
+                  <CardTitle className="text-lg font-bold text-white">{form.title}</CardTitle>
+                  <CardDescription className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+                    {form.description || "No description provided."}
+                  </CardDescription>
                 </div>
+              </CardHeader>
 
-                <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <CardContent className="py-4">
+                <div className="flex flex-wrap gap-2 text-2xs text-zinc-400">
+                  <span className="px-2.5 py-1 bg-zinc-900 rounded-lg border border-zinc-800 capitalize">
+                    {form.accessLevel}
+                  </span>
+                  <span className="px-2.5 py-1 bg-zinc-900 rounded-lg border border-zinc-800">
+                    {(form.themeConfig as any)?.backgroundColor ? "Custom Styling" : "Default styling"}
+                  </span>
+                </div>
+              </CardContent>
+
+              <CardFooter className="flex justify-between items-center gap-2 border-t border-zinc-800/60 pt-4 pb-4">
+                <div className="flex gap-1.5">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleOpenPreview(form)}
-                    className="h-8 text-3xs gap-1 rounded-xl"
+                    onClick={() => {
+                      setPreviewTemplate(form);
+                      setPreviewPage(0);
+                    }}
+                    className="h-8 text-2xs gap-1"
                   >
                     <Eye className="h-3 w-3" />
                     Preview
@@ -353,42 +320,42 @@ export default function ArchivedPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleRemoveArchive(form.id)}
-                    className="h-8 text-3xs gap-1 text-red-400 hover:text-red-300 rounded-xl"
+                    className="h-8 text-2xs gap-1 text-red-400 hover:text-red-300"
                   >
                     Remove
                   </Button>
-
-                  <Select
-                    value=""
-                    onValueChange={(val) => {
-                      setCloningFormId(form.id);
-                      setCloneTargetWorkspace(val);
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-28 text-3xs bg-zinc-950 border-zinc-850 text-zinc-350 rounded-xl">
-                      <SelectValue placeholder="Use Template" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-950 border-zinc-855 text-white">
-                      {workspaces?.map((w) => (
-                        <SelectItem key={w.workspace.id} value={w.workspace.id}>
-                          {w.workspace.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
-              </CardContent>
+
+                <Select
+                  value=""
+                  onValueChange={(val) => {
+                    setCloningFormId(form.id);
+                    setCloneTargetWorkspace(val);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-28 text-2xs bg-zinc-900 border-zinc-800 text-zinc-300">
+                    <SelectValue placeholder="Use Template" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                    {workspaces?.map((w) => (
+                      <SelectItem key={w.workspace.id} value={w.workspace.id}>
+                        {w.workspace.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardFooter>
             </Card>
           ))}
         </div>
       )}
 
       <Dialog open={!!cloningFormId} onOpenChange={(open) => { if (!open) setCloningFormId(""); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-850 text-white sm:max-w-sm">
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Deploy Template</DialogTitle>
             <DialogDescription>
-              This duplicates the form structure, pages and active questions into your target workspace.
+              This will duplicate the form structure, theme and questions into your workspace.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2">
@@ -402,29 +369,87 @@ export default function ArchivedPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!previewTemplate} onOpenChange={(open) => { if (!open) setPreviewTemplate(null); }}>
-        <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-850 text-white max-h-[80vh] overflow-y-auto">
+      <Dialog
+        open={!!previewTemplate}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTemplate(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-white max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold">Template Mock Preview</DialogTitle>
-            <DialogDescription className="text-zinc-500 text-3xs">
-              Test conditional flows, logic branches and paging rules. Responses are mock.
+            <DialogTitle className="text-xl font-bold">Template Mock Preview</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Test conditional flows, stars, dropdowns, and multiple fields. Response will not be recorded.
             </DialogDescription>
           </DialogHeader>
 
           {previewTemplate && (
             <div className="space-y-6">
-              <FormRenderer
-                formId={previewTemplate.id}
-                form={previewTemplate}
-                fields={[...previewFields]}
-                pages={[...previewPages]}
-                isPreview={true}
-              />
+              <div
+                className="p-6 rounded-2xl border"
+                style={{
+                  backgroundColor: previewTemplate.themeConfig?.formBackgroundColor || "#18181b",
+                  borderColor: previewTemplate.themeConfig?.borderColor || "#27272a",
+                }}
+              >
+                {previewPage === 0 && (
+                  previewTemplate.themeConfig?.bannerUrl ? (
+                    <div className="h-32 w-full overflow-hidden rounded-t-xl border-b -mt-6 -mx-6 mb-6" style={{ borderColor: previewTemplate.themeConfig?.borderColor || "#27272a" }}>
+                      <img src={previewTemplate.themeConfig?.bannerUrl} alt="Banner" className="h-full w-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="h-20 w-full rounded-t-xl border-b -mt-6 -mx-6 mb-6 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden" style={{ borderColor: previewTemplate.themeConfig?.borderColor || "#27272a" }}>
+                      <span className="text-[10px] font-bold font-mono tracking-widest text-zinc-650 uppercase">ChaiForm Premium</span>
+                    </div>
+                  )
+                )}
+
+                <div className="space-y-1 mb-4">
+                  {previewPage === 0 ? (
+                    <>
+                      <h2 className="text-2xl font-bold" style={{ color: previewTemplate.themeConfig?.textColor || "#ffffff" }}>
+                        {previewTemplate.title}
+                      </h2>
+                      {previewTemplate.description && (
+                        <p className="text-xs text-zinc-400">{previewTemplate.description}</p>
+                      )}
+                    </>
+                  ) : (
+                    <h3 className="text-lg font-bold" style={{ color: previewTemplate.themeConfig?.textColor || "#ffffff" }}>
+                      Active Preview Page
+                    </h3>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-2xs text-zinc-400 italic">
+                    Mock fields preview window. Buttons navigate page boundaries.
+                  </p>
+                  <div className="flex gap-2 justify-between border-t border-zinc-800 pt-4 mt-6">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={previewPage === 0}
+                      onClick={() => setPreviewPage(previewPage - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setPreviewPage(previewPage + 1)}
+                    >
+                      Next <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <FormComments formId={previewTemplate.id} />
             </div>
           )}
+
           <DialogFooter>
-            <Button onClick={() => setPreviewTemplate(null)} className="rounded-xl">Close Preview</Button>
+            <Button onClick={() => setPreviewTemplate(null)}>Close Preview</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
