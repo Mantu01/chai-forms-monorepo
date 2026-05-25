@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { use } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "~/trpc/client";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
-import { ArrowLeft, MessageSquare, ChevronDown, Sparkles, Building, Trash2 } from "lucide-react";
+import { ArrowLeft, MessageSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
 
@@ -62,7 +63,7 @@ function ReplyItem({ reply, allComments, isAdmin, onDeleted }: ReplyItemProps) {
                 {new Date(reply.createdAt).toLocaleString()}
               </span>
             </div>
-            <p className="text-xs text-zinc-300 leading-relaxed">{reply.content}</p>
+            <p className="text-xs text-zinc-300 leading-relaxed font-sans">{reply.content}</p>
           </div>
         </div>
         {showDelete && (
@@ -92,11 +93,14 @@ function ReplyItem({ reply, allComments, isAdmin, onDeleted }: ReplyItemProps) {
 
 export default function CommunityDetailPage(props: CommunityDetailPageProps) {
   const { formId } = use(props.params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const { data: form } = trpc.form.getFormById.useQuery({ formId });
   const { data: comments, refetch } = trpc.comment.getCommentsByForm.useQuery({ formId });
   const { data: userData } = trpc.auth.me.useQuery();
 
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const sortOrder = (searchParams.get("sort") as "newest" | "oldest") || "newest";
 
   const deleteComment = trpc.comment.deleteComment.useMutation({
     onSuccess: () => {
@@ -135,6 +139,12 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
     }
   };
 
+  const handleSortChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sort", val);
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
   if (!form) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950">
@@ -161,18 +171,18 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
           <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             {form.title}
           </h1>
-          <p className="text-xs text-zinc-400 leading-relaxed max-w-lg">
+          <p className="text-xs text-zinc-450 leading-relaxed max-w-lg">
             Viewing all community interactions for form {form.title}.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-400">Sort by:</span>
+          <span className="text-xs text-zinc-450">Sort by:</span>
           <Select
             value={sortOrder}
-            onValueChange={(val: any) => setSortOrder(val)}
+            onValueChange={handleSortChange}
           >
-            <SelectTrigger className="h-8 w-36 text-2xs bg-zinc-900 border-zinc-800 text-zinc-300">
+            <SelectTrigger className="h-8 w-36 text-2xs bg-zinc-900 border-zinc-800 text-zinc-350">
               <SelectValue placeholder="Sort Order" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
@@ -201,7 +211,7 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
                     <div className="flex gap-3">
                       <Avatar className="h-8 w-8 ring-1 ring-zinc-800">
                         {comment.userProfileImageUrl && <AvatarImage src={comment.userProfileImageUrl} />}
-                        <AvatarFallback className="text-[10px] bg-zinc-850 text-zinc-400">
+                        <AvatarFallback className="text-[10px] bg-zinc-850 text-zinc-405">
                           {displayName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>

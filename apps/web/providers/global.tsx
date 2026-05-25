@@ -9,6 +9,7 @@ import { TamboProvider } from "@tambo-ai/react";
 import { trpc } from "~/trpc/client";
 import { createTRPCHttpBatchClientClient } from "~/trpc/create-client";
 import { env } from "~/env";
+import { components } from "~/lib/tambo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ export const GlobalProviders: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <TamboProvider
       apiKey={env.NEXT_PUBLIC_TAMBO_API_KEY!}
+      components={components}
       userKey="user-1"
     >
       <QueryClientProvider client={queryClient}>

@@ -12,6 +12,7 @@ import { Switch } from "~/components/ui/switch";
 import { ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "~/trpc/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface FormSettingsTabProps {
   form: {
@@ -38,6 +39,7 @@ export function FormSettingsTab({
 }: FormSettingsTabProps) {
   const router = useRouter();
   const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
 
   const updateForm = trpc.form.updateForm.useMutation({
     onSuccess: (data) => {
@@ -63,8 +65,11 @@ export function FormSettingsTab({
     },
   });
 
-  const [isTemplateState, setIsTemplateState] = React.useState(form.isTemplate || false);
-  const [bannerUrlState, setBannerUrlState] = React.useState((form.themeConfig as any)?.bannerUrl || "");
+  const { data: bannerUrl = (form.themeConfig as any)?.bannerUrl || "" } = useQuery({
+    queryKey: ["formSettingsBannerUrl", form.id],
+    queryFn: () => (form.themeConfig as any)?.bannerUrl || "",
+    initialData: (form.themeConfig as any)?.bannerUrl || "",
+  });
 
   const uploadFile = trpc.form.uploadFile.useMutation();
 
@@ -79,7 +84,7 @@ export function FormSettingsTab({
           fileData: reader.result as string,
           folder: "banners",
         });
-        setBannerUrlState(res.url);
+        queryClient.setQueryData(["formSettingsBannerUrl", form.id], res.url);
         toast.success("Banner image uploaded");
       } catch (err) {
         toast.error("Failed to upload banner image");
@@ -96,6 +101,7 @@ export function FormSettingsTab({
     const accessLevel = formData.get("accessLevel") as string;
     const isPublic = accessLevel !== "private";
     const status = formData.get("status") as any;
+    const isTemplate = formData.get("isTemplate") === "true" || formData.get("isTemplate") === "on";
 
     const themeConfig = {
       backgroundColor: formData.get("backgroundColor") as string,
@@ -108,7 +114,7 @@ export function FormSettingsTab({
       borderColor: formData.get("borderColor") as string,
       inputBackgroundColor: formData.get("inputBackgroundColor") as string,
       inputTextColor: formData.get("inputTextColor") as string,
-      bannerUrl: bannerUrlState,
+      bannerUrl,
     };
 
     updateForm.mutate({
@@ -121,7 +127,7 @@ export function FormSettingsTab({
         accessLevel,
         status,
         themeConfig,
-        isTemplate: isTemplateState,
+        isTemplate,
       },
     });
   };
@@ -157,7 +163,7 @@ export function FormSettingsTab({
                 name="title"
                 defaultValue={form.title}
                 required
-                className="h-10 rounded-xl"
+                className="h-10 rounded-xl text-xs"
               />
             </div>
 
@@ -167,7 +173,7 @@ export function FormSettingsTab({
                 id="form-desc"
                 name="description"
                 defaultValue={form.description || ""}
-                className="rounded-xl"
+                className="rounded-xl text-xs"
               />
             </div>
 
@@ -178,7 +184,7 @@ export function FormSettingsTab({
                 name="slug"
                 defaultValue={form.slug}
                 required
-                className="h-10 rounded-xl"
+                className="h-10 rounded-xl text-xs"
               />
             </div>
 
@@ -186,12 +192,12 @@ export function FormSettingsTab({
               <div className="space-y-1.5">
                 <Label htmlFor="form-status" className="text-xs">Status</Label>
                 <Select name="status" defaultValue={form.status} disabled={!isAdminOrOwner}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className="rounded-xl text-xs h-10">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="draft" className="text-xs">Draft</SelectItem>
+                    <SelectItem value="published" className="text-xs">Published</SelectItem>
                   </SelectContent>
                 </Select>
                 {!isAdminOrOwner && (
@@ -202,13 +208,13 @@ export function FormSettingsTab({
               <div className="space-y-1.5">
                 <Label htmlFor="form-access" className="text-xs">Access Level</Label>
                 <Select name="accessLevel" defaultValue={form.accessLevel || "public"}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className="rounded-xl text-xs h-10">
                     <SelectValue placeholder="Select access" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="public">Public (anyone can submit)</SelectItem>
-                    <SelectItem value="unlisted">Unlisted (access with link)</SelectItem>
-                    <SelectItem value="private">Private (only workspace members)</SelectItem>
+                    <SelectItem value="public" className="text-xs">Public (anyone can submit)</SelectItem>
+                    <SelectItem value="unlisted" className="text-xs">Unlisted (access with link)</SelectItem>
+                    <SelectItem value="private" className="text-xs">Private (only workspace members)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -221,8 +227,8 @@ export function FormSettingsTab({
               </div>
               <Switch
                 id="form-is-template"
-                checked={isTemplateState}
-                onCheckedChange={setIsTemplateState}
+                name="isTemplate"
+                defaultChecked={form.isTemplate}
               />
             </div>
 
@@ -232,15 +238,15 @@ export function FormSettingsTab({
 
               <div className="space-y-2 mb-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/40">
                 <Label className="text-xs font-bold text-white">Custom Header Banner Image</Label>
-                <p className="text-4xs text-zinc-500">Upload a banner image to display on the first page of your form.</p>
-                {bannerUrlState && (
+                <p className="text-[10px] text-zinc-500">Upload a banner image to display on the first page of your form.</p>
+                {bannerUrl && (
                   <div className="relative h-24 w-full overflow-hidden rounded-lg border border-zinc-800 mb-2">
-                    <img src={bannerUrlState} alt="Form Banner" className="h-full w-full object-cover" />
+                    <img src={bannerUrl} alt="Form Banner" className="h-full w-full object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => setBannerUrlState("")}
+                      onClick={() => queryClient.setQueryData(["formSettingsBannerUrl", form.id], "")}
                       className="absolute right-2 top-2 h-7 px-2 text-2xs rounded-lg"
                     >
                       Remove
@@ -257,8 +263,8 @@ export function FormSettingsTab({
                   <Input
                     type="text"
                     placeholder="Or paste banner image URL"
-                    value={bannerUrlState}
-                    onChange={(e) => setBannerUrlState(e.target.value)}
+                    value={bannerUrl}
+                    onChange={(e) => queryClient.setQueryData(["formSettingsBannerUrl", form.id], e.target.value)}
                     className="text-xs h-9 rounded-lg flex-1"
                   />
                 </div>
@@ -377,7 +383,7 @@ export function FormSettingsTab({
               </div>
             </div>
 
-            <Button type="submit" disabled={updateForm.isPending} className="rounded-xl mt-2">
+            <Button type="submit" disabled={updateForm.isPending} className="rounded-xl mt-2 text-xs h-9">
               {updateForm.isPending ? "Saving Changes..." : "Save Changes"}
             </Button>
           </form>
@@ -391,12 +397,12 @@ export function FormSettingsTab({
             <CardDescription>Share form with users to accept replies</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full" onClick={copyShareLink}>
+            <Button variant="outline" className="w-full text-xs h-9" onClick={copyShareLink}>
               <Copy className="h-4 w-4 mr-2" />
               Copy Public Url
             </Button>
             <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-              <Button className="w-full">
+              <Button className="w-full text-xs h-9">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open Live Form
               </Button>
@@ -413,7 +419,7 @@ export function FormSettingsTab({
             <CardContent>
               <Button
                 variant="destructive"
-                className="w-full rounded-xl"
+                className="w-full rounded-xl text-xs h-9"
                 onClick={handleDeleteForm}
                 disabled={deleteForm.isPending}
               >

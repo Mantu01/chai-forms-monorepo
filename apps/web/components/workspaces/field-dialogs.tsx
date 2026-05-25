@@ -15,8 +15,6 @@ interface FieldDialogsProps {
   searchParams: any;
   fields?: readonly any[];
   pages?: readonly any[];
-  newFieldType: string;
-  setNewFieldType: React.Dispatch<React.SetStateAction<string>>;
   createField: any;
   updateField: any;
   editingField?: any;
@@ -29,14 +27,20 @@ export function FormFieldDialogs({
   searchParams,
   fields,
   pages,
-  newFieldType,
-  setNewFieldType,
   createField,
   updateField,
   editingField,
   handleCreateField,
   handleUpdateField
 }: FieldDialogsProps) {
+  const newFieldType = searchParams.get("newFieldType") || "text";
+
+  const handleTypeChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("newFieldType", val);
+    router.replace(`?${params.toString()}`);
+  };
+
   return (
     <>
       <Dialog open={searchParams.get("new-field") === "true"} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
@@ -54,7 +58,7 @@ export function FormFieldDialogs({
               </div>
               <div className="space-y-1">
                 <Label htmlFor="field-type" className="text-xs">Field Type</Label>
-                <Select name="type" defaultValue="text" onValueChange={(val) => setNewFieldType(String(val))}>
+                <Select name="type" defaultValue="text" onValueChange={handleTypeChange}>
                   <SelectTrigger className="rounded-xl border-border/80">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>

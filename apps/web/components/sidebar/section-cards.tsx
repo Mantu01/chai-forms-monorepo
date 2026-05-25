@@ -1,102 +1,98 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+"use client";
 
-import { Badge } from "~/components/ui/badge"
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card"
+import React from "react";
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 
-export function SectionCards() {
+interface SectionCardsProps {
+  stats?: {
+    totalSubmissionsLastMonth: number;
+    submissionsTrend: number;
+    totalForms: number;
+    activeForms: number;
+    submissionRate: number;
+    submissionRateTrend: number;
+  };
+}
+
+export function SectionCards({ stats }: SectionCardsProps) {
+  const totalSubmissions = stats?.totalSubmissionsLastMonth ?? 0;
+  const submissionsTrend = stats?.submissionsTrend ?? 0;
+  const totalForms = stats?.totalForms ?? 0;
+  const activeForms = stats?.activeForms ?? 0;
+  const submissionRate = stats?.submissionRate ?? 0;
+  const submissionRateTrend = stats?.submissionRateTrend ?? 0;
+
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
-      <Card className="@container/card">
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-2 lg:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+          <CardDescription className="text-zinc-400">Total Submissions (1m)</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+            {totalSubmissions.toLocaleString()}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
+            <Badge variant="outline" className={`gap-1.5 px-2 py-0.5 rounded-full text-[10px] ${submissionsTrend >= 0 ? "text-emerald-450 border-emerald-500/20 bg-emerald-500/5" : "text-red-400 border-red-500/20 bg-red-500/5"}`}>
+              {submissionsTrend >= 0 ? <IconTrendingUp className="size-3" /> : <IconTrendingDown className="size-3" />}
+              {submissionsTrend >= 0 ? "+" : ""}{submissionsTrend.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <IconTrendingUp className="size-4" />
+        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+          <div className="flex gap-1.5 font-medium items-center">
+            {submissionsTrend >= 0 ? "Trending up this month" : "Trending down this month"}
           </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
+          <div>Compared to the previous 30 days</div>
         </CardFooter>
       </Card>
-      <Card className="@container/card">
+
+      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+          <CardDescription className="text-zinc-400">Total Forms</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+            {totalForms.toLocaleString()}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingDown />
-              -20%
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <IconTrendingDown className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Acquisition needs attention
-          </div>
+        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+          <div>Forms across all workspaces</div>
+          <div>Both draft and published configurations</div>
         </CardFooter>
       </Card>
-      <Card className="@container/card">
+
+      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+          <CardDescription className="text-zinc-400">Active Forms</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+            {activeForms.toLocaleString()}
           </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+          <div>Forms set to published status</div>
+          <div>Available for submission response capture</div>
         </CardFooter>
       </Card>
-      <Card className="@container/card">
+
+      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+          <CardDescription className="text-zinc-400">Submission Rate</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+            {submissionRate.toFixed(1)}%
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +4.5%
+            <Badge variant="outline" className={`gap-1.5 px-2 py-0.5 rounded-full text-[10px] ${submissionRateTrend >= 0 ? "text-emerald-450 border-emerald-500/20 bg-emerald-500/5" : "text-red-400 border-red-500/20 bg-red-500/5"}`}>
+              {submissionRateTrend >= 0 ? <IconTrendingUp className="size-3" /> : <IconTrendingDown className="size-3" />}
+              {submissionRateTrend >= 0 ? "+" : ""}{submissionRateTrend.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase <IconTrendingUp className="size-4" />
+        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+          <div className="flex gap-1.5 font-medium items-center">
+            {submissionRateTrend >= 0 ? "Rate increased from last period" : "Rate decreased from last period"}
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div>Ratio of completed submissions to total logs</div>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

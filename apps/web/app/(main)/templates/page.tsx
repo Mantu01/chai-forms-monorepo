@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { FormEvent, Suspense } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { trpc } from "~/trpc/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -10,31 +12,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import { Eye, Copy, Star, ChevronLeft, ChevronRight, CornerDownRight, MessageSquare, Download, FolderHeart, Archive, Send, Sparkles } from "lucide-react";
+import { Eye, Archive, Send, Sparkles, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
+import { Badge } from "~/components/ui/badge";
 import { Spinner } from "~/components/ui/spinner";
+import { FormRenderer } from "~/components/forms/form-renderer";
 
 interface CommentNodeProps {
   comment: any;
   allComments: any[];
   formId: string;
   onReplyAdded: () => void;
+  router: any;
+  searchParams: any;
 }
 
-function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNodeProps) {
-  const [replyText, setReplyText] = useState("");
-  const [showReplyForm, setShowReplyForm] = useState(false);
-  const [guestName, setGuestName] = useState("");
+function CommentNode({ comment, allComments, formId, onReplyAdded, router, searchParams }: CommentNodeProps) {
   const { data: userData } = trpc.auth.me.useQuery();
   const createComment = trpc.comment.createComment.useMutation();
 
   const replies = allComments.filter((c) => c.parentId === comment.id);
 
-  const handleReplySubmit = async (e: React.FormEvent) => {
+  const handleReplySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const replyText = (formData.get("replyText") as string) || "";
+    const guestName = (formData.get("guestName") as string) || "";
+
     if (!replyText.trim()) return;
     try {
       await createComment.mutateAsync({
@@ -43,8 +48,10 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
         parentId: comment.id,
         guestName: userData?.user ? undefined : guestName,
       });
-      setReplyText("");
-      setShowReplyForm(false);
+      e.currentTarget.reset();
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("replyToCommentId");
+      router.push(`?${params.toString()}`);
       onReplyAdded();
       toast.success("Reply added");
     } catch (err) {
@@ -52,6 +59,7 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
     }
   };
 
+  const isReplying = searchParams.get("replyToCommentId") === comment.id;
   const displayName = comment.userFullName || comment.guestName || "Anonymous";
 
   return (
@@ -76,7 +84,11 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
           <Button
             variant="ghost"
             size="xs"
-            onClick={() => setShowReplyForm(!showReplyForm)}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("replyToCommentId", comment.id);
+              router.push(`?${params.toString()}`);
+            }}
             className="text-[10px] text-zinc-400 hover:text-white"
           >
             Reply
@@ -84,23 +96,21 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
         </div>
       </div>
 
-      {showReplyForm && (
+      {isReplying && (
         <form onSubmit={handleReplySubmit} className="space-y-2 mt-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
           {!userData?.user && (
             <Input
               type="text"
+              name="guestName"
               placeholder="Your Name (Guest)"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              className="text-xs h-8 bg-zinc-900 border-zinc-800"
+              className="text-xs h-8 bg-zinc-900 border-zinc-800 text-white"
             />
           )}
           <div className="flex gap-2">
             <Textarea
+              name="replyText"
               placeholder="Write a reply..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              className="text-xs bg-zinc-900 border-zinc-800 min-h-[50px] resize-none"
+              className="text-xs bg-zinc-900 border-zinc-800 text-white min-h-[50px] resize-none"
             />
             <Button type="submit" size="sm" className="h-9 self-end">
               Send
@@ -116,6 +126,8 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
           allComments={allComments}
           formId={formId}
           onReplyAdded={onReplyAdded}
+          router={router}
+          searchParams={searchParams}
         />
       ))}
     </div>
@@ -124,17 +136,21 @@ function CommentNode({ comment, allComments, formId, onReplyAdded }: CommentNode
 
 interface FormCommentsProps {
   formId: string;
+  router: any;
+  searchParams: any;
 }
 
-function FormComments({ formId }: FormCommentsProps) {
+function FormComments({ formId, router, searchParams }: FormCommentsProps) {
   const { data: comments, refetch } = trpc.comment.getCommentsByForm.useQuery({ formId });
-  const [commentText, setCommentText] = useState("");
-  const [guestName, setGuestName] = useState("");
   const { data: userData } = trpc.auth.me.useQuery();
   const createComment = trpc.comment.createComment.useMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const commentText = (formData.get("commentText") as string) || "";
+    const guestName = (formData.get("guestName") as string) || "";
+
     if (!commentText.trim()) return;
     try {
       await createComment.mutateAsync({
@@ -142,7 +158,7 @@ function FormComments({ formId }: FormCommentsProps) {
         content: commentText,
         guestName: userData?.user ? undefined : guestName,
       });
-      setCommentText("");
+      e.currentTarget.reset();
       refetch();
       toast.success("Comment posted");
     } catch (err) {
@@ -163,18 +179,16 @@ function FormComments({ formId }: FormCommentsProps) {
         {!userData?.user && (
           <Input
             type="text"
+            name="guestName"
             placeholder="Your Name (Guest)"
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            className="text-xs h-9 bg-zinc-950 border-zinc-800 max-w-xs"
+            className="text-xs h-9 bg-zinc-950 border-zinc-800 text-white max-w-xs"
           />
         )}
         <div className="flex gap-2">
           <Textarea
+            name="commentText"
             placeholder="Share your thoughts about this template..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            className="text-xs bg-zinc-950 border-zinc-800 min-h-[60px]"
+            className="text-xs bg-zinc-950 border-zinc-800 text-white min-h-[60px]"
           />
           <Button type="submit" className="h-10 self-end px-4 gap-1">
             <Send className="h-3 w-3" />
@@ -194,6 +208,8 @@ function FormComments({ formId }: FormCommentsProps) {
               allComments={comments || []}
               formId={formId}
               onReplyAdded={refetch}
+              router={router}
+              searchParams={searchParams}
             />
           ))
         )}
@@ -202,21 +218,21 @@ function FormComments({ formId }: FormCommentsProps) {
   );
 }
 
-export default function TemplatesPage() {
+function TemplatesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
   const { data: templates, isLoading } = trpc.form.getPublicTemplates.useQuery();
-  const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery();
+  const { data: workspaces } = trpc.workspace.getUserWorkspaces.useQuery({});
   const { data: archivedTemplates, refetch: refetchArchives } = trpc.form.getArchivedTemplates.useQuery();
 
   const cloneTemplate = trpc.form.cloneFormTemplate.useMutation();
   const archiveTemplate = trpc.form.archiveTemplate.useMutation();
   const unarchiveTemplate = trpc.form.unarchiveTemplate.useMutation();
 
-  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
-  const [previewPage, setPreviewPage] = useState(0);
-  const [previewAnswers, setPreviewAnswers] = useState<Record<string, any>>({});
-  const [cloneTargetWorkspace, setCloneTargetWorkspace] = useState("");
-  const [cloningFormId, setCloningFormId] = useState("");
+  const cloningFormId = searchParams.get("cloningFormId");
+  const cloneTargetWorkspace = searchParams.get("cloneTargetWorkspace");
 
   const handleClone = async () => {
     if (!cloningFormId || !cloneTargetWorkspace) return;
@@ -226,8 +242,10 @@ export default function TemplatesPage() {
         workspaceId: cloneTargetWorkspace,
       });
       toast.success("Template cloned to your workspace successfully");
-      setCloningFormId("");
-      setCloneTargetWorkspace("");
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("cloningFormId");
+      params.delete("cloneTargetWorkspace");
+      router.push(`?${params.toString()}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to clone template");
     }
@@ -249,13 +267,6 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleFieldChange = (fieldKey: string, val: any) => {
-    setPreviewAnswers((prev) => ({
-      ...prev,
-      [fieldKey]: val,
-    }));
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950">
@@ -265,220 +276,142 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-8">
+    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2">
             <Sparkles className="h-3 w-3" />
             Discover Templates
           </Badge>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             ChaiForm Public Store
           </h1>
-          <p className="text-zinc-400 text-sm leading-relaxed max-w-lg">
+          <p className="text-zinc-400 text-xs leading-relaxed max-w-lg">
             Choose from custom-built, shareable form structures created by other organizations. Deploy or preview instantly.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col gap-3">
         {templates?.map(({ form, workspace }) => {
           const isArchived = archivedTemplates?.some((a) => a.form.id === form.id);
           return (
-            <Card key={form.id} className="border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:shadow-xl transition-all duration-300">
-              <CardHeader className="space-y-3 pb-4 border-b border-zinc-800/60">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8 ring-1 ring-zinc-700">
-                    {workspace.logoUrl && <AvatarImage src={workspace.logoUrl} />}
-                    <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-300">
-                      {workspace.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="text-xs font-semibold text-zinc-300">{workspace.name}</h4>
-                    <p className="text-[9px] text-zinc-500 font-mono">Owner Org</p>
+            <div
+              key={form.id}
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-zinc-900/40 border border-zinc-800 rounded-xl gap-3 text-xs"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="h-7 w-7 ring-1 ring-zinc-700 shrink-0">
+                  {workspace.logoUrl && <AvatarImage src={workspace.logoUrl} />}
+                  <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-300">
+                    {workspace.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-semibold text-zinc-100 truncate text-xs">{form.title}</h4>
+                    <span className="text-[9px] text-zinc-500 font-mono shrink-0">by {workspace.name}</span>
                   </div>
+                  <p className="text-[10px] text-zinc-455 truncate max-w-md">{form.description || "No description provided."}</p>
                 </div>
-                <div className="space-y-1">
-                  <CardTitle className="text-lg font-bold text-white">{form.title}</CardTitle>
-                  <CardDescription className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
-                    {form.description || "No description provided."}
-                  </CardDescription>
-                </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="py-4">
-                <div className="flex flex-wrap gap-2 text-2xs text-zinc-400">
-                  <span className="px-2.5 py-1 bg-zinc-900 rounded-lg border border-zinc-800 capitalize">
-                    {form.accessLevel}
-                  </span>
-                  <span className="px-2.5 py-1 bg-zinc-900 rounded-lg border border-zinc-800">
-                    {(form.themeConfig as any)?.backgroundColor ? "Custom Styling" : "Default styling"}
-                  </span>
-                </div>
-              </CardContent>
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 capitalize bg-zinc-950/45 border-zinc-800 text-zinc-400">
+                  {form.accessLevel}
+                </Badge>
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-zinc-950/45 border-zinc-800 text-zinc-400">
+                  {(form.themeConfig as any)?.backgroundColor ? "Custom Styling" : "Default styling"}
+                </Badge>
+              </div>
 
-              <CardFooter className="flex justify-between items-center gap-2 border-t border-zinc-800/60 pt-4 pb-4">
-                <div className="flex gap-1.5">
+              <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                <Link href={`/preview/${form.id}`} target="_blank">
                   <Button
-                    size="sm"
+                    size="xs"
                     variant="outline"
-                    onClick={() => {
-                      setPreviewTemplate(form);
-                      setPreviewPage(0);
-                      setPreviewAnswers({});
-                    }}
-                    className="h-8 text-2xs gap-1"
+                    className="h-7 text-[10px] gap-1 px-2.5 rounded-lg border-zinc-800"
                   >
                     <Eye className="h-3 w-3" />
                     Preview
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleArchiveToggle(form.id)}
-                    className={`h-8 text-2xs gap-1 ${isArchived ? "text-primary hover:text-primary/95" : "text-zinc-400 hover:text-white"}`}
-                  >
-                    <Archive className="h-3 w-3" />
-                    {isArchived ? "Archived" : "Archive"}
-                  </Button>
-                </div>
+                </Link>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => handleArchiveToggle(form.id)}
+                  className={`h-7 text-[10px] gap-1 px-2.5 rounded-lg ${isArchived ? "text-primary hover:text-primary/95" : "text-zinc-400 hover:text-white"}`}
+                >
+                  <Archive className="h-3 w-3" />
+                  {isArchived ? "Archived" : "Archive"}
+                </Button>
 
                 <Select
                   value=""
                   onValueChange={(val) => {
-                    setCloningFormId(form.id);
-                    setCloneTargetWorkspace(val);
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("cloningFormId", form.id);
+                    params.set("cloneTargetWorkspace", val);
+                    router.push(`?${params.toString()}`);
                   }}
                 >
-                  <SelectTrigger className="h-8 w-28 text-2xs bg-zinc-900 border-zinc-800 text-zinc-300">
+                  <SelectTrigger className="h-7 w-28 text-[10px] bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg">
                     <SelectValue placeholder="Use Template" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white text-[10px]">
                     {workspaces?.map((w) => (
-                      <SelectItem key={w.workspace.id} value={w.workspace.id}>
+                      <SelectItem key={w.workspace.id} value={w.workspace.id} className="text-[10px]">
                         {w.workspace.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <Dialog open={!!cloningFormId} onOpenChange={(open) => { if (!open) setCloningFormId(""); }}>
+      <Dialog open={!!cloningFormId} onOpenChange={(open) => {
+        if (!open) {
+          const params = new URLSearchParams(searchParams.toString());
+          params.delete("cloningFormId");
+          params.delete("cloneTargetWorkspace");
+          router.push(`?${params.toString()}`);
+        }
+      }}>
         <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Deploy Template</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-sm font-bold">Deploy Template</DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
               This will duplicate the form structure, theme and questions into your workspace.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setCloningFormId("")}>
+            <Button variant="outline" size="sm" onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("cloningFormId");
+              params.delete("cloneTargetWorkspace");
+              router.push(`?${params.toString()}`);
+            }} className="text-xs">
               Cancel
             </Button>
-            <Button onClick={handleClone} disabled={cloneTemplate.isPending}>
+            <Button size="sm" onClick={handleClone} disabled={cloneTemplate.isPending} className="text-xs">
               {cloneTemplate.isPending ? "Deploying..." : "Confirm & Deploy"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!previewTemplate}
-        onOpenChange={(open) => {
-          if (!open) setPreviewTemplate(null);
-        }}
-      >
-        <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-white max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Template Mock Preview</DialogTitle>
-            <DialogDescription className="text-zinc-500">
-              Test conditional flows, stars, dropdowns, and multiple fields. Response will not be recorded.
-            </DialogDescription>
-          </DialogHeader>
 
-          {previewTemplate && (
-            <div className="space-y-6">
-              <div
-                className="p-6 rounded-2xl border"
-                style={{
-                  backgroundColor: previewTemplate.themeConfig?.formBackgroundColor || "#18181b",
-                  borderColor: previewTemplate.themeConfig?.borderColor || "#27272a",
-                }}
-              >
-                {previewPage === 0 && (
-                  previewTemplate.themeConfig?.bannerUrl ? (
-                    <div className="h-32 w-full overflow-hidden rounded-t-xl border-b -mt-6 -mx-6 mb-6" style={{ borderColor: previewTemplate.themeConfig?.borderColor || "#27272a" }}>
-                      <img src={previewTemplate.themeConfig?.bannerUrl} alt="Banner" className="h-full w-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="h-20 w-full rounded-t-xl border-b -mt-6 -mx-6 mb-6 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden" style={{ borderColor: previewTemplate.themeConfig?.borderColor || "#27272a" }}>
-                      <span className="text-[10px] font-bold font-mono tracking-widest text-zinc-650 uppercase">ChaiForm Premium</span>
-                    </div>
-                  )
-                )}
-
-                <div className="space-y-1 mb-4">
-                  {previewPage === 0 ? (
-                    <>
-                      <h2 className="text-2xl font-bold" style={{ color: previewTemplate.themeConfig?.textColor || "#ffffff" }}>
-                        {previewTemplate.title}
-                      </h2>
-                      {previewTemplate.description && (
-                        <p className="text-xs text-zinc-400">{previewTemplate.description}</p>
-                      )}
-                    </>
-                  ) : (
-                    <h3 className="text-lg font-bold" style={{ color: previewTemplate.themeConfig?.textColor || "#ffffff" }}>
-                      Active Preview Page
-                    </h3>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-2xs text-zinc-400 italic">
-                    Mock fields preview window. Buttons below navigate page boundaries.
-                  </p>
-                  <div className="flex gap-2 justify-between border-t border-zinc-800 pt-4 mt-6">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={previewPage === 0}
-                      onClick={() => setPreviewPage(previewPage - 1)}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" /> Back
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => setPreviewPage(previewPage + 1)}
-                    >
-                      Next <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <FormComments formId={previewTemplate.id} />
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button onClick={() => setPreviewTemplate(null)}>Close Preview</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
 
-function Badge({ className, children }: { className?: string; children: React.ReactNode }) {
+export default function TemplatesPage() {
   return (
-    <span className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}>
-      {children}
-    </span>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-zinc-950"><Spinner /></div>}>
+      <TemplatesContent />
+    </Suspense>
   );
 }

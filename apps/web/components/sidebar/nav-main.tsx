@@ -1,11 +1,8 @@
-"use client"
-
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
-import { Archive, Briefcase, Building, Building2, Compass, FileStack, FileText, GraduationCap, Group, LayoutDashboard, LayoutTemplate, MessageSquareText, OrigamiIcon, User } from "lucide-react"
+import { Archive, Building2, LayoutDashboard, LayoutTemplate, MessageSquareText} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-import { useRouter } from "next/navigation"
 import { trpc } from "~/trpc/client"
 import { Button } from "~/components/ui/button"
 import {
@@ -20,8 +17,6 @@ import { QuickCreateDialog } from "../workspaces/quick-create-dialog"
 const MAIN_NAV = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Workspaces', url: '/workspaces', icon: Building2 },
-  { title: 'Analytics', url: '/analytics', icon: Compass },
-  { title: 'Submissions', url: '/submissions', icon: FileStack },
   { title: 'Community', url: '/community', icon: MessageSquareText },
   { title: 'Archived', url: '/archived', icon: Archive },
   { title: 'Templates', url: '/templates', icon: LayoutTemplate },

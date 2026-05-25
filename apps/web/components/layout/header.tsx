@@ -4,7 +4,7 @@ import Logo from "./logo"
 const navLinks = [
   { href: "/about", label: "About" },
   { href: "/terms", label: "Terms" },
-  { href: "/privacy-policy", label: "Privacy" },
+  { href: "/privacy", label: "Privacy" },
 ]
 
 export default function Header() {

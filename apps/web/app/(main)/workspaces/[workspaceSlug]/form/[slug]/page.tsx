@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, FormEvent } from "react";
+import { use, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "~/trpc/client";
@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { FormFieldsTab } from "~/components/workspaces/form-fields-tab";
 import { FormSubmissionsTab } from "~/components/workspaces/form-submissions-tab";
 import { FormSettingsTab } from "~/components/workspaces/form-settings-tab";
+import { FormGeneratorOverlay } from "~/components/workspaces/form-generator-overlay";
 
 interface FormDetailsPageProps {
   params: Promise<{ workspaceSlug: string; slug: string }>;
@@ -27,6 +28,8 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   const utils = trpc.useUtils();
 
   const activeTab = (searchParams.get("tab") || "fields") as "fields" | "submissions" | "settings";
+  const generateParam = searchParams.get("generate") === "true";
+  const promptParam = searchParams.get("prompt") || "";
 
   const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
   const userId = userData?.user?.id;
@@ -53,14 +56,6 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   );
 
   const formId = form?.id;
-  const [showGenerateOverlay, setShowGenerateOverlay] = useState(searchParams.get("generated") === "true");
-
-  useEffect(() => {
-    if (!formLoading && showGenerateOverlay) {
-      const timer = setTimeout(() => setShowGenerateOverlay(false), 900);
-      return () => clearTimeout(timer);
-    }
-  }, [formLoading, showGenerateOverlay]);
 
   const { data: fields } = trpc.form.getFieldsByForm.useQuery(
     { formId: formId || "" },
@@ -128,14 +123,8 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      {showGenerateOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="rounded-3xl border border-white/10 bg-zinc-950/95 p-6 text-center shadow-xl">
-            <Spinner />
-            <p className="mt-4 text-sm font-semibold text-white">Generating your form...</p>
-            <p className="mt-2 text-xs text-zinc-400">Your editor is loading the newly created form.</p>
-          </div>
-        </div>
+      {generateParam && promptParam && formId && (
+        <FormGeneratorOverlay formId={formId} prompt={promptParam} />
       )}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <main className="w-full min-w-0">
@@ -195,7 +184,7 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
                     <SelectItem value="time">Time</SelectItem>
                     <SelectItem value="file">File</SelectItem>
                     <SelectItem value="checkbox">Checkbox</SelectItem>
-                    <SelectItem value="rating">Ratomg</SelectItem>
+                    <SelectItem value="rating">Rating</SelectItem>
                     <SelectItem value="radio">Radio</SelectItem>
                     <SelectItem value="matrix">Matrix</SelectItem>
                     <SelectItem value="multi_select">Multi Select</SelectItem>

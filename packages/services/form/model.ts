@@ -16,10 +16,10 @@ export const FormResponseSchema = z.object({
   redirectUrl: z.string().nullable(),
   themeConfig: z.any(),
   isTemplate: z.boolean(),
-  closeAt: z.date().nullable(),
-  publishedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date().nullable(),
+  closeAt: z.any().nullable(),
+  publishedAt: z.any().nullable(),
+  createdAt: z.any(),
+  updatedAt: z.any().nullable(),
 });
 
 export const FormWithStatsResponseSchema = FormResponseSchema.extend({
@@ -51,7 +51,7 @@ export const CommentResponseSchema = z.object({
   guestName: z.string().nullable(),
   content: z.string(),
   parentId: z.string().uuid().nullable(),
-  createdAt: z.date(),
+  createdAt: z.any(),
 });
 
 export const CreateCommentInputSchema = z.object({

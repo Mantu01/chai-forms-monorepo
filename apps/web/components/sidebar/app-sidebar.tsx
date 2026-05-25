@@ -1,29 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
-  IconBell,
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
   IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
   IconSearch,
   IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
-import { NavDocuments } from "~/components/sidebar/nav-documents"
-import { NavMain } from "~/components/sidebar/nav-main"
-import { NavSecondary } from "~/components/sidebar/nav-secondary"
-import { NavUser } from "~/components/sidebar/nav-user"
+import { NavDocuments } from "~/components/sidebar/nav-documents";
+import { NavMain } from "~/components/sidebar/nav-main";
+import { NavUser } from "~/components/sidebar/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -32,126 +19,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "~/components/ui/sidebar"
-import Logo from "../layout/logo"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "~/components/ui/dialog"
-import { Button } from "~/components/ui/button"
-import { toast } from "sonner"
-import { trpc } from "~/trpc/client"
-
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "#",
-      icon: IconDashboard,
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Feedback Submissions Export.csv",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Lead Form Responses.xlsx",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Contact Form Logs.csv",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
-}
+} from "~/components/ui/sidebar";
+import Logo from "../layout/logo";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
+import { toast } from "sonner";
+import { trpc } from "~/trpc/client";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -162,6 +37,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = userData?.user;
 
   const { data: invites } = trpc.workspace.getPendingInvites.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  const { data: userForms } = trpc.dashboard.getAllUserForms.useQuery(undefined, {
     enabled: !!user,
   });
 
@@ -211,6 +90,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     isSubscribed: false,
   };
 
+  const documentItems = userForms? userForms.map((f) => f.title): [];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -224,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Logo />
                 <span className="text-base font-semibold">Chai Form</span>
                 {user?.isSubscribed && (
-                  <span className="rounded-md bg-gradient-to-r from-amber-500 to-orange-600 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-xs">
+                  <span className="rounded-md bg-linear-to-r from-amber-500 to-orange-600 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-xs">
                     PRO
                   </span>
                 )}
@@ -235,9 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain />
-        
-
-        <NavDocuments items={data.documents} />
+        <NavDocuments names={documentItems} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={currentUser} />
@@ -287,5 +166,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </DialogContent>
       </Dialog>
     </Sidebar>
-  )
+  );
 }

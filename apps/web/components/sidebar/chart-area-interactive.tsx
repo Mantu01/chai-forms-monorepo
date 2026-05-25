@@ -1,415 +1,289 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts"
+import * as React from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { trpc } from "~/trpc/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
+import { toast } from "sonner";
+import { BarChart3 } from "lucide-react";
 
-import { useIsMobile } from "~/hooks/use-mobile"
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card"
-
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "~/components/ui/chart"
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select"
-
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "~/components/ui/toggle-group"
-
-export const description = "Interactive visitors analytics chart"
-
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150,tablet:342 },
-  { date: "2024-04-02", desktop: 97, mobile: 180,tablet:342 },
-  { date: "2024-04-03", desktop: 167, mobile: 120,tablet:342 },
-  { date: "2024-04-04", desktop: 242, mobile: 260,tablet:342 },
-  { date: "2024-04-05", desktop: 373, mobile: 290,tablet:342 },
-  { date: "2024-04-06", desktop: 301, mobile: 340,tablet:342 },
-  { date: "2024-04-07", desktop: 245, mobile: 180,tablet:342 },
-  { date: "2024-04-08", desktop: 409, mobile: 320,tablet:342 },
-  { date: "2024-04-09", desktop: 59, mobile: 110,tablet:342 },
-  { date: "2024-04-10", desktop: 261, mobile: 190,tablet:342 },
-  { date: "2024-04-11", desktop: 327, mobile: 350,tablet:342 },
-  { date: "2024-04-12", desktop: 292, mobile: 210,tablet:342 },
-  { date: "2024-04-13", desktop: 342, mobile: 380,tablet:342 },
-  { date: "2024-04-14", desktop: 137, mobile: 220,tablet:342 },
-  { date: "2024-04-15", desktop: 120, mobile: 170,tablet:342 },
-  { date: "2024-04-16", desktop: 138, mobile: 190,tablet:342 },
-  { date: "2024-04-17", desktop: 446, mobile: 360,tablet:342 },
-  { date: "2024-04-18", desktop: 364, mobile: 410,tablet:342 },
-  { date: "2024-04-19", desktop: 243, mobile: 180,tablet:342 },
-  { date: "2024-04-20", desktop: 89, mobile: 150,tablet:342 },
-  { date: "2024-04-21", desktop: 137, mobile: 200,tablet:342 },
-  { date: "2024-04-22", desktop: 224, mobile: 170,tablet:342 },
-  { date: "2024-04-23", desktop: 138, mobile: 230,tablet:342 },
-  { date: "2024-04-24", desktop: 387, mobile: 290,tablet:342 },
-  { date: "2024-04-25", desktop: 215, mobile: 250,tablet:342 },
-  { date: "2024-04-26", desktop: 75, mobile: 130,tablet:342 },
-  { date: "2024-04-27", desktop: 383, mobile: 420,tablet:342 },
-  { date: "2024-04-28", desktop: 122, mobile: 180,tablet:342 },
-  { date: "2024-04-29", desktop: 315, mobile: 240,tablet:342 },
-  { date: "2024-04-30", desktop: 454, mobile: 380,tablet:342 },
-  { date: "2024-05-01", desktop: 165, mobile: 220,tablet:342 },
-  { date: "2024-05-02", desktop: 293, mobile: 310,tablet:342 },
-  { date: "2024-05-03", desktop: 247, mobile: 190,tablet:342 },
-  { date: "2024-05-04", desktop: 385, mobile: 420,tablet:342 },
-  { date: "2024-05-05", desktop: 481, mobile: 390,tablet:342 },
-  { date: "2024-05-06", desktop: 498, mobile: 520,tablet:342 },
-  { date: "2024-05-07", desktop: 388, mobile: 300,tablet:342 },
-  { date: "2024-05-08", desktop: 149, mobile: 210,tablet:342 },
-  { date: "2024-05-09", desktop: 227, mobile: 180,tablet:342 },
-  { date: "2024-05-10", desktop: 293, mobile: 330,tablet:342 },
-  { date: "2024-05-11", desktop: 335, mobile: 270,tablet:342 },
-  { date: "2024-05-12", desktop: 197, mobile: 240,tablet:342 },
-  { date: "2024-05-13", desktop: 197, mobile: 160,tablet:342 },
-  { date: "2024-05-14", desktop: 448, mobile: 490,tablet:342 },
-  { date: "2024-05-15", desktop: 473, mobile: 380,tablet:342 },
-  { date: "2024-05-16", desktop: 338, mobile: 400,tablet:342 },
-  { date: "2024-05-17", desktop: 499, mobile: 420,tablet:342 },
-  { date: "2024-05-18", desktop: 315, mobile: 350,tablet:342 },
-  { date: "2024-05-19", desktop: 235, mobile: 180,tablet:342 },
-  { date: "2024-05-20", desktop: 177, mobile: 230,tablet:342 },
-  { date: "2024-05-21", desktop: 82, mobile: 140,tablet:342 },
-  { date: "2024-05-22", desktop: 81, mobile: 120,tablet:342 },
-  { date: "2024-05-23", desktop: 252, mobile: 290,tablet:2 },
-  { date: "2024-05-24", desktop: 294, mobile: 220,tablet:342 },
-  { date: "2024-05-25", desktop: 201, mobile: 250,tablet:342 },
-  { date: "2024-05-26", desktop: 213, mobile: 170,tablet:342 },
-  { date: "2024-05-27", desktop: 420, mobile: 460,tablet:342 },
-  { date: "2024-05-28", desktop: 233, mobile: 190,tablet:342 },
-  { date: "2024-05-29", desktop: 78, mobile: 130,tablet:342 },
-  { date: "2024-05-30", desktop: 340, mobile: 280,tablet:342 },
-  { date: "2024-05-31", desktop: 178, mobile: 230,tablet:342 },
-  { date: "2024-06-01", desktop: 178, mobile: 200,tablet:342 },
-  { date: "2024-06-02", desktop: 470, mobile: 410,tablet:742 },
-  { date: "2024-06-03", desktop: 103, mobile: 160,tablet:342 },
-  { date: "2024-06-04", desktop: 439, mobile: 380,tablet:342 },
-  { date: "2024-06-05", desktop: 88, mobile: 140,tablet:342 },
-  { date: "2024-06-06", desktop: 294, mobile: 250,tablet:342 },
-  { date: "2024-06-07", desktop: 323, mobile: 370,tablet:342 },
-  { date: "2024-06-08", desktop: 385, mobile: 320,tablet:342 },
-  { date: "2024-06-09", desktop: 438, mobile: 480,tablet:342 },
-  { date: "2024-06-10", desktop: 155, mobile: 200,tablet:342 },
-  { date: "2024-06-11", desktop: 92, mobile: 150,tablet:342 },
-  { date: "2024-06-12", desktop: 492, mobile: 420,tablet:42 },
-  { date: "2024-06-13", desktop: 81, mobile: 130,tablet:342 },
-  { date: "2024-06-14", desktop: 426, mobile: 380,tablet:342 },
-  { date: "2024-06-15", desktop: 307, mobile: 350,tablet:342 },
-  { date: "2024-06-16", desktop: 371, mobile: 310,tablet:342 },
-  { date: "2024-06-17", desktop: 475, mobile: 520,tablet:342 },
-  { date: "2024-06-18", desktop: 107, mobile: 170,tablet:342 },
-  { date: "2024-06-19", desktop: 341, mobile: 290,tablet:342 },
-  { date: "2024-06-20", desktop: 408, mobile: 450,tablet:342 },
-  { date: "2024-06-21", desktop: 169, mobile: 210,tablet:842 },
-  { date: "2024-06-22", desktop: 317, mobile: 270,tablet:642 },
-  { date: "2024-06-23", desktop: 480, mobile: 530,tablet:142 },
-  { date: "2024-06-24", desktop: 132, mobile: 180,tablet:342 },
-  { date: "2024-06-25", desktop: 141, mobile: 190,tablet:382 },
-  { date: "2024-06-26", desktop: 434, mobile: 380,tablet:362 },
-  { date: "2024-06-27", desktop: 448, mobile: 490,tablet:342 },
-  { date: "2024-06-28", desktop: 149, mobile: 200,tablet:32 },
-  { date: "2024-06-29", desktop: 103, mobile: 160,tablet:342 },
-  { date: "2024-06-30", desktop: 446, mobile: 400,tablet:342 },
-]
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "#2563eb",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "#10b981",
-  },
-  tablet: {
-    label: "Tablet",
-    color: "#f59e0b",
-  },
-} satisfies ChartConfig
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 
 export function ChartAreaInteractive() {
-  const isMobile = useIsMobile()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  const [timeRange, setTimeRange] = React.useState("90d")
+  const timeRange = (searchParams.get("timeRange") as "90d" | "30d" | "7d") || "90d";
+  const type = (searchParams.get("type") as "workspace" | "form") || "workspace";
+  const selectedIds = searchParams.get("selectedIds")?.split(",").filter(Boolean) || [];
 
-  React.useEffect(() => {
-    if (isMobile) {
-      setTimeRange("7d")
+  const { data: userWorkspaces } = trpc.workspace.getUserWorkspaces.useQuery({});
+  const { data: allForms } = trpc.dashboard.getAllUserForms.useQuery(undefined, {
+    enabled: type === "form",
+  });
+
+  const { data: graphData, isLoading } = trpc.dashboard.getGraphData.useQuery(
+    {
+      timeRange,
+      type,
+      selectedIds,
+    },
+    {
+      enabled: selectedIds.length > 0,
     }
-  }, [isMobile])
+  );
 
-  const filteredData = React.useMemo(() => {
-    const referenceDate = new Date("2024-04-12")
+  const handleTimeRangeChange = (val: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("timeRange", val);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-    let daysToSubtract = 90
+  const handleTypeChange = (val: "workspace" | "form") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("type", val);
+    params.delete("selectedIds");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-    if (timeRange === "30d") {
-      daysToSubtract = 30
+  const handleToggleId = (id: string) => {
+    let newSelected = [...selectedIds];
+    if (newSelected.includes(id)) {
+      newSelected = newSelected.filter((x) => x !== id);
+    } else {
+      if (newSelected.length >= 5) {
+        toast.error("You can select up to 5 items for visualization.");
+        return;
+      }
+      newSelected.push(id);
     }
 
-    if (timeRange === "7d") {
-      daysToSubtract = 7
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSelected.length > 0) {
+      params.set("selectedIds", newSelected.join(","));
+    } else {
+      params.delete("selectedIds");
     }
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-    const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
+  const activeKeys = graphData && graphData.length > 0 
+    ? Object.keys(graphData[0]).filter((k) => k !== "date")
+    : [];
 
-    return chartData.filter((item) => {
-      const date = new Date(item.date)
-      return date >= startDate
-    })
-  }, [timeRange])
+  const chartConfig: any = {};
+  activeKeys.forEach((key, index) => {
+    chartConfig[key] = {
+      label: key,
+      color: COLORS[index % COLORS.length],
+    };
+  });
 
   return (
-    <Card className="@container/card border-none shadow-sm">
-      <CardHeader className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <CardTitle className="text-xl font-semibold">
-            Total Visitors
+    <Card className="border border-zinc-800 bg-zinc-900/30 backdrop-blur-md">
+      <CardHeader className="flex flex-col gap-4 border-b border-zinc-800/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            Submission Trends
           </CardTitle>
-
-          <CardDescription className="mt-1">
-            Visitor analytics across desktop, mobile and tablet
+          <CardDescription className="text-xs text-zinc-400">
+            Monitor submission flow reactively across workspaces or individual forms
           </CardDescription>
         </div>
 
-        <CardAction>
-          {/* Desktop Toggle */}
-          <ToggleGroup
-            type="single"
-            value={timeRange}
-            onValueChange={(value) => value && setTimeRange(value)}
-            variant="outline"
-            className="hidden @[767px]/card:flex"
-          >
-            <ToggleGroupItem value="90d">
-              Last 3 months
-            </ToggleGroupItem>
-
-            <ToggleGroupItem value="30d">
-              Last 30 days
-            </ToggleGroupItem>
-
-            <ToggleGroupItem value="7d">
-              Last 7 days
-            </ToggleGroupItem>
-          </ToggleGroup>
-
-          {/* Mobile Select */}
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger
-              size="sm"
-              aria-label="Select range"
-              className="w-40 @[767px]/card:hidden"
-            >
-              <SelectValue placeholder="Select range" />
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={type} onValueChange={(val: any) => handleTypeChange(val)}>
+            <SelectTrigger className="h-8 w-36 text-xs bg-zinc-950 border-zinc-800 text-zinc-300">
+              <SelectValue placeholder="Data Source" />
             </SelectTrigger>
-
-            <SelectContent className="rounded-xl">
-              <SelectItem value="90d">
-                Last 3 months
-              </SelectItem>
-
-              <SelectItem value="30d">
-                Last 30 days
-              </SelectItem>
-
-              <SelectItem value="7d">
-                Last 7 days
-              </SelectItem>
+            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+              <SelectItem value="workspace">Workspaces</SelectItem>
+              <SelectItem value="form">Forms</SelectItem>
             </SelectContent>
           </Select>
-        </CardAction>
+
+          <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+            <SelectTrigger className="h-8 w-36 text-xs bg-zinc-950 border-zinc-800 text-zinc-300">
+              <SelectValue placeholder="Select Range" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+              <SelectItem value="90d">Last 3 months</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
 
-      <CardContent className="px-2 pt-6 sm:px-6">
-        <ChartContainer
-          config={chartConfig}
-          className="h-95 w-full"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={filteredData}
-              margin={{
-                left: 12,
-                right: 12,
-                top: 10,
-                bottom: 0,
-              }}
-            >
-              <defs>
-                {/* Desktop */}
-                <linearGradient
-                  id="fillDesktop"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor={chartConfig.desktop.color}
-                    stopOpacity={0.4}
+      <CardContent className="pt-6 flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <Label className="text-xs font-semibold text-zinc-400">
+            Select up to 5 {type === "workspace" ? "workspaces" : "forms"}:
+          </Label>
+          
+          <div className="flex flex-wrap gap-x-5 gap-y-2.5">
+            {type === "workspace" && userWorkspaces?.map((uw) => {
+              const isChecked = selectedIds.includes(uw.workspace.id);
+              return (
+                <div key={uw.workspace.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`ws-${uw.workspace.id}`}
+                    checked={isChecked}
+                    onCheckedChange={() => handleToggleId(uw.workspace.id)}
+                    className="border-zinc-700 bg-zinc-950 data-[state=checked]:bg-primary"
                   />
+                  <Label
+                    htmlFor={`ws-${uw.workspace.id}`}
+                    className="text-xs text-zinc-300 cursor-pointer select-none"
+                  >
+                    {uw.workspace.name}
+                  </Label>
+                </div>
+              );
+            })}
 
-                  <stop
-                    offset="95%"
-                    stopColor={chartConfig.desktop.color}
-                    stopOpacity={0.05}
+            {type === "form" && allForms?.map((f) => {
+              const isChecked = selectedIds.includes(f.id);
+              return (
+                <div key={f.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`form-${f.id}`}
+                    checked={isChecked}
+                    onCheckedChange={() => handleToggleId(f.id)}
+                    className="border-zinc-700 bg-zinc-950 data-[state=checked]:bg-primary"
                   />
-                </linearGradient>
+                  <Label
+                    htmlFor={`form-${f.id}`}
+                    className="text-xs text-zinc-300 cursor-pointer select-none"
+                  >
+                    {f.title} <span className="text-[10px] text-zinc-550 font-mono">({f.workspaceName})</span>
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-                {/* Mobile */}
-                <linearGradient
-                  id="fillMobile"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor={chartConfig.mobile.color}
-                    stopOpacity={0.4}
-                  />
-
-                  <stop
-                    offset="95%"
-                    stopColor={chartConfig.mobile.color}
-                    stopOpacity={0.05}
-                  />
-                </linearGradient>
-
-                {/* Tablet */}
-                <linearGradient
-                  id="fillTablet"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor={chartConfig.tablet.color}
-                    stopOpacity={0.4}
-                  />
-
-                  <stop
-                    offset="95%"
-                    stopColor={chartConfig.tablet.color}
-                    stopOpacity={0.05}
-                  />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                className="stroke-muted"
-              />
-
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                minTickGap={24}
-                tickFormatter={(value) => {
-                  return new Date(value).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
+        {selectedIds.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-800 rounded-2xl bg-zinc-950/20 text-center gap-3">
+            <BarChart3 className="h-8 w-8 text-zinc-650" />
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-zinc-350">No Data Source Selected</p>
+              <p className="text-[10px] text-zinc-500">Select at least one workspace or form above to visualize telemetry.</p>
+            </div>
+          </div>
+        ) : isLoading ? (
+          <div className="flex items-center justify-center py-24 text-xs text-zinc-400">
+            Loading analytics graph...
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={graphData}
+                margin={{
+                  left: 0,
+                  right: 10,
+                  top: 10,
+                  bottom: 0,
                 }}
-              />
+              >
+                <defs>
+                  {activeKeys.map((key, idx) => {
+                    const color = COLORS[idx % COLORS.length];
+                    return (
+                      <linearGradient
+                        key={key}
+                        id={`fill-${key.replace(/\s+/g, "-")}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                        <stop offset="95%" stopColor={color} stopOpacity={0.01} />
+                      </linearGradient>
+                    );
+                  })}
+                </defs>
 
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                width={40}
-              />
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                  className="stroke-zinc-800/60"
+                />
 
-              <ChartTooltip
-                cursor={{
-                  stroke: "#94a3b8",
-                  strokeWidth: 1,
-                  strokeDasharray: "4 4",
-                }}
-                content={
-                  <ChartTooltipContent
-                    indicator="dot"
-                    labelFormatter={(value: any) =>
-                      new Date(value).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })
-                    }
-                  />
-                }
-              />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  minTickGap={24}
+                  className="text-[10px] fill-zinc-500"
+                  tickFormatter={(value) => {
+                    return new Date(value).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  }}
+                />
 
-              <Legend />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  width={30}
+                  className="text-[10px] fill-zinc-500"
+                />
 
-              {/* Mobile */}
-              <Area
-                type="monotone"
-                dataKey="mobile"
-                stroke={chartConfig.mobile.color}
-                fill="url(#fillMobile)"
-                strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
+                <ChartTooltip
+                  cursor={{
+                    stroke: "#3f3f46",
+                    strokeWidth: 1,
+                    strokeDasharray: "4 4",
+                  }}
+                  content={
+                    <ChartTooltipContent
+                      indicator="dot"
+                      labelFormatter={(value: any) =>
+                        new Date(value).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      }
+                    />
+                  }
+                />
 
-              {/* Desktop */}
-              <Area
-                type="monotone"
-                dataKey="desktop"
-                stroke={chartConfig.desktop.color}
-                fill="url(#fillDesktop)"
-                strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
+                <Legend className="text-[11px] text-zinc-400" />
 
-              {/* Tablet */}
-              <Area
-                type="monotone"
-                dataKey="tablet"
-                stroke={chartConfig.tablet.color}
-                fill="url(#fillTablet)"
-                strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+                {activeKeys.map((key, idx) => {
+                  const color = COLORS[idx % COLORS.length];
+                  return (
+                    <Area
+                      key={key}
+                      type="monotone"
+                      dataKey={key}
+                      stroke={color}
+                      fill={`url(#fill-${key.replace(/\s+/g, "-")})`}
+                      strokeWidth={2}
+                      activeDot={{ r: 4 }}
+                    />
+                  );
+                })}
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
-  )
+  );
 }

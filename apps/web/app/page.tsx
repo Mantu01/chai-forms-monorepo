@@ -1,65 +1,64 @@
-import {Sparkles,MousePointerClick,GitBranch,Users,BarChart3,LayoutTemplate,CheckCircle2,Zap,} from "lucide-react";
+import { Sparkles, MousePointerClick, GitBranch, Users, BarChart3, LayoutTemplate, CheckCircle2, Zap, Shield, ShieldCheck, FileCheck, Layers } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import VideoPreview from "~/components/home/video-preview";
 import ActionButton from "~/components/home/action-button";
-import Header from '~/components/layout/header';
-import Footer from '~/components/layout/footer';
+import Header from "~/components/layout/header";
+import Footer from "~/components/layout/footer";
 
 const VIDEO_URL = "https://res.cloudinary.com/dqznmhhtv/video/upload/v1779300873/samples/dance-2.mp4";
-
 
 const features = [
   {
     icon: Sparkles,
-    title: "AI Form Generator",
-    description: "Describe your form in plain text. AI builds the entire structure, fields, and logic in seconds.",
+    title: "Tambo AI Form Generation",
+    description: "Type a prompt to stream dynamic multi-page form fields and layouts built automatically in real time using Tambo AI.",
     badge: "AI-Powered",
     highlight: true,
   },
   {
-    icon: MousePointerClick,
-    title: "Drag & Drop Builder",
-    description: "Intuitive visual editor. Rearrange fields, configure options, and preview in real time.",
-    badge: null,
+    icon: ShieldCheck,
+    title: "Role-Based Access Control (RBAC)",
+    description: "Define Owners, Admins, and Members inside workspaces. Secure your telemetry logs and limit deletion authority.",
+    badge: "Secure",
+    highlight: false,
+  },
+  {
+    icon: Layers,
+    title: "Base64 File Uploads",
+    description: "Submit images and documents directly converted into lightweight base64 strings stored securely inside your database.",
+    badge: "Premium",
     highlight: false,
   },
   {
     icon: GitBranch,
-    title: "Conditional Logic",
-    description: "Show or hide fields dynamically. Build smart branching workflows without writing code.",
+    title: "Conditional Flow Branching",
+    description: "Establish visibility triggers that show or hide form fields reactively depending on input responses.",
     badge: null,
     highlight: false,
   },
   {
     icon: Users,
-    title: "Team Collaboration",
-    description: "Invite teammates, assign roles, and co-edit forms with real-time sync.",
+    title: "Community Stores & Comments",
+    description: "Publish layouts as public templates. Allow other organizations to copy layouts and leave feedback inside nested threads.",
     badge: null,
     highlight: false,
   },
   {
     icon: BarChart3,
-    title: "Analytics",
-    description: "Track completion rates, drop-offs, and response trends with built-in dashboards.",
-    badge: null,
-    highlight: false,
-  },
-  {
-    icon: LayoutTemplate,
-    title: "Templates",
-    description: "Start from 100+ professionally designed templates across every industry and use case.",
-    badge: "100+",
+    title: "Dynamic Analytics Dashboards",
+    description: "Track completion rates and telemetry trends using 90d, 30d, and 7d charts grouped by workspace or form inputs.",
+    badge: "Interactive",
     highlight: false,
   },
 ];
 
 const stats = [
-  { value: "10k+", label: "Forms Created" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "50+", label: "Integrations" },
-  { value: "4.9★", label: "User Rating" },
+  { value: "10k+", label: "Forms Built" },
+  { value: "99.99%", label: "Uptime" },
+  { value: "Base64", label: "File Conversion" },
+  { value: "RBAC", label: "Workspace Safety" },
 ];
 
 const proofPoints = [
@@ -72,7 +71,7 @@ const proofPoints = [
 export default function HomePage() {
   return (
     <div className="w-full overflow-x-hidden">
-      <Header/>
+      <Header />
       <div className="w-full max-w-7xl mx-auto px-4 pt-10 sm:px-6 lg:px-8">
 
         <section className="py-16 md:py-24">
@@ -80,7 +79,7 @@ export default function HomePage() {
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-xs font-medium rounded-full">
-                  <Zap className="w-3 h-3" />
+                  <Zap className="w-3 h-3 text-primary" />
                   AI-Powered Form Builder
                 </Badge>
               </div>
@@ -92,7 +91,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg">
-                Create powerful forms in seconds using AI. From lead capture to complex surveys — with conditional logic, real-time analytics, and seamless integrations built in.
+                Create powerful forms in seconds using Tambo AI. From lead capture to complex surveys — with conditional logic, real-time analytics, RBAC permissions, and base64 upload flows built in.
               </p>
 
               <ActionButton variant="hero" />
@@ -188,6 +187,7 @@ export default function HomePage() {
         </section>
 
       </div>
+      <Footer />
     </div>
   );
 }
