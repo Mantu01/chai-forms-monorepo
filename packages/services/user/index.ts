@@ -8,7 +8,7 @@ class UserService {
 
   private userQuery=new UserQuery()
 
-  public async handleGoogleCallback(code: string): Promise<SelectUser> {
+  public async handleGoogleCallback(code: string, referralCode?: string): Promise<SelectUser> {
     const { tokens } = await googleOAuth2Client.getToken(code);
     const accessToken = tokens.access_token;
     if (!accessToken) {
@@ -39,11 +39,13 @@ class UserService {
         }
         user = updated;
       } else {
+        const isSubscribed = referralCode ? await this.userQuery.checkReferralCode(referralCode) : false;
         const created = await this.userQuery.createUser({
           fullName: userInfo.name,
           email: userInfo.email,
           googleId: userInfo.sub,
           profileImageUrl: userInfo.picture || null,
+          isSubscribed,
         });
         if (!created) {
           throw new Error("Failed to create user");
@@ -95,6 +97,7 @@ class UserService {
         fullName: user.fullName,
         email: user.email,
         profileImageUrl: user.profileImageUrl,
+        isSubscribed: !!user.isSubscribed,
       },
     };
   }

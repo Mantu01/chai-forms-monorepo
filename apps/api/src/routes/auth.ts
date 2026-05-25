@@ -11,7 +11,8 @@ authRouter.get("/callback", async (req, res) => {
     return res.status(400).send("No authorization code provided");
   }
   try {
-    const user = await userService.handleGoogleCallback(code);
+    const state = req.query.state;
+    const user = await userService.handleGoogleCallback(code, typeof state === "string" ? state : undefined);
     const sessionToken = signToken({ userId: user.id });
     res.cookie("cookie", sessionToken, {
       httpOnly: true,

@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, ilike, inArray } from "drizzle-orm";
 import db from "..";
 import { formFields, formPages, forms, InsertForm, InsertFormField, InsertFormPage, SelectForm, SelectFormField, SelectFormPage } from "../models/form.model";
+import { submissions } from "../models/submission.model";
 
 export class FormQuery {
   public async createForm(data: InsertForm): Promise<SelectForm | undefined> {
@@ -121,5 +122,19 @@ export class FormQuery {
 
   public async getManyFormsByIds(formIds: string[]): Promise<ReadonlyArray<SelectForm>> {
     return db.select().from(forms).where(inArray(forms.id, formIds));
+  }
+
+  public async getFormsWithStats(workspaceId: string) {
+    const formsList = await db.select().from(forms).where(eq(forms.workspaceId, workspaceId)).orderBy(desc(forms.createdAt));
+    const stats = await Promise.all(
+      formsList.map(async (f) => {
+        const [res] = await db.select({ count: count() }).from(submissions).where(eq(submissions.formId, f.id));
+        return {
+          ...f,
+          submissionCount: res?.count ?? 0,
+        };
+      })
+    );
+    return stats;
   }
 }

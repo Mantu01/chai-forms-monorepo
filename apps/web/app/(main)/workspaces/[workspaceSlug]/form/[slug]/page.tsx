@@ -1,6 +1,6 @@
 "use client";
 
-import { use, FormEvent } from "react";
+import { use, useEffect, useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "~/trpc/client";
@@ -53,6 +53,14 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   );
 
   const formId = form?.id;
+  const [showGenerateOverlay, setShowGenerateOverlay] = useState(searchParams.get("generated") === "true");
+
+  useEffect(() => {
+    if (!formLoading && showGenerateOverlay) {
+      const timer = setTimeout(() => setShowGenerateOverlay(false), 900);
+      return () => clearTimeout(timer);
+    }
+  }, [formLoading, showGenerateOverlay]);
 
   const { data: fields } = trpc.form.getFieldsByForm.useQuery(
     { formId: formId || "" },
@@ -119,33 +127,18 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   }
 
   return (
-    <div className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
-          <div className="flex items-center space-x-3">
-            <Link href={`/workspaces/${workspaceSlug}`} className="text-muted-foreground hover:text-foreground transition-colors">
-              {workspace.name}
-            </Link>
-            <span className="text-muted-foreground">/</span>
-            <h1 className="text-xl font-bold">{form.title}</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-2xs font-semibold capitalize border">
-              {form.status}
-            </span>
+    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      {showGenerateOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="rounded-3xl border border-white/10 bg-zinc-950/95 p-6 text-center shadow-xl">
+            <Spinner />
+            <p className="mt-4 text-sm font-semibold text-white">Generating your form...</p>
+            <p className="mt-2 text-xs text-zinc-400">Your editor is loading the newly created form.</p>
           </div>
-          <div className="flex space-x-2">
-            <Link href="?tab=fields">
-              <Button variant={activeTab === "fields" ? "default" : "outline"}>Fields</Button>
-            </Link>
-            <Link href="?tab=submissions">
-              <Button variant={activeTab === "submissions" ? "default" : "outline"}>Submissions</Button>
-            </Link>
-            <Link href="?tab=settings">
-              <Button variant={activeTab === "settings" ? "default" : "outline"}>Settings</Button>
-            </Link>
-          </div>
-        </header>
-
-        <main className="mt-4">
+        </div>
+      )}
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <main className="w-full min-w-0">
           {activeTab === "fields" && formId && (
             <FormFieldsTab formId={formId} isAdminOrOwner={isAdminOrOwner} />
           )}
@@ -193,15 +186,19 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="max-h-48 overflow-y-auto">
-                    <SelectItem value="text">Short Text</SelectItem>
-                    <SelectItem value="textarea">Long Text (Paragraph)</SelectItem>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="textarea">Textarea</SelectItem>
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="phone">Phone Number</SelectItem>
                     <SelectItem value="number">Number</SelectItem>
                     <SelectItem value="date">Date</SelectItem>
                     <SelectItem value="time">Time</SelectItem>
-                    <SelectItem value="url">URL Link</SelectItem>
-                    <SelectItem value="checkbox">Yes/No Checkbox</SelectItem>
+                    <SelectItem value="file">File</SelectItem>
+                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                    <SelectItem value="rating">Ratomg</SelectItem>
+                    <SelectItem value="radio">Radio</SelectItem>
+                    <SelectItem value="matrix">Matrix</SelectItem>
+                    <SelectItem value="multi_select">Multi Select</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

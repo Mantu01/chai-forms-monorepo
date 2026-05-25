@@ -11,8 +11,9 @@ export const getLoggedInUserSchema=z.object({
   user:z.object({
     id: z.string(),
     fullName: z.string(),
-    email: z.email(),
+    email: z.string().email(),
     profileImageUrl: z.string().nullable(),
+    isSubscribed: z.boolean(),
   }).nullable()
 });
 

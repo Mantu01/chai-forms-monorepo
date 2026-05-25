@@ -13,6 +13,7 @@ export const forms = pgTable("forms", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   status: formStatusEnum("status").default("draft").notNull(),
   isPublic: boolean("is_public").default(true).notNull(),
+  accessLevel: varchar("access_level", { length: 50 }).default("public").notNull(),
   createdBy: uuid("created_by").references(() => users.id).notNull(),
 
   allowMultipleSubmissions: boolean("allow_multiple_submissions").default(true),

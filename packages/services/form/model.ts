@@ -8,6 +8,7 @@ export const FormResponseSchema = z.object({
   slug: z.string(),
   status: z.enum(["draft", "published", "archived"]),
   isPublic: z.boolean(),
+  accessLevel: z.string(),
   createdBy: z.string().uuid(),
   allowMultipleSubmissions: z.boolean().nullable(),
   requireAuth: z.boolean().nullable(),
@@ -18,6 +19,10 @@ export const FormResponseSchema = z.object({
   publishedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date().nullable(),
+});
+
+export const FormWithStatsResponseSchema = FormResponseSchema.extend({
+  submissionCount: z.number(),
 });
 
 export const PageResponseSchema = z.object({
@@ -49,6 +54,7 @@ export const CreateFormInputSchema = z.object({
   description: z.string().optional(),
   slug: z.string().min(1),
   isPublic: z.boolean().optional(),
+  accessLevel: z.string().optional(),
   allowMultipleSubmissions: z.boolean().optional(),
   requireAuth: z.boolean().optional(),
   maxSubmissions: z.number().optional(),

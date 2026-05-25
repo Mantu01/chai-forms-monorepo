@@ -1,5 +1,6 @@
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import { users, InsertUser, SelectUser } from "../models/user.model";
+import { referralCodes } from "../models/referral.model";
 import db from "..";
 
 export class UserQuery {
@@ -97,5 +98,10 @@ export class UserQuery {
 
   async findUserByEmailPartial(emailPattern: string): Promise<SelectUser[]> {
     return db.query.users.findMany();
+  }
+
+  async checkReferralCode(code: string): Promise<boolean> {
+    const [referral] = await db.select().from(referralCodes).where(eq(referralCodes.code, code));
+    return !!referral;
   }
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { AppSidebar } from "~/components/sidebar/app-sidebar"
 import { SiteHeader } from "~/components/sidebar/site-header"
 import {SidebarInset,SidebarProvider,} from "~/components/ui/sidebar"
@@ -14,7 +15,9 @@ export default function Page({ children }: { children: ReactNode }) {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <Suspense fallback={<div className="w-[var(--sidebar-width)] h-full bg-sidebar border-r" />}>
+        <AppSidebar variant="inset" />
+      </Suspense>
       <SidebarInset>
         <SiteHeader />
         {children}

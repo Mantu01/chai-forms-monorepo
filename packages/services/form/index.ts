@@ -5,6 +5,7 @@ import {
   CreatePageInputSchema,
   FieldResponseSchema,
   FormResponseSchema,
+  FormWithStatsResponseSchema,
   PageResponseSchema,
   ReorderInputSchema,
   UpdateFieldInputSchema,
@@ -12,6 +13,7 @@ import {
   UpdatePageInputSchema,
 } from "./model";
 import { FormQuery, WorkspaceQuery } from "@repo/database/queries";
+import { uploadImage } from "../clients/cloudinary";
 
 export class WorkspaceService {
   constructor(
@@ -280,5 +282,16 @@ export class WorkspaceService {
     if (!parsed.data.ids.length) throw new Error("No field ids provided");
 
     await this.workspaceQuery.reorderFields(parsed.data.ids);
+  }
+
+  public async getFormsWithStats(workspaceId: string): Promise<ReadonlyArray<z.infer<typeof FormWithStatsResponseSchema>>> {
+    if (!workspaceId) throw new Error("Workspace id is required");
+    const formsWithStats = await this.workspaceQuery.getFormsWithStats(workspaceId);
+    return z.array(FormWithStatsResponseSchema).parse(formsWithStats || []);
+  }
+
+  public async uploadFile(fileData: string, folderName: string): Promise<string> {
+    if (!fileData) throw new Error("File data is required");
+    return uploadImage(fileData, folderName || "forms");
   }
 }

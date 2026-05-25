@@ -26,10 +26,8 @@ export const fieldTypeEnum = pgEnum("field_type", [
   "time",
   "file",
   "rating",
-  "url",
   "matrix",
 ]);
-
 export const workflowStatusEnum = pgEnum("workflow_status", [
   "pending",
   "running",

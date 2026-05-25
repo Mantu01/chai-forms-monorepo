@@ -149,4 +149,26 @@ export const workspaceRouter = router({
     .query(async ({ input }) => {
       return workspaceService.getWorkspaceMemberDetails(input);
     }),
+
+  getPendingInvites: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/invites/pending"), tags: TAGS } })
+    .input(z.undefined())
+    .output(z.array(z.object({
+      id: z.string().uuid(),
+      role: z.string(),
+      workspaceId: z.string().uuid(),
+      workspaceName: z.string(),
+      token: z.string(),
+    })))
+    .query(async ({ ctx }) => {
+      return workspaceService.getPendingInvitesForEmail(ctx.userId);
+    }),
+
+  rejectInvite: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/invite/reject"), tags: TAGS } })
+    .input(z.object({ inviteId: z.string().uuid() }))
+    .output(successResponseSchema)
+    .mutation(async ({ input }) => {
+      return workspaceService.rejectInvite(input.inviteId);
+    }),
 });

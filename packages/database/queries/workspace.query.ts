@@ -217,4 +217,24 @@ export class WorkspaceQuery {
 
     return invite;
   }
+
+  async getPendingInvitesForEmail(email: string) {
+    return db
+      .select({
+        id: workspaceInvites.id,
+        role: workspaceInvites.role,
+        workspaceId: workspaceInvites.workspaceId,
+        workspaceName: workspaces.name,
+        token: workspaceInvites.token,
+      })
+      .from(workspaceInvites)
+      .innerJoin(workspaces, eq(workspaceInvites.workspaceId, workspaces.id))
+      .where(
+        and(
+          eq(workspaceInvites.email, email),
+          isNull(workspaceInvites.acceptedAt),
+          gt(workspaceInvites.expiresAt, new Date())
+        )
+      );
+  }
 }

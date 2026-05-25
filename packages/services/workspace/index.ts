@@ -294,4 +294,19 @@ export class WorkspaceService {
     }
     return getWorkspaceMemberDetailsOutputSchema.parse(result);
   }
+
+  public async getPendingInvitesForEmail(userId: string): Promise<{ id: string; role: string; workspaceId: string; workspaceName: string; token: string }[]> {
+    const user = await this.userQuery.findUserById(userId);
+    if (!user?.email) return [];
+    const invites = await this.workspaceQuery.getPendingInvitesForEmail(user.email);
+    return invites.map((inv) => ({
+      ...inv,
+      role: inv.role || "member",
+    }));
+  }
+
+  public async rejectInvite(inviteId: string): Promise<SuccessResponseSchema> {
+    await this.workspaceQuery.deleteInvite(inviteId);
+    return successResponseSchema.parse({ success: true });
+  }
 }

@@ -20,6 +20,8 @@ interface FormSettingsTabProps {
     description?: string | null;
     status: "draft" | "published" | "archived";
     isPublic: boolean;
+    accessLevel: string;
+    themeConfig?: any;
   };
   workspaceId: string;
   workspaceSlug: string;
@@ -65,8 +67,22 @@ export function FormSettingsTab({
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const newSlug = formData.get("slug") as string;
-    const isPublic = formData.get("isPublic") === "true";
+    const accessLevel = formData.get("accessLevel") as string;
+    const isPublic = accessLevel !== "private";
     const status = formData.get("status") as any;
+
+    const themeConfig = {
+      backgroundColor: formData.get("backgroundColor") as string,
+      formBackgroundColor: formData.get("formBackgroundColor") as string,
+      headerBackgroundColor: formData.get("headerBackgroundColor") as string,
+      textColor: formData.get("textColor") as string,
+      mutedTextColor: formData.get("mutedTextColor") as string,
+      primaryColor: formData.get("primaryColor") as string,
+      buttonTextColor: formData.get("buttonTextColor") as string,
+      borderColor: formData.get("borderColor") as string,
+      inputBackgroundColor: formData.get("inputBackgroundColor") as string,
+      inputTextColor: formData.get("inputTextColor") as string,
+    };
 
     updateForm.mutate({
       formId: form.id,
@@ -75,7 +91,9 @@ export function FormSettingsTab({
         description,
         slug: newSlug,
         isPublic,
+        accessLevel,
         status,
+        themeConfig,
       },
     });
   };
@@ -146,7 +164,6 @@ export function FormSettingsTab({
                   <SelectContent>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
                 {!isAdminOrOwner && (
@@ -155,16 +172,134 @@ export function FormSettingsTab({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="form-public" className="text-xs">Access Level</Label>
-                <Select name="isPublic" defaultValue={form.isPublic ? "true" : "false"}>
+                <Label htmlFor="form-access" className="text-xs">Access Level</Label>
+                <Select name="accessLevel" defaultValue={form.accessLevel || "public"}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue placeholder="Select access" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Public (anyone can submit)</SelectItem>
-                    <SelectItem value="false">Private (restricted access)</SelectItem>
+                    <SelectItem value="public">Public (anyone can submit)</SelectItem>
+                    <SelectItem value="unlisted">Unlisted (access with link)</SelectItem>
+                    <SelectItem value="private">Private (only workspace members)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="border-t border-border/80 pt-6 mt-6">
+              <h3 className="text-sm font-semibold mb-1 text-white font-sans">Form Custom Theme Styling</h3>
+              <p className="text-2xs text-muted-foreground mb-4">Design the look & feel of your form by picking custom color highlights.</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-bg" className="text-xs">Page Background</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-bg-picker" value={(form.themeConfig as any)?.backgroundColor || "#09090b"} onChange={(e) => {
+                      const input = document.getElementById("theme-bg") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-bg" name="backgroundColor" defaultValue={(form.themeConfig as any)?.backgroundColor || "#09090b"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-form-bg" className="text-xs">Form Background</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-form-bg-picker" value={(form.themeConfig as any)?.formBackgroundColor || "#18181b"} onChange={(e) => {
+                      const input = document.getElementById("theme-form-bg") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-form-bg" name="formBackgroundColor" defaultValue={(form.themeConfig as any)?.formBackgroundColor || "#18181b"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-header-bg" className="text-xs">Card Header Background</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-header-bg-picker" value={(form.themeConfig as any)?.headerBackgroundColor || "#27272a"} onChange={(e) => {
+                      const input = document.getElementById("theme-header-bg") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-header-bg" name="headerBackgroundColor" defaultValue={(form.themeConfig as any)?.headerBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-primary" className="text-xs">Primary Accent / Button</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-primary-picker" value={(form.themeConfig as any)?.primaryColor || "#3f3f46"} onChange={(e) => {
+                      const input = document.getElementById("theme-primary") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-primary" name="primaryColor" defaultValue={(form.themeConfig as any)?.primaryColor || "#3f3f46"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-btn-txt" className="text-xs">Button Text</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-btn-txt-picker" value={(form.themeConfig as any)?.buttonTextColor || "#ffffff"} onChange={(e) => {
+                      const input = document.getElementById("theme-btn-txt") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-btn-txt" name="buttonTextColor" defaultValue={(form.themeConfig as any)?.buttonTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-txt" className="text-xs">Text & Labels</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-txt-picker" value={(form.themeConfig as any)?.textColor || "#ffffff"} onChange={(e) => {
+                      const input = document.getElementById("theme-txt") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-txt" name="textColor" defaultValue={(form.themeConfig as any)?.textColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-muted-txt" className="text-xs">Muted Description Text</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-muted-txt-picker" value={(form.themeConfig as any)?.mutedTextColor || "#a1a1aa"} onChange={(e) => {
+                      const input = document.getElementById("theme-muted-txt") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-muted-txt" name="mutedTextColor" defaultValue={(form.themeConfig as any)?.mutedTextColor || "#a1a1aa"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-border" className="text-xs">Border Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-border-picker" value={(form.themeConfig as any)?.borderColor || "#27272a"} onChange={(e) => {
+                      const input = document.getElementById("theme-border") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-border" name="borderColor" defaultValue={(form.themeConfig as any)?.borderColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-input-bg" className="text-xs">Input Background</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-input-bg-picker" value={(form.themeConfig as any)?.inputBackgroundColor || "#27272a"} onChange={(e) => {
+                      const input = document.getElementById("theme-input-bg") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-input-bg" name="inputBackgroundColor" defaultValue={(form.themeConfig as any)?.inputBackgroundColor || "#27272a"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="theme-input-txt" className="text-xs">Input Text Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" id="theme-input-txt-picker" value={(form.themeConfig as any)?.inputTextColor || "#ffffff"} onChange={(e) => {
+                      const input = document.getElementById("theme-input-txt") as HTMLInputElement;
+                      if (input) input.value = e.target.value;
+                    }} className="h-9 w-9 rounded-lg border border-zinc-700 bg-transparent cursor-pointer" />
+                    <Input id="theme-input-txt" name="inputTextColor" defaultValue={(form.themeConfig as any)?.inputTextColor || "#ffffff"} className="h-9 rounded-xl flex-1 text-xs font-mono" />
+                  </div>
+                </div>
               </div>
             </div>
 

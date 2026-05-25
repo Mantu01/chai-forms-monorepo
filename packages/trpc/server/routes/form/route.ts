@@ -7,6 +7,11 @@ import {
   UpdateFieldInputSchema,
   FormResponseSchema,
   FieldResponseSchema,
+  FormWithStatsResponseSchema,
+  CreatePageInputSchema,
+  UpdatePageInputSchema,
+  PageResponseSchema,
+  ReorderInputSchema,
 } from "@repo/services/form/model";
 import { publicProcedure, protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
@@ -165,6 +170,104 @@ export const formRouter = router({
     .query(async ({ input }) => {
       try {
         return await formService.getFieldsByForm(input.formId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  getPagesByForm: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/pages"), tags: TAGS } })
+    .input(z.object({ formId: z.string().uuid() }))
+    .output(z.readonly(z.array(PageResponseSchema)))
+    .query(async ({ input }) => {
+      try {
+        return await formService.getPagesByForm(input.formId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  createPage: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/page/create"), tags: TAGS } })
+    .input(CreatePageInputSchema)
+    .output(PageResponseSchema)
+    .mutation(async ({ input }) => {
+      try {
+        return await formService.createPage(input);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  updatePage: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/page/update"), tags: TAGS } })
+    .input(z.object({ pageId: z.string().uuid(), data: UpdatePageInputSchema }))
+    .output(PageResponseSchema)
+    .mutation(async ({ input }) => {
+      try {
+        return await formService.updatePage(input.pageId, input.data);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  deletePage: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/page/delete"), tags: TAGS } })
+    .input(z.object({ pageId: z.string().uuid() }))
+    .output(PageResponseSchema)
+    .mutation(async ({ input }) => {
+      try {
+        return await formService.deletePage(input.pageId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  reorderPages: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/pages/reorder"), tags: TAGS } })
+    .input(ReorderInputSchema)
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input }) => {
+      try {
+        await formService.reorderPages(input);
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  reorderFields: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/fields/reorder"), tags: TAGS } })
+    .input(ReorderInputSchema)
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input }) => {
+      try {
+        await formService.reorderFields(input);
+        return { success: true };
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  getFormsWithStats: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/list-with-stats"), tags: TAGS } })
+    .input(z.object({ workspaceId: z.string().uuid() }))
+    .output(z.readonly(z.array(FormWithStatsResponseSchema)))
+    .query(async ({ input }) => {
+      try {
+        return await formService.getFormsWithStats(input.workspaceId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  uploadFile: publicProcedure
+    .input(z.object({ fileData: z.string(), folder: z.string() }))
+    .output(z.object({ url: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const url = await formService.uploadFile(input.fileData, input.folder);
+        return { url };
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }

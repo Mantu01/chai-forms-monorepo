@@ -1,4 +1,4 @@
-import { SubmissionQuery } from "@repo/database/queries";
+import { SubmissionQuery, FormQuery } from "@repo/database/queries";
 import {
   CreateSubmissionInputSchema,
   createSubmissionInputSchema,
@@ -39,6 +39,59 @@ export class SubmissionService {
     input: CreateSubmissionInputSchema & { submittedBy?: string }
   ): Promise<SubmissionWithAnswersResponseSchema> {
     const payload = createSubmissionInputSchema.parse(input);
+    const formQuery = new FormQuery();
+
+    const formFields = await formQuery.getFieldsByForm(payload.formId);
+
+    const fieldById = new Map<string, any>();
+    const fieldByKey = new Map<string, any>();
+    formFields.forEach((f: any) => {
+      fieldById.set(f.id, f);
+      fieldByKey.set(f.fieldKey, f);
+    });
+
+    const answersMap = new Map(payload.answers.map((a) => [a.fieldId, a.value]));
+
+    const answersByKey: Record<string, any> = {};
+    formFields.forEach((f: any) => {
+      const val = answersMap.has(f.id) ? answersMap.get(f.id) : undefined;
+      answersByKey[f.fieldKey] = val;
+    });
+
+    const evaluateVisibility = (field: any) => {
+      const logic = field.config?.logic?.showIf;
+      if (!logic) return true;
+      const targetVal = answersByKey[logic.fieldKey];
+      if (targetVal === undefined || targetVal === null) return false;
+      if (logic.operator === "equals") {
+        return String(targetVal) === String(logic.value);
+      }
+      if (logic.operator === "not_equals") {
+        return String(targetVal) !== String(logic.value);
+      }
+      if (logic.operator === "contains") {
+        if (Array.isArray(targetVal)) {
+          return targetVal.includes(logic.value);
+        }
+        return String(targetVal).toLowerCase().includes(String(logic.value).toLowerCase());
+      }
+      return true;
+    };
+
+    const visibleFields = formFields.filter((f: any) => evaluateVisibility(f));
+
+    const missingRequired = visibleFields.filter((f: any) => {
+      if (!f.isRequired) return false;
+      const val = answersByKey[f.fieldKey];
+      if (val === undefined || val === null) return true;
+      if (typeof val === "string" && val.trim() === "") return true;
+      if (Array.isArray(val) && val.length === 0) return true;
+      return false;
+    });
+
+    if (missingRequired.length > 0) {
+      throw new Error(`Missing required fields: ${missingRequired.map((f: any) => f.label).join(", ")}`);
+    }
 
     const submission = await this.submissionQuery.createSubmission({
       formId: payload.formId,
@@ -51,13 +104,25 @@ export class SubmissionService {
       throw new Error("Failed to create submission");
     }
 
-    const answers = await this.submissionQuery.bulkCreateAnswers(
-      payload.answers.map((answer) => ({
+    const answersToInsert = visibleFields.map((f: any) => {
+      let val = answersMap.has(f.id) ? answersMap.get(f.id) : undefined;
+      if (val === undefined) {
+        val = f.defaultValue ?? null;
+      }
+      if (f.type === "number") {
+        val = val === null || val === "" ? null : Number(val);
+      }
+      if (f.type === "checkbox") {
+        val = Boolean(val);
+      }
+      return {
         submissionId: submission.id,
-        fieldId: answer.fieldId,
-        value: answer.value,
-      }))
-    );
+        fieldId: f.id,
+        value: val,
+      };
+    }).filter((a: any) => a !== undefined);
+
+    const answers = await this.submissionQuery.bulkCreateAnswers(answersToInsert as any[]);
 
     return submissionWithAnswersResponseSchema.parse({
       submission,
@@ -148,12 +213,57 @@ export class SubmissionService {
       throw new Error("Submission not found");
     }
 
+    const formQuery = new FormQuery();
+    const formFields = await formQuery.getFieldsByForm(existingSubmission.formId);
+
+    const answersMap = new Map(payload.answers.map((a) => [a.fieldId, a.value]));
+
+    const answersByKey: Record<string, any> = {};
+    formFields.forEach((f: any) => {
+      answersByKey[f.fieldKey] = answersMap.has(f.id) ? answersMap.get(f.id) : undefined;
+    });
+
+    const evaluateVisibility = (field: any) => {
+      const logic = field.config?.logic?.showIf;
+      if (!logic) return true;
+      const targetVal = answersByKey[logic.fieldKey];
+      if (targetVal === undefined || targetVal === null) return false;
+      if (logic.operator === "equals") {
+        return String(targetVal) === String(logic.value);
+      }
+      if (logic.operator === "not_equals") {
+        return String(targetVal) !== String(logic.value);
+      }
+      if (logic.operator === "contains") {
+        if (Array.isArray(targetVal)) {
+          return targetVal.includes(logic.value);
+        }
+        return String(targetVal).toLowerCase().includes(String(logic.value).toLowerCase());
+      }
+      return true;
+    };
+
+    const visibleFields = formFields.filter((f: any) => evaluateVisibility(f));
+
+    const missingRequired = visibleFields.filter((f: any) => {
+      if (!f.isRequired) return false;
+      const val = answersByKey[f.fieldKey];
+      if (val === undefined || val === null) return true;
+      if (typeof val === "string" && val.trim() === "") return true;
+      if (Array.isArray(val) && val.length === 0) return true;
+      return false;
+    });
+
+    if (missingRequired.length > 0) {
+      throw new Error(`Missing required fields: ${missingRequired.map((f: any) => f.label).join(", ")}`);
+    }
+
     const answers = await this.submissionQuery.replaceSubmissionAnswers(
       payload.submissionId,
-      payload.answers.map((answer) => ({
+      visibleFields.map((f: any) => ({
         submissionId: payload.submissionId,
-        fieldId: answer.fieldId,
-        value: answer.value,
+        fieldId: f.id,
+        value: answersMap.has(f.id) ? answersMap.get(f.id) : (f.defaultValue ?? null),
       }))
     );
 

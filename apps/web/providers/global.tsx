@@ -4,9 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import React, { useState } from "react";
 import { Toaster } from "~/components/ui/sonner";
+import { TamboProvider } from "@tambo-ai/react";
 
 import { trpc } from "~/trpc/client";
 import { createTRPCHttpBatchClientClient } from "~/trpc/create-client";
+import { env } from "~/env";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,18 +26,23 @@ export const GlobalProviders: React.FC<{ children: React.ReactNode }> = ({ child
     }),
   );
   return (
-    <QueryClientProvider client={queryClient}>
-      <NextThemesProvider
-        attribute="class"
-        defaultTheme="light"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <trpc.Provider queryClient={queryClient} client={trpcClient}>
-          {children}
-          <Toaster />
-        </trpc.Provider>
-      </NextThemesProvider>
-    </QueryClientProvider>
+    <TamboProvider
+      apiKey={env.NEXT_PUBLIC_TAMBO_API_KEY!}
+      userKey="user-1"
+    >
+      <QueryClientProvider client={queryClient}>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <trpc.Provider queryClient={queryClient} client={trpcClient}>
+            {children}
+            <Toaster />
+          </trpc.Provider>
+        </NextThemesProvider>
+      </QueryClientProvider>
+    </TamboProvider>
   );
 };
