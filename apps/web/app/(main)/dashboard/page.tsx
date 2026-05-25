@@ -38,7 +38,7 @@ function AnalyticsContent() {
 
 function DashboardPage() {
   return (
-    <div className="flex flex-1 flex-col bg-zinc-950 min-h-screen">
+    <div className="flex flex-1 flex-col bg-background text-foreground min-h-screen">
       <Suspense fallback={<div className="flex justify-center py-20"><Spinner /></div>}>
         <AnalyticsContent />
       </Suspense>

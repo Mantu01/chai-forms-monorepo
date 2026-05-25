@@ -11,6 +11,16 @@ import { Avatar, AvatarImage, AvatarFallback } from "~/components/ui/avatar";
 import { ArrowLeft, MessageSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 
 interface CommunityDetailPageProps {
   params: Promise<{ formId: string }>;
@@ -21,58 +31,49 @@ interface ReplyItemProps {
   allComments: any[];
   isAdmin: boolean;
   onDeleted: () => void;
+  router: any;
+  searchParams: any;
 }
 
-function ReplyItem({ reply, allComments, isAdmin, onDeleted }: ReplyItemProps) {
-  const deleteComment = trpc.comment.deleteComment.useMutation({
-    onSuccess: () => {
-      toast.success("Comment deleted successfully");
-      onDeleted();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to delete comment");
-    },
-  });
-
+function ReplyItem({ reply, allComments, isAdmin, onDeleted, router, searchParams }: ReplyItemProps) {
   const { data: userData } = trpc.auth.me.useQuery();
   const displayName = reply.userFullName || reply.guestName || "Anonymous";
   const childReplies = allComments.filter((c) => c.parentId === reply.id);
 
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this reply?")) {
-      deleteComment.mutate({ commentId: reply.id });
-    }
+  const handleDeleteTrigger = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("deleteCommentId", reply.id);
+    router.push(`?${params.toString()}`);
   };
 
   const showDelete = isAdmin || (userData?.user && reply.userId === userData.user.id);
 
   return (
-    <div className="pl-6 border-l border-zinc-800 mt-4 space-y-3">
-      <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-900/60 flex items-start justify-between">
+    <div className="pl-6 border-l border-border mt-4 space-y-3">
+      <div className="bg-muted/30 p-3 rounded-xl border border-border/60 flex items-start justify-between">
         <div className="flex gap-3">
           <Avatar className="h-6 w-6">
             {reply.userProfileImageUrl && <AvatarImage src={reply.userProfileImageUrl} />}
-            <AvatarFallback className="text-[9px] bg-zinc-800 text-zinc-300">
+            <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
               {displayName.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-zinc-200">{displayName}</span>
-              <span className="text-[9px] text-zinc-500">
+              <span className="text-xs font-semibold">{displayName}</span>
+              <span className="text-[9px] text-muted-foreground">
                 {new Date(reply.createdAt).toLocaleString()}
               </span>
             </div>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans">{reply.content}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed font-sans">{reply.content}</p>
           </div>
         </div>
         {showDelete && (
           <Button
             variant="ghost"
             size="xs"
-            onClick={handleDelete}
-            disabled={deleteComment.isPending}
-            className="text-red-400 hover:text-red-300 h-6 w-6 p-0"
+            onClick={handleDeleteTrigger}
+            className="text-destructive hover:text-destructive/80 h-6 w-6 p-0 cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -85,6 +86,8 @@ function ReplyItem({ reply, allComments, isAdmin, onDeleted }: ReplyItemProps) {
           allComments={allComments}
           isAdmin={isAdmin}
           onDeleted={onDeleted}
+          router={router}
+          searchParams={searchParams}
         />
       ))}
     </div>
@@ -105,6 +108,9 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
   const deleteComment = trpc.comment.deleteComment.useMutation({
     onSuccess: () => {
       toast.success("Comment deleted successfully");
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("deleteCommentId");
+      router.push(`?${params.toString()}`);
       refetch();
     },
     onError: (err) => {
@@ -133,10 +139,10 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
     }
   }, [comments, sortOrder]);
 
-  const handleDeleteComment = (commentId: string) => {
-    if (confirm("Are you sure you want to delete this comment thread?")) {
-      deleteComment.mutate({ commentId });
-    }
+  const handleDeleteTrigger = (commentId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("deleteCommentId", commentId);
+    router.push(`?${params.toString()}`);
   };
 
   const handleSortChange = (val: string) => {
@@ -145,18 +151,20 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
+  const activeDeleteCommentId = searchParams.get("deleteCommentId");
+
   if (!form) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">
+    <div className="min-h-screen bg-background text-foreground p-6 space-y-6">
       <Link href="/community">
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-zinc-400 hover:text-white mb-2">
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-muted-foreground hover:text-foreground mb-2 cursor-pointer">
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Hub</span>
         </Button>
@@ -168,26 +176,26 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
             <MessageSquare className="h-3.5 w-3.5" />
             Interactions Board
           </Badge>
-          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight">
             {form.title}
           </h1>
-          <p className="text-xs text-zinc-450 leading-relaxed max-w-lg">
+          <p className="text-xs text-muted-foreground leading-relaxed max-w-lg">
             Viewing all community interactions for form {form.title}.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-450">Sort by:</span>
+          <span className="text-xs text-muted-foreground">Sort by:</span>
           <Select
             value={sortOrder}
             onValueChange={handleSortChange}
           >
-            <SelectTrigger className="h-8 w-36 text-2xs bg-zinc-900 border-zinc-800 text-zinc-350">
+            <SelectTrigger className="h-8 w-36 text-xs bg-muted border-border text-foreground">
               <SelectValue placeholder="Sort Order" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-              <SelectItem value="newest">Latest to Oldest</SelectItem>
-              <SelectItem value="oldest">Oldest to Latest</SelectItem>
+            <SelectContent className="bg-card border-border">
+              <SelectItem value="newest" className="cursor-pointer">Latest to Oldest</SelectItem>
+              <SelectItem value="oldest" className="cursor-pointer">Oldest to Latest</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -195,8 +203,8 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
 
       <div className="space-y-6">
         {rootComments.length === 0 ? (
-          <div className="text-center py-16 border border-zinc-800 rounded-2xl bg-zinc-900/10">
-            <p className="text-zinc-500 text-sm">No comments have been posted for this form preset yet.</p>
+          <div className="text-center py-16 border border-border rounded-2xl bg-muted/10">
+            <p className="text-muted-foreground text-sm">No comments have been posted for this form preset yet.</p>
           </div>
         ) : (
           rootComments.map((comment) => {
@@ -205,33 +213,32 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
             const showDelete = isWorkspaceAdmin || (userData?.user && comment.userId === userData.user.id);
 
             return (
-              <Card key={comment.id} className="border-zinc-800 bg-zinc-900/40 backdrop-blur-md">
+              <Card key={comment.id} className="border-border bg-card backdrop-blur-md">
                 <CardContent className="p-4 space-y-4">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-3">
-                      <Avatar className="h-8 w-8 ring-1 ring-zinc-800">
+                      <Avatar className="h-8 w-8 ring-1 ring-border">
                         {comment.userProfileImageUrl && <AvatarImage src={comment.userProfileImageUrl} />}
-                        <AvatarFallback className="text-[10px] bg-zinc-850 text-zinc-405">
+                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
                           {displayName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-zinc-200">{displayName}</span>
-                          <span className="text-[9px] text-zinc-500">
+                          <span className="text-xs font-semibold">{displayName}</span>
+                          <span className="text-[9px] text-muted-foreground">
                             {new Date(comment.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-350 leading-relaxed font-sans">{comment.content}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed font-sans">{comment.content}</p>
                       </div>
                     </div>
                     {showDelete && (
                       <Button
                         variant="ghost"
                         size="xs"
-                        onClick={() => handleDeleteComment(comment.id)}
-                        disabled={deleteComment.isPending}
-                        className="text-red-400 hover:text-red-300 h-7 w-7 p-0"
+                        onClick={() => handleDeleteTrigger(comment.id)}
+                        className="text-destructive hover:text-destructive/80 h-7 w-7 p-0 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -245,6 +252,8 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
                       allComments={comments || []}
                       isAdmin={isWorkspaceAdmin}
                       onDeleted={refetch}
+                      router={router}
+                      searchParams={searchParams}
                     />
                   ))}
                 </CardContent>
@@ -253,6 +262,36 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
           })
         )}
       </div>
+
+      <AlertDialog open={!!activeDeleteCommentId} onOpenChange={(open) => {
+        if (!open) {
+          const params = new URLSearchParams(searchParams.toString());
+          params.delete("deleteCommentId");
+          router.push(`?${params.toString()}`);
+        }
+      }}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this comment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+              onClick={() => {
+                if (activeDeleteCommentId) {
+                  deleteComment.mutate({ commentId: activeDeleteCommentId });
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
