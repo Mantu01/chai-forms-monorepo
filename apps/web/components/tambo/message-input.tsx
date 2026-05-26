@@ -41,6 +41,7 @@ import {
   type ResourceProvider,
   type StagedImageState,
 } from "@tambo-ai/react-ui-base/message-input";
+import { useSearchParams } from "next/navigation";
 
 // Lazy load DictationButton for code splitting (framework-agnostic alternative to next/dynamic)
 // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -535,21 +536,29 @@ const MessageInputSubmitButton = React.forwardRef<
     "order-3 w-10 h-10 bg-foreground text-background rounded-lg hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center enabled:cursor-pointer",
     className,
   );
+  const searchParams = useSearchParams();
+  const workspaceSlug = searchParams.get("workspaceSlug");
 
   return (
     <MessageInputBase.SubmitButton
       ref={ref}
       className={buttonClasses}
       {...props}
-      render={(props, { loading }) => (
-        <button {...props}>
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <ArrowUp className="w-4 h-4" />
-          )}
-        </button>
-      )}
+      render={(props, { loading }) =>
+        workspaceSlug ? (
+          <button {...props}>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ArrowUp className="w-4 h-4" />
+            )}
+          </button>
+        ) : (
+          <div className={cn(props.className,"bg-muted-backdrop pointer-events-none hover:bg-transparent")}>
+            <ArrowUp className="w-4 h-4 text-accent-foreground" />
+          </div>
+        )
+      }
     />
   );
 });

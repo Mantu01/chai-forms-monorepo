@@ -165,10 +165,10 @@ function SortableFieldRow({
               {field.type}
             </Badge>
             {field.isRequired && (
-              <span className="text-[10px] text-red-500 font-bold">* Required</span>
+              <span className="text-[10px] text-rose-600 font-bold">* Required</span>
             )}
             {field.config?.logic?.showIf && (
-              <span className="text-[10px] text-amber-500 font-bold">Conditional</span>
+              <span className="text-[10px] text-amber-600 font-bold">Conditional</span>
             )}
           </div>
         </div>
@@ -591,11 +591,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
                   onEditPage={(p) => router.push(`?tab=fields&edit-page=${p.id}`)}
                   onDeletePage={handleDeletePage}
                   onEditField={(f) => router.push(`?tab=fields&edit-field=${f.id}`)}
-                  onDeleteField={(fid) => {
-                    if (confirm("Delete this field?")) {
-                      deleteField.mutate({ fieldId: fid });
-                    }
-                  }}
+                  onDeleteField={(fid) => deleteField.mutate({ fieldId: fid })}
                   onAddFieldToPage={(pid) => router.push(`?tab=fields&new-field=true&targetPageId=${pid}`)}
                 />
               ))}

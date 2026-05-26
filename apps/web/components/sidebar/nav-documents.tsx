@@ -1,11 +1,8 @@
-"use client"
-
 import {
   IconDots,
   IconFolder,
   IconShare3,
   IconTrash,
-  type Icon,
 } from "@tabler/icons-react"
 
 import {
@@ -25,15 +22,15 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar"
 
-export function NavDocuments({names}: {names: strings[]}) {
+export function NavDocuments({names}: {names: string[]}) {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Recents</SidebarGroupLabel>
       <SidebarMenu>
-        {names.map((name) => (
-          <SidebarMenuItem key={name}>
+        {names.map((name,idx) => (
+          <SidebarMenuItem key={idx}>
             <SidebarMenuButton asChild>
                 <span>{name}</span>
             </SidebarMenuButton>

@@ -86,34 +86,34 @@ export function ChartAreaInteractive() {
   });
 
   return (
-    <Card className="border border-zinc-800 bg-zinc-900/30 backdrop-blur-md">
-      <CardHeader className="flex flex-col gap-4 border-b border-zinc-800/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="borderbackdrop-blur-md">
+      <CardHeader className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
             Submission Trends
           </CardTitle>
-          <CardDescription className="text-xs text-zinc-400">
+          <CardDescription className="text-xs">
             Monitor submission flow reactively across workspaces or individual forms
           </CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <Select value={type} onValueChange={(val: any) => handleTypeChange(val)}>
-            <SelectTrigger className="h-8 w-36 text-xs bg-zinc-950 border-zinc-800 text-zinc-300">
+            <SelectTrigger className="h-8 w-36 text-xs">
               <SelectValue placeholder="Data Source" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+            <SelectContent>
               <SelectItem value="workspace">Workspaces</SelectItem>
               <SelectItem value="form">Forms</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-            <SelectTrigger className="h-8 w-36 text-xs bg-zinc-950 border-zinc-800 text-zinc-300">
+            <SelectTrigger className="h-8 w-36 text-xs">
               <SelectValue placeholder="Select Range" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+            <SelectContent>
               <SelectItem value="90d">Last 3 months</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
               <SelectItem value="7d">Last 7 days</SelectItem>
@@ -124,7 +124,7 @@ export function ChartAreaInteractive() {
 
       <CardContent className="pt-6 flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <Label className="text-xs font-semibold text-zinc-400">
+          <Label className="text-xs font-semibold">
             Select up to 5 {type === "workspace" ? "workspaces" : "forms"}:
           </Label>
           
@@ -137,11 +137,11 @@ export function ChartAreaInteractive() {
                     id={`ws-${uw.workspace.id}`}
                     checked={isChecked}
                     onCheckedChange={() => handleToggleId(uw.workspace.id)}
-                    className="border-zinc-700 bg-zinc-950 data-[state=checked]:bg-primary"
+                    className=" data-[state=checked]:bg-primary"
                   />
                   <Label
                     htmlFor={`ws-${uw.workspace.id}`}
-                    className="text-xs text-zinc-300 cursor-pointer select-none"
+                    className="text-xs  cursor-pointer select-none"
                   >
                     {uw.workspace.name}
                   </Label>
@@ -157,11 +157,11 @@ export function ChartAreaInteractive() {
                     id={`form-${f.id}`}
                     checked={isChecked}
                     onCheckedChange={() => handleToggleId(f.id)}
-                    className="border-zinc-700 bg-zinc-950 data-[state=checked]:bg-primary"
+                    className=" data-[state=checked]:bg-primary"
                   />
                   <Label
                     htmlFor={`form-${f.id}`}
-                    className="text-xs text-zinc-300 cursor-pointer select-none"
+                    className="text-xs  cursor-pointer select-none"
                   >
                     {f.title} <span className="text-[10px] text-zinc-550 font-mono">({f.workspaceName})</span>
                   </Label>
@@ -172,7 +172,7 @@ export function ChartAreaInteractive() {
         </div>
 
         {selectedIds.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-800 rounded-2xl bg-zinc-950/20 text-center gap-3">
+          <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-800 rounded-2xl text-center gap-3">
             <BarChart3 className="h-8 w-8 text-zinc-650" />
             <div className="space-y-1">
               <p className="text-xs font-semibold text-zinc-350">No Data Source Selected</p>
@@ -180,7 +180,7 @@ export function ChartAreaInteractive() {
             </div>
           </div>
         ) : isLoading ? (
-          <div className="flex items-center justify-center py-24 text-xs text-zinc-400">
+          <div className="flex items-center justify-center py-24 text-xs">
             Loading analytics graph...
           </div>
         ) : (
@@ -263,7 +263,7 @@ export function ChartAreaInteractive() {
                   }
                 />
 
-                <Legend className="text-[11px] text-zinc-400" />
+                <Legend className="text-[11px]" />
 
                 {activeKeys.map((key, idx) => {
                   const color = COLORS[idx % COLORS.length];

@@ -4,7 +4,7 @@ import { SiteHeader } from "~/components/sidebar/site-header"
 import {SidebarInset,SidebarProvider,} from "~/components/ui/sidebar"
 
 import { ReactNode } from "react"
-
+import { MessageThreadWrapper } from "~/components/ai-builder/message-thread-wrapper"
 export default function Page({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider
@@ -19,9 +19,11 @@ export default function Page({ children }: { children: ReactNode }) {
         <AppSidebar variant="inset" />
       </Suspense>
       <SidebarInset>
+        <MessageThreadWrapper />
         <SiteHeader />
         {children}
       </SidebarInset>
     </SidebarProvider>
   )
 }
+

@@ -234,7 +234,7 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
                           id={field.fieldKey}
                           name={field.fieldKey}
                           type={field.type}
-                          defaultValue={displayValue}
+                          defaultValue={field.type!=='file'?displayValue:''}
                           className="bg-background border-border mt-1 text-xs"
                         />
                       )}

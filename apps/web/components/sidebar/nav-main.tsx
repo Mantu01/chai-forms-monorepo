@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "~/components/ui/sidebar"
-import { QuickCreateDialog } from "../workspaces/quick-create-dialog"
 
 const MAIN_NAV = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -75,7 +74,6 @@ export function NavMain() {
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
-      <QuickCreateDialog />
     </>
   )
 }

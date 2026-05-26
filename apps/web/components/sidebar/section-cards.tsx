@@ -26,20 +26,20 @@ export function SectionCards({ stats }: SectionCardsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-2 lg:grid-cols-4 dark:*:data-[slot=card]:bg-card">
-      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
+      <Card className="@container/card ">
         <CardHeader>
-          <CardDescription className="text-zinc-400">Total Submissions (1m)</CardDescription>
-          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+          <CardDescription>Total Submissions (1m)</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums">
             {totalSubmissions.toLocaleString()}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className={`gap-1.5 px-2 py-0.5 rounded-full text-[10px] ${submissionsTrend >= 0 ? "text-emerald-450 border-emerald-500/20 bg-emerald-500/5" : "text-red-400 border-red-500/20 bg-red-500/5"}`}>
+            <Badge variant="outline" className={`gap-1.5 px-2 py-0.5 rounded-full text-[10px] ${submissionsTrend >= 0 ? "text-emerald-450 border-emerald-500/20 " : "text-red-400 border-red-500/20"}`}>
               {submissionsTrend >= 0 ? <IconTrendingUp className="size-3" /> : <IconTrendingDown className="size-3" />}
               {submissionsTrend >= 0 ? "+" : ""}{submissionsTrend.toFixed(1)}%
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+        <CardFooter className="flex-col items-start gap-1 text-2xs">
           <div className="flex gap-1.5 font-medium items-center">
             {submissionsTrend >= 0 ? "Trending up this month" : "Trending down this month"}
           </div>
@@ -47,36 +47,36 @@ export function SectionCards({ stats }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
+      <Card className="@container/card ">
         <CardHeader>
-          <CardDescription className="text-zinc-400">Total Forms</CardDescription>
-          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+          <CardDescription>Total Forms</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums">
             {totalForms.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+        <CardFooter className="flex-col items-start gap-1 text-2xs">
           <div>Forms across all workspaces</div>
           <div>Both draft and published configurations</div>
         </CardFooter>
       </Card>
 
-      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
+      <Card className="@container/card ">
         <CardHeader>
-          <CardDescription className="text-zinc-400">Active Forms</CardDescription>
-          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+          <CardDescription>Active Forms</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums">
             {activeForms.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+        <CardFooter className="flex-col items-start gap-1 text-2xs">
           <div>Forms set to published status</div>
           <div>Available for submission response capture</div>
         </CardFooter>
       </Card>
 
-      <Card className="@container/card bg-zinc-900/35 border-zinc-800">
+      <Card className="@container/card ">
         <CardHeader>
-          <CardDescription className="text-zinc-400">Submission Rate</CardDescription>
-          <CardTitle className="text-2xl font-bold tabular-nums text-white">
+          <CardDescription>Submission Rate</CardDescription>
+          <CardTitle className="text-2xl font-bold tabular-nums">
             {submissionRate.toFixed(1)}%
           </CardTitle>
           <CardAction>
@@ -86,7 +86,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs text-zinc-500">
+        <CardFooter className="flex-col items-start gap-1 text-2xs">
           <div className="flex gap-1.5 font-medium items-center">
             {submissionRateTrend >= 0 ? "Rate increased from last period" : "Rate decreased from last period"}
           </div>

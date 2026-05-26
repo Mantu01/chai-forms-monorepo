@@ -15,7 +15,6 @@ import { Suspense } from "react";
 import { FormFieldsTab } from "~/components/workspaces/form-fields-tab";
 import { FormSubmissionsTab } from "~/components/workspaces/form-submissions-tab";
 import { FormSettingsTab } from "~/components/workspaces/form-settings-tab";
-import { FormGeneratorOverlay } from "~/components/workspaces/form-generator-overlay";
 
 interface FormDetailsPageProps {
   params: Promise<{ workspaceSlug: string; slug: string }>;
@@ -28,8 +27,6 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   const utils = trpc.useUtils();
 
   const activeTab = (searchParams.get("tab") || "fields") as "fields" | "submissions" | "settings";
-  const generateParam = searchParams.get("generate") === "true";
-  const promptParam = searchParams.get("prompt") || "";
 
   const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
   const userId = userData?.user?.id;
@@ -123,9 +120,6 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      {generateParam && promptParam && formId && (
-        <FormGeneratorOverlay formId={formId} prompt={promptParam} />
-      )}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <main className="w-full min-w-0">
           {activeTab === "fields" && formId && (
