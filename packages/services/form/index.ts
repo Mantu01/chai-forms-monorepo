@@ -14,8 +14,71 @@ import {
 } from "./model";
 import { FormQuery, WorkspaceQuery } from "@repo/database/queries";
 import { uploadImage } from "../clients/cloudinary";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "@repo/database";
 import { db, forms as dbForms, formThemes as dbFormThemes, archivedTemplates as dbArchivedTemplates, workspaces as dbWorkspaces } from "@repo/database";
+
+const DEFAULT_THEMES: Record<string, Record<string, string>> = {
+  dark: {
+    backgroundColor: "#09090b",
+    formBackgroundColor: "#18181b",
+    headerBackgroundColor: "#27272a",
+    primaryColor: "#3f3f46",
+    buttonTextColor: "#ffffff",
+    textColor: "#ffffff",
+    mutedTextColor: "#a1a1aa",
+    borderColor: "#27272a",
+    inputBackgroundColor: "#27272a",
+    inputTextColor: "#ffffff",
+  },
+  light: {
+    backgroundColor: "#f4f4f5",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#e4e4e7",
+    primaryColor: "#18181b",
+    buttonTextColor: "#ffffff",
+    textColor: "#09090b",
+    mutedTextColor: "#71717a",
+    borderColor: "#e4e4e7",
+    inputBackgroundColor: "#f4f4f5",
+    inputTextColor: "#09090b",
+  },
+  ocean: {
+    backgroundColor: "#f0f9ff",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#e0f2fe",
+    primaryColor: "#0284c7",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
+  emerald: {
+    backgroundColor: "#f0fdf4",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#dcfce7",
+    primaryColor: "#16a34a",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
+  sunset: {
+    backgroundColor: "#fff7ed",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#ffedd5",
+    primaryColor: "#ea580c",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
+};
 
 export class WorkspaceService {
   constructor(
@@ -43,6 +106,7 @@ export class WorkspaceService {
     let theme = await this.workspaceQuery.getFormTheme(form.id);
     if (!theme) {
       theme = await this.workspaceQuery.upsertFormTheme(form.id, {
+        themeName: "dark",
         backgroundColor: "#09090b",
         formBackgroundColor: "#18181b",
         headerBackgroundColor: "#27272a",
@@ -56,17 +120,21 @@ export class WorkspaceService {
         bannerUrl: null,
       });
     }
+    if (!theme) throw new Error("Failed to initialize form theme");
+    const resolvedTheme = (theme.themeName && theme.themeName !== "custom" && DEFAULT_THEMES[theme.themeName]) || theme;
+
     form.themeConfig = {
-      backgroundColor: theme.backgroundColor,
-      formBackgroundColor: theme.formBackgroundColor,
-      headerBackgroundColor: theme.headerBackgroundColor,
-      primaryColor: theme.primaryColor,
-      buttonTextColor: theme.buttonTextColor,
-      textColor: theme.textColor,
-      mutedTextColor: theme.mutedTextColor,
-      borderColor: theme.borderColor,
-      inputBackgroundColor: theme.inputBackgroundColor,
-      inputTextColor: theme.inputTextColor,
+      themeName: theme.themeName || "custom",
+      backgroundColor: resolvedTheme.backgroundColor,
+      formBackgroundColor: resolvedTheme.formBackgroundColor,
+      headerBackgroundColor: resolvedTheme.headerBackgroundColor,
+      primaryColor: resolvedTheme.primaryColor,
+      buttonTextColor: resolvedTheme.buttonTextColor,
+      textColor: resolvedTheme.textColor,
+      mutedTextColor: resolvedTheme.mutedTextColor,
+      borderColor: resolvedTheme.borderColor,
+      inputBackgroundColor: resolvedTheme.inputBackgroundColor,
+      inputTextColor: resolvedTheme.inputTextColor,
       bannerUrl: theme.bannerUrl,
     };
     return form;
@@ -84,6 +152,7 @@ export class WorkspaceService {
     const form = await this.workspaceQuery.createForm({
       ...parsed.data,
       createdBy,
+      themeConfig: parsed.data.themeConfig || {},
     });
     if (!form) throw new Error("Failed to create form");
 
@@ -372,6 +441,7 @@ export class WorkspaceService {
     const originalTheme = await this.workspaceQuery.getFormTheme(formId);
     if (originalTheme) {
       await this.workspaceQuery.upsertFormTheme(newForm.id, {
+        themeName: originalTheme.themeName || "custom",
         backgroundColor: originalTheme.backgroundColor,
         formBackgroundColor: originalTheme.formBackgroundColor,
         headerBackgroundColor: originalTheme.headerBackgroundColor,

@@ -2,16 +2,90 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "~/componen
 import { Button } from "~/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "~/trpc/client";
 
 interface BillingPlansProps {
   isSubscribed: boolean;
 }
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export function BillingPlans({ isSubscribed }: BillingPlansProps) {
-  const handleUpgrade = () => {
-    toast.success("Mock Checkout: Subscription upgraded successfully!", {
-      description: "You now have complete access to all Pro features.",
-    });
+  const utils = trpc.useUtils();
+  const createOrder = trpc.billing.createOrder.useMutation();
+  const verifyPayment = trpc.billing.verifyPayment.useMutation();
+
+  const handleUpgrade = async () => {
+    try {
+      const order = await createOrder.mutateAsync({ amount: 499 });
+      const loaded = await loadRazorpayScript();
+
+      if (!loaded || order.razorpayOrderId.startsWith("order_mock_")) {
+        toast.info("Razorpay offline or mock environment detected. Simulating transaction...");
+        await verifyPayment.mutateAsync({
+          razorpayOrderId: order.razorpayOrderId,
+          razorpayPaymentId: `pay_mock_${Math.random().toString(36).substring(2, 15)}`,
+          razorpaySignature: "mock_signature",
+        });
+        toast.success("Upgrade Successful!", {
+          description: "You now have complete access to all Pro features.",
+        });
+        utils.auth.me.invalidate();
+        return;
+      }
+
+      const options = {
+        key: order.keyId,
+        amount: order.amount * 100,
+        currency: order.currency,
+        name: "Chai Forms Pro",
+        description: "Professional Monthly Plan Subscription",
+        order_id: order.razorpayOrderId,
+        handler: async (response: any) => {
+          try {
+            await verifyPayment.mutateAsync({
+              razorpayOrderId: order.razorpayOrderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            toast.success("Upgrade Successful!", {
+              description: "You now have complete access to all Pro features.",
+            });
+            utils.auth.me.invalidate();
+          } catch (err: any) {
+            toast.error(err.message || "Payment verification failed");
+          }
+        },
+        prefill: {
+          name: "",
+          email: "",
+        },
+        theme: {
+          color: "#ea580c",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate payment");
+    }
   };
 
   const freeFeatures = [
@@ -36,7 +110,7 @@ export function BillingPlans({ isSubscribed }: BillingPlansProps) {
         <div>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-bold">Starter Plan</CardTitle>
-            <span className="text-lg font-bold mt-1">$0 <span className="text-2xs text-muted-foreground font-normal">/ month</span></span>
+            <span className="text-lg font-bold mt-1">₹0 <span className="text-2xs text-muted-foreground font-normal">/ month</span></span>
           </CardHeader>
           <CardContent className="text-xs space-y-2.5">
             {freeFeatures.map((f) => (
@@ -63,7 +137,7 @@ export function BillingPlans({ isSubscribed }: BillingPlansProps) {
                 Professional
               </CardTitle>
             </div>
-            <span className="text-lg font-bold mt-1">$15 <span className="text-2xs text-muted-foreground font-normal">/ month</span></span>
+            <span className="text-lg font-bold mt-1">₹499 <span className="text-2xs text-muted-foreground font-normal">/ month</span></span>
           </CardHeader>
           <CardContent className="text-xs space-y-2.5">
             {proFeatures.map((f) => (
@@ -75,8 +149,13 @@ export function BillingPlans({ isSubscribed }: BillingPlansProps) {
           </CardContent>
         </div>
         <CardFooter className="pt-3">
-          <Button onClick={handleUpgrade} size="sm" className="w-full text-xs h-8" disabled={isSubscribed}>
-            {isSubscribed ? "Current Plan" : "Upgrade to Pro"}
+          <Button
+            onClick={handleUpgrade}
+            size="sm"
+            className="w-full text-xs h-8 bg-gradient-to-tr from-amber-500 to-orange-600 hover:opacity-90 transition-opacity"
+            disabled={isSubscribed || createOrder.isPending || verifyPayment.isPending}
+          >
+            {isSubscribed ? "Current Plan" : createOrder.isPending || verifyPayment.isPending ? "Upgrading..." : "Upgrade to Pro"}
           </Button>
         </CardFooter>
       </Card>

@@ -46,6 +46,7 @@ const fieldClass =
   "h-10 rounded-xl border-border/60 bg-background/60 text-sm shadow-sm";
 
 const themeDefaults = {
+  themeName: "dark",
   backgroundColor: "#09090b",
   formBackgroundColor: "#18181b",
   headerBackgroundColor: "#27272a",
@@ -56,6 +57,69 @@ const themeDefaults = {
   borderColor: "#27272a",
   inputBackgroundColor: "#27272a",
   inputTextColor: "#ffffff",
+};
+
+const presets: Record<string, Record<string, string>> = {
+  dark: {
+    backgroundColor: "#09090b",
+    formBackgroundColor: "#18181b",
+    headerBackgroundColor: "#27272a",
+    primaryColor: "#3f3f46",
+    buttonTextColor: "#ffffff",
+    textColor: "#ffffff",
+    mutedTextColor: "#a1a1aa",
+    borderColor: "#27272a",
+    inputBackgroundColor: "#27272a",
+    inputTextColor: "#ffffff",
+  },
+  light: {
+    backgroundColor: "#f4f4f5",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#e4e4e7",
+    primaryColor: "#18181b",
+    buttonTextColor: "#ffffff",
+    textColor: "#09090b",
+    mutedTextColor: "#71717a",
+    borderColor: "#e4e4e7",
+    inputBackgroundColor: "#f4f4f5",
+    inputTextColor: "#09090b",
+  },
+  ocean: {
+    backgroundColor: "#f0f9ff",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#e0f2fe",
+    primaryColor: "#0284c7",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
+  emerald: {
+    backgroundColor: "#f0fdf4",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#dcfce7",
+    primaryColor: "#16a34a",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
+  sunset: {
+    backgroundColor: "#fff7ed",
+    formBackgroundColor: "#ffffff",
+    headerBackgroundColor: "#ffedd5",
+    primaryColor: "#ea580c",
+    buttonTextColor: "#ffffff",
+    textColor: "#0f172a",
+    mutedTextColor: "#475569",
+    borderColor: "#e2e8f0",
+    inputBackgroundColor: "#f8fafc",
+    inputTextColor: "#0f172a",
+  },
 };
 
 export function FormSettingsTab({form,workspaceId,workspaceSlug,isAdminOrOwner,}: FormSettingsTabProps) {
@@ -74,7 +138,7 @@ export function FormSettingsTab({form,workspaceId,workspaceSlug,isAdminOrOwner,}
   const [theme, setTheme] = useState(initialTheme);
 
   const updateTheme = (key: string, value: string) => {
-    setTheme((prev) => ({
+    setTheme((prev: any) => ({
       ...prev,
       [key]: value,
     }));
@@ -400,6 +464,38 @@ export function FormSettingsTab({form,workspaceId,workspaceSlug,isAdminOrOwner,}
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label>Theme Preset</Label>
+                <Select
+                  value={theme.themeName || "dark"}
+                  onValueChange={(val) => {
+                    if (val === "custom") {
+                      updateTheme("themeName", "custom");
+                    } else {
+                      const selected = presets[val];
+                      if (selected) {
+                        setTheme({
+                          ...selected,
+                          themeName: val,
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className={fieldClass}>
+                    <SelectValue placeholder="Select theme preset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dark">Default Dark</SelectItem>
+                    <SelectItem value="light">Sleek Light</SelectItem>
+                    <SelectItem value="ocean">Ocean Breeze</SelectItem>
+                    <SelectItem value="emerald">Forest Emerald</SelectItem>
+                    <SelectItem value="sunset">Sunset Glow</SelectItem>
+                    <SelectItem value="custom">Custom Theme</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Card className="border-border/60 bg-muted/20 shadow-none">
                 <CardContent className="space-y-4 p-5">
                   <div className="flex items-center gap-2">
@@ -472,52 +568,54 @@ export function FormSettingsTab({form,workspaceId,workspaceSlug,isAdminOrOwner,}
                 </CardContent>
               </Card>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {themeFields.map((item) => (
-                  <div
-                    key={item.key}
-                    className="space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-4"
-                  >
-                    <Label className="text-sm font-medium">
-                      {item.label}
-                    </Label>
+              {theme.themeName === "custom" && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {themeFields.map((item) => (
+                    <div
+                      key={item.key}
+                      className="space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-4"
+                    >
+                      <Label className="text-sm font-medium">
+                        {item.label}
+                      </Label>
 
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={
-                          theme[
-                            item.key as keyof typeof theme
-                          ]
-                        }
-                        onChange={(e) =>
-                          updateTheme(
-                            item.key,
-                            e.target.value
-                          )
-                        }
-                        className="h-11 w-14 cursor-pointer rounded-xl border border-border bg-transparent"
-                      />
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={
+                            theme[
+                              item.key as keyof typeof theme
+                            ]
+                          }
+                          onChange={(e) =>
+                            updateTheme(
+                              item.key,
+                              e.target.value
+                            )
+                          }
+                          className="h-11 w-14 cursor-pointer rounded-xl border border-border bg-transparent"
+                        />
 
-                      <Input
-                        name={item.key}
-                        value={
-                          theme[
-                            item.key as keyof typeof theme
-                          ]
-                        }
-                        onChange={(e) =>
-                          updateTheme(
-                            item.key,
-                            e.target.value
-                          )
-                        }
-                        className="h-11 rounded-xl font-mono text-sm"
-                      />
+                        <Input
+                          name={item.key}
+                          value={
+                            theme[
+                              item.key as keyof typeof theme
+                            ]
+                          }
+                          onChange={(e) =>
+                            updateTheme(
+                              item.key,
+                              e.target.value
+                            )
+                          }
+                          className="h-11 rounded-xl font-mono text-sm"
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Button

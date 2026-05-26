@@ -5,6 +5,7 @@ import { submissionRouter } from "./routes/submission/route";
 import { formRouter } from "./routes/form/route";
 import { commentRouter } from "./routes/comment/route";
 import { dashboardRouter } from "./routes/dashboard/route";
+import { billingRouter } from "./routes/billing/route";
 
 export const serverRouter = router({
   auth: authRouter,
@@ -13,6 +14,7 @@ export const serverRouter = router({
   form: formRouter,
   comment: commentRouter,
   dashboard: dashboardRouter,
+  billing: billingRouter,
 });
 
 export { createContext } from "./context";

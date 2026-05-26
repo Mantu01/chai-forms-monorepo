@@ -4,6 +4,7 @@ import { forms } from "./form.model";
 export const formThemes = pgTable("form_themes", {
   id: uuid("id").defaultRandom().primaryKey(),
   formId: uuid("form_id").references(() => forms.id, { onDelete: "cascade" }).notNull().unique(),
+  themeName: varchar("theme_name", { length: 50 }).default("dark").notNull(),
   backgroundColor: varchar("background_color", { length: 50 }).default("#09090b").notNull(),
   formBackgroundColor: varchar("form_background_color", { length: 50 }).default("#18181b").notNull(),
   headerBackgroundColor: varchar("header_background_color", { length: 50 }).default("#27272a").notNull(),

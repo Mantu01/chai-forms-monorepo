@@ -29,6 +29,7 @@ export const FormWithStatsResponseSchema = FormResponseSchema.extend({
 export const FormThemeSchema = z.object({
   id: z.string().uuid(),
   formId: z.string().uuid(),
+  themeName: z.string().optional(),
   backgroundColor: z.string(),
   formBackgroundColor: z.string(),
   headerBackgroundColor: z.string(),

@@ -29,6 +29,20 @@
       "when": 1779695329754,
       "tag": "0003_little_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779795083218,
+      "tag": "0004_stale_bulldozer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779795827211,
+      "tag": "0005_curious_klaw",
+      "breakpoints": true
     }
   ]
 }

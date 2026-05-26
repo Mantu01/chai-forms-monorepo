@@ -147,7 +147,7 @@ const MessageSuggestions = React.forwardRef<
     // Find the last AI message
     const lastAiMessage =
       messages.length > 0
-        ? (messages.toReversed().find((msg) => msg.role === "assistant") ??
+        ? ([...messages].reverse().find((msg) => msg.role === "assistant") ??
           null)
         : null;
 
@@ -184,7 +184,10 @@ const MessageSuggestions = React.forwardRef<
           if (!isNaN(keyNum) && keyNum > 0 && keyNum <= suggestions.length) {
             event.preventDefault();
             const suggestionIndex = keyNum - 1;
-            void accept({ suggestion: suggestions[suggestionIndex] });
+            const chosenSuggestion = suggestions[suggestionIndex];
+            if (chosenSuggestion) {
+              void accept({ suggestion: chosenSuggestion });
+            }
           }
         }
       };
