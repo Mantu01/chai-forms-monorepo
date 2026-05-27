@@ -128,6 +128,7 @@ Each published form supports an access level:
 - Workspace RBAC permissions.
 
 ### Razorpay Integration Status + Referral Unlock
+- Razorpay integration is working perfectly to handle payments, but it is currently in test mode.
 - Pro upgrades are implemented through Razorpay checkout:
   - `createOrder` calls Razorpay order creation
   - `verifyPayment` verifies payment signature (or accepts mock in offline/mock mode)

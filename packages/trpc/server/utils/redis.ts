@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import {env} from '../../env'
 
 let redis: Redis | null = null;
 
@@ -7,8 +8,11 @@ function getRedis(): Redis | null {
 
   if (!redis) {
     try {
-      redis = new Redis(process.env.REDIS_URL, {
-        // Don't crash the process on connection failure
+      redis = new Redis( {
+        host:env.REDIS_HOST,
+        password:env.REDIS_PASSWORD,
+        port:env.REDIS_PORT,
+        username:env.REDIS_USERNAME,
         lazyConnect: true,
         enableOfflineQueue: false,
         connectTimeout: 2000,
