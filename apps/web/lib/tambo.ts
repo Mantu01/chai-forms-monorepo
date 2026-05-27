@@ -1,5 +1,5 @@
 import { TamboComponent } from "@tambo-ai/react";
-import z from "zod";
+import { z } from "zod";
 import GenerateForm from "~/components/ai-builder/generate-form";
 
 

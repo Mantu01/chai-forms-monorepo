@@ -19,7 +19,7 @@ import {
 import { publicProcedure, protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { submissionService } from "@repo/services";
-import z from "zod";
+import { z } from "zod";
 
 const TAGS = ["Submission"];
 const getPath = generatePath("/submission");
