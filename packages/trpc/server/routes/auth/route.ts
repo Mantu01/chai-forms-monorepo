@@ -64,7 +64,7 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
-          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod";
+          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
           if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
@@ -112,7 +112,7 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
-          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod";
+          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
           if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
