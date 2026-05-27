@@ -19,7 +19,7 @@ authRouter.get("/callback", async (req, res) => {
     res.cookie("cookie", sessionToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "none" : "lax",
+      sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -29,3 +29,4 @@ authRouter.get("/callback", async (req, res) => {
     return res.status(500).send("Authentication failed");
   }
 });
+

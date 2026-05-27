@@ -24,7 +24,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Card } from "~/components/ui/card";
-import { env } from "~/env";
+import { getApiBaseUrl } from "~/lib/api-url";
 
 interface CreateWorkspaceDialogProps {
   open: boolean;
@@ -88,7 +88,7 @@ export function CreateWorkspaceDialog({ open, onClose, userId }: CreateWorkspace
         logoFormData.append("workspaceId", data.id);
         logoFormData.append("logo", logoFile);
 
-        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/workspace/upload-logo`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/workspace/upload-logo`, {
           method: "POST",
           body: logoFormData,
           credentials:'include'

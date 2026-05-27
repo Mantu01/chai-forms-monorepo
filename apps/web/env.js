@@ -6,7 +6,11 @@ export const env = createEnv({
    * Specify your server-side environment variables schema here. This way you can ensure the app
    * isn't built with invalid env vars.
    */
-  server: {},
+  server: {
+    // Internal URL for the API backend (used by the proxy for server-to-server calls).
+    // Falls back to NEXT_PUBLIC_API_URL if not set.
+    INTERNAL_API_URL: z.string().optional(),
+  },
 
   /**
    * Specify your client-side environment variables schema here. This way you can ensure the app
@@ -23,6 +27,7 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    INTERNAL_API_URL: process.env.INTERNAL_API_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_TAMBO_API_KEY:process.env.NEXT_PUBLIC_TAMBO_API_KEY,
   },

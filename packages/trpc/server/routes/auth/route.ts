@@ -9,6 +9,71 @@ import { signToken } from "../../utils/auth";
 const TAGS = ["Authentication"];
 const getPath = generatePath("/auth");
 
+/**
+ * Centralized cookie configuration.
+ *
+ * Since the frontend now proxies all requests through the same origin,
+ * we use simple, same-origin-friendly cookie settings:
+ * - HttpOnly: true (prevents XSS from reading the cookie)
+ * - Secure: true in production (HTTPS only)
+ * - SameSite: Lax (safe default for same-origin)
+ * - No Domain (defaults to the origin that set the cookie)
+ * - No Partitioned (not needed for same-origin)
+ */
+function getCookieOptions() {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  };
+}
+
+/** Set a cookie on the response object, supporting both Express and raw http responses */
+function setSessionCookie(res: any, token: string) {
+  const opts = getCookieOptions();
+  if ("cookie" in res && typeof res.cookie === "function") {
+    // Express response
+    res.cookie("cookie", token, opts);
+  } else if (typeof res.setHeader === "function") {
+    // Raw http response
+    const parts = [
+      `cookie=${token}`,
+      `Path=${opts.path}`,
+      `Max-Age=${Math.floor(opts.maxAge / 1000)}`,
+      "HttpOnly",
+      `SameSite=${opts.sameSite}`,
+    ];
+    if (opts.secure) parts.push("Secure");
+    res.setHeader("Set-Cookie", parts.join("; "));
+  }
+}
+
+/** Clear the session cookie */
+function clearSessionCookie(res: any) {
+  const opts = getCookieOptions();
+  if ("clearCookie" in res && typeof res.clearCookie === "function") {
+    res.clearCookie("cookie", {
+      path: opts.path,
+      httpOnly: opts.httpOnly,
+      secure: opts.secure,
+      sameSite: opts.sameSite,
+    });
+  } else if (typeof res.setHeader === "function") {
+    const parts = [
+      "cookie=",
+      `Path=${opts.path}`,
+      "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+      "HttpOnly",
+      `SameSite=${opts.sameSite}`,
+    ];
+    if (opts.secure) parts.push("Secure");
+    res.setHeader("Set-Cookie", parts.join("; "));
+  }
+}
+
 export const authRouter = router({
   getSupportedAuthenticationProviders: publicProcedure
     .meta({ openapi: { method: "GET", path: getPath("/supported-providers"), tags: TAGS } })
@@ -32,27 +97,8 @@ export const authRouter = router({
     .input(zodUndefinedModel)
     .output(z.object({ success: z.boolean() }))
     .mutation(async ({ ctx }) => {
-      console.log({ ctx })
       if (ctx.res) {
-        const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-        const domain = process.env.COOKIE_DOMAIN ? process.env.COOKIE_DOMAIN : undefined;
-
-        if ("clearCookie" in ctx.res && typeof (ctx.res as any).clearCookie === "function") {
-          (ctx.res as any).clearCookie("cookie", {
-            path: "/",
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? "none" : "lax",
-            domain,
-            partitioned: isProd ? true : undefined,
-          });
-        } else {
-          const domainStr = domain ? `; Domain=${domain}` : '';
-          const cookieStr = `cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}${domainStr}`;
-          if (typeof (ctx.res as any).setHeader === "function") {
-            (ctx.res as any).setHeader("Set-Cookie", cookieStr);
-          }
-        }
+        clearSessionCookie(ctx.res);
       }
       return { success: true };
     }),
@@ -72,24 +118,7 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
-          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-          const domain = process.env.COOKIE_DOMAIN ? process.env.COOKIE_DOMAIN : undefined;
-
-          if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
-            (ctx.res as any).cookie("cookie", sessionToken, {
-              httpOnly: true,
-              secure: isProd,
-              sameSite: isProd ? "none" : "lax",
-              path: "/",
-              domain,
-              maxAge: 7 * 24 * 60 * 60 * 1000,
-              partitioned: isProd ? true : undefined,
-            });
-          } else if (typeof (ctx.res as any).setHeader === "function") {
-            const domainStr = domain ? `; Domain=${domain}` : '';
-            const cookieStr = `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}${domainStr}`;
-            (ctx.res as any).setHeader("Set-Cookie", cookieStr);
-          }
+          setSessionCookie(ctx.res, sessionToken);
         }
 
         return {
@@ -123,24 +152,7 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
-          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-          const domain = process.env.COOKIE_DOMAIN ? process.env.COOKIE_DOMAIN : undefined;
-
-          if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
-            (ctx.res as any).cookie("cookie", sessionToken, {
-              httpOnly: true,
-              secure: isProd,
-              sameSite: isProd ? "none" : "lax",
-              path: "/",
-              domain,
-              maxAge: 7 * 24 * 60 * 60 * 1000,
-              partitioned: isProd ? true : undefined,
-            });
-          } else if (typeof (ctx.res as any).setHeader === "function") {
-            const domainStr = domain ? `; Domain=${domain}` : '';
-            const cookieStr = `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}${domainStr}`;
-            (ctx.res as any).setHeader("Set-Cookie", cookieStr);
-          }
+          setSessionCookie(ctx.res, sessionToken);
         }
 
         return {

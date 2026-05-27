@@ -16,7 +16,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Spinner } from "~/components/ui/spinner";
-import { env } from "~/env";
+import { getApiBaseUrl } from "~/lib/api-url";
 
 interface WorkspaceSettingsDialogProps {
   workspaceId: string | null;
@@ -66,9 +66,10 @@ export function WorkspaceSettingsDialog({
     formData.append("workspaceId", workspaceId);
 
     try {
-      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/workspace/upload-logo`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/workspace/upload-logo`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to upload");
       utils.workspace.getWorkspace.invalidate({ workspaceId });
