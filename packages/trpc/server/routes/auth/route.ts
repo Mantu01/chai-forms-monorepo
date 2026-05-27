@@ -40,10 +40,8 @@ export const authRouter = router({
           });
         } else {
           const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-          ctx.res.setHeader(
-            "Set-Cookie",
-            `cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
-          );
+          const cookieStr = `cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}`;
+          ctx.res.setHeader("Set-Cookie", cookieStr);
         }
       }
       return { success: true };
@@ -65,19 +63,18 @@ export const authRouter = router({
 
         if (ctx.res) {
           const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-          if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
+          const cookieStr = `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}`;
+          if (typeof (ctx.res as any).setHeader === "function") {
+            (ctx.res as any).setHeader("Set-Cookie", cookieStr);
+          } else if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
               secure: isProd,
               sameSite: isProd ? "none" : "lax",
               path: "/",
               maxAge: 7 * 24 * 60 * 60 * 1000,
+              partitioned: isProd ? true : undefined,
             });
-          } else {
-            ctx.res.setHeader(
-              "Set-Cookie",
-              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
-            );
           }
         }
 
@@ -113,19 +110,18 @@ export const authRouter = router({
 
         if (ctx.res) {
           const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
-          if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
+          const cookieStr = `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly${isProd ? '; SameSite=None; Secure; Partitioned' : '; SameSite=Lax'}`;
+          if (typeof (ctx.res as any).setHeader === "function") {
+            (ctx.res as any).setHeader("Set-Cookie", cookieStr);
+          } else if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
               secure: isProd,
               sameSite: isProd ? "none" : "lax",
               path: "/",
               maxAge: 7 * 24 * 60 * 60 * 1000,
+              partitioned: isProd ? true : undefined,
             });
-          } else {
-            ctx.res.setHeader(
-              "Set-Cookie",
-              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
-            );
           }
         }
 
