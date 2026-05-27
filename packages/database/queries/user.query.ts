@@ -1,4 +1,4 @@
-import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, count } from "drizzle-orm";
 import { users, InsertUser, SelectUser } from "../models/user.model";
 import { referralCodes } from "../models/referral.model";
 import db from "..";
@@ -69,15 +69,16 @@ export class UserQuery {
   }
 
   async countTotalUsers(): Promise<number> {
-    const result = await db.query.users.findMany();
-    return result.length;
+    const [result] = await db.select({ count: count() }).from(users);
+    return result?.count ?? 0;
   }
 
   async countSubscribedUsers(): Promise<number> {
-    const result = await db.query.users.findMany({
-      where: eq(users.isSubscribed, true),
-    });
-    return result.length;
+    const [result] = await db
+      .select({ count: count() })
+      .from(users)
+      .where(eq(users.isSubscribed, true));
+    return result?.count ?? 0;
   }
 
   async findUsersByCreatedDate(startDate: Date, endDate: Date): Promise<SelectUser[]> {

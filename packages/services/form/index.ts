@@ -11,6 +11,7 @@ import {
   UpdateFieldInputSchema,
   UpdateFormInputSchema,
   UpdatePageInputSchema,
+  PublicFormResponseSchema,
 } from "./model";
 import { FormQuery, WorkspaceQuery } from "@repo/database/queries";
 import { uploadImage } from "../clients/cloudinary";
@@ -101,6 +102,42 @@ export class WorkspaceService {
     return form;
   }
 
+  private resolveThemeConfig(theme: any, defaultThemesMap: Map<string, any>): any {
+    let resolvedTheme: any = theme;
+    if (theme.defaultThemeId) {
+      const dbTheme = defaultThemesMap.get(theme.defaultThemeId);
+      if (dbTheme) resolvedTheme = dbTheme;
+    } else if (theme.themeName && theme.themeName !== "custom") {
+      // Try to find by name in the map
+      for (const dt of defaultThemesMap.values()) {
+        if (dt.name === theme.themeName) {
+          resolvedTheme = dt;
+          break;
+        }
+      }
+      // Fallback to built-in themes
+      if (resolvedTheme === theme && DEFAULT_THEMES[theme.themeName]) {
+        resolvedTheme = DEFAULT_THEMES[theme.themeName];
+      }
+    }
+    return {
+      themeName: theme.themeName || "custom",
+      defaultThemeId: theme.defaultThemeId || null,
+      backgroundColor: resolvedTheme.backgroundColor,
+      formBackgroundColor: resolvedTheme.formBackgroundColor,
+      headerBackgroundColor: resolvedTheme.headerBackgroundColor,
+      primaryColor: resolvedTheme.primaryColor,
+      buttonTextColor: resolvedTheme.buttonTextColor,
+      textColor: resolvedTheme.textColor,
+      mutedTextColor: resolvedTheme.mutedTextColor,
+      borderColor: resolvedTheme.borderColor,
+      inputBackgroundColor: resolvedTheme.inputBackgroundColor,
+      inputTextColor: resolvedTheme.inputTextColor,
+      bannerUrl: resolvedTheme.bannerUrl ?? null,
+    };
+  }
+
+  /** Single-form theme attachment (used for individual form fetches) */
   private async attachThemeToForm(form: any) {
     if (!form) return form;
     let theme = await this.workspaceQuery.getFormTheme(form.id);
@@ -121,23 +158,62 @@ export class WorkspaceService {
       });
     }
     if (!theme) throw new Error("Failed to initialize form theme");
-    const resolvedTheme = (theme.themeName && theme.themeName !== "custom" && DEFAULT_THEMES[theme.themeName]) || theme;
-
-    form.themeConfig = {
-      themeName: theme.themeName || "custom",
-      backgroundColor: resolvedTheme.backgroundColor,
-      formBackgroundColor: resolvedTheme.formBackgroundColor,
-      headerBackgroundColor: resolvedTheme.headerBackgroundColor,
-      primaryColor: resolvedTheme.primaryColor,
-      buttonTextColor: resolvedTheme.buttonTextColor,
-      textColor: resolvedTheme.textColor,
-      mutedTextColor: resolvedTheme.mutedTextColor,
-      borderColor: resolvedTheme.borderColor,
-      inputBackgroundColor: resolvedTheme.inputBackgroundColor,
-      inputTextColor: resolvedTheme.inputTextColor,
-      bannerUrl: theme.bannerUrl,
-    };
+    const defaultThemesMap = new Map<string, any>();
+    const allDefaults = await this.workspaceQuery.getDefaultThemes();
+    for (const dt of allDefaults) defaultThemesMap.set(dt.id, dt);
+    form.themeConfig = this.resolveThemeConfig(theme, defaultThemesMap);
     return form;
+  }
+
+  /**
+   * Batch-attach themes for a list of forms.
+   * Makes only 2 DB queries total (themes + defaultThemes) regardless of list size.
+   */
+  private async batchAttachThemesToForms(formList: any[]): Promise<any[]> {
+    if (!formList.length) return formList;
+    const formIds = formList.map((f) => f.id);
+
+    // Fetch all form themes in one query
+    const themes = await this.workspaceQuery.getFormThemesByIds(formIds);
+    const themeByFormId = new Map(themes.map((t) => [t.formId, t]));
+
+    // Fetch all default themes in one query
+    const allDefaults = await this.workspaceQuery.getDefaultThemes();
+    const defaultThemesMap = new Map(allDefaults.map((dt) => [dt.id, dt]));
+
+    // Upsert default theme for forms that have none (only if needed)
+    const missingFormIds = formIds.filter((id) => !themeByFormId.has(id));
+    if (missingFormIds.length > 0) {
+      const defaultThemeData = {
+        themeName: "dark",
+        backgroundColor: "#09090b",
+        formBackgroundColor: "#18181b",
+        headerBackgroundColor: "#27272a",
+        primaryColor: "#3f3f46",
+        buttonTextColor: "#ffffff",
+        textColor: "#ffffff",
+        mutedTextColor: "#a1a1aa",
+        borderColor: "#27272a",
+        inputBackgroundColor: "#27272a",
+        inputTextColor: "#ffffff",
+        bannerUrl: null,
+      };
+      // Upsert in parallel but still just a batch, not N queries
+      const newThemes = await Promise.all(
+        missingFormIds.map((id) => this.workspaceQuery.upsertFormTheme(id, defaultThemeData))
+      );
+      for (const t of newThemes) {
+        if (t) themeByFormId.set(t.formId, t);
+      }
+    }
+
+    return formList.map((form) => {
+      const theme = themeByFormId.get(form.id);
+      if (theme) {
+        form.themeConfig = this.resolveThemeConfig(theme, defaultThemesMap);
+      }
+      return form;
+    });
   }
 
   public async createForm(createdBy: string, input: z.infer<typeof CreateFormInputSchema>): Promise<z.infer<typeof FormResponseSchema>> {
@@ -228,7 +304,7 @@ export class WorkspaceService {
     if (!workspaceId) throw new Error("Workspace id is required");
 
     const forms = await this.workspaceQuery.getFormsByWorkspace(workspaceId);
-    const formsWithThemes = await Promise.all((forms || []).map(f => this.attachThemeToForm(f)));
+    const formsWithThemes = await this.batchAttachThemesToForms([...(forms || [])]);
     return z.array(FormResponseSchema).parse(formsWithThemes || []);
   }
 
@@ -237,7 +313,7 @@ export class WorkspaceService {
     if (!search?.trim()) return [];
 
     const forms = await this.workspaceQuery.searchForms(workspaceId, search);
-    const formsWithThemes = await Promise.all((forms || []).map(f => this.attachThemeToForm(f)));
+    const formsWithThemes = await this.batchAttachThemesToForms([...(forms || [])]);
     return z.array(FormResponseSchema).parse(formsWithThemes || []);
   }
 
@@ -404,7 +480,7 @@ export class WorkspaceService {
   public async getFormsWithStats(workspaceId: string): Promise<ReadonlyArray<z.infer<typeof FormWithStatsResponseSchema>>> {
     if (!workspaceId) throw new Error("Workspace id is required");
     const formsWithStats = await this.workspaceQuery.getFormsWithStats(workspaceId);
-    const formsWithThemes = await Promise.all((formsWithStats || []).map(f => this.attachThemeToForm(f)));
+    const formsWithThemes = await this.batchAttachThemesToForms([...(formsWithStats || [])]);
     return z.array(FormWithStatsResponseSchema).parse(formsWithThemes || []);
   }
 
@@ -506,15 +582,39 @@ export class WorkspaceService {
       .where(and(eq(dbForms.isTemplate, true), eq(dbForms.status, "published")))
       .orderBy(desc(dbForms.createdAt));
 
-    const formsWithThemes = await Promise.all((list || []).map(async (item) => {
-      const formWithTheme = await this.attachThemeToForm(item.form);
-      return {
-        form: formWithTheme,
-        workspace: item.workspace,
-      };
-    }));
+    const rawForms = (list || []).map((item) => item.form);
+    const formsWithThemes = await this.batchAttachThemesToForms(rawForms);
+    const formsWithThemesMap = new Map(formsWithThemes.map((f) => [f.id, f]));
 
-    return formsWithThemes;
+    return (list || []).map((item) => ({
+      form: formsWithThemesMap.get(item.form.id) ?? item.form,
+      workspace: item.workspace,
+    }));
+  }
+
+  public async getPublicForms(): Promise<ReadonlyArray<z.infer<typeof PublicFormResponseSchema>>> {
+    const list = await db
+      .select({
+        form: dbForms,
+        workspace: {
+          name: dbWorkspaces.name,
+          logoUrl: dbWorkspaces.logoUrl,
+        },
+      })
+      .from(dbForms)
+      .innerJoin(dbWorkspaces, eq(dbForms.workspaceId, dbWorkspaces.id))
+      .where(and(eq(dbForms.isTemplate, false), eq(dbForms.isPublic, true), eq(dbForms.status, "published")))
+      .orderBy(desc(dbForms.createdAt));
+
+    const rawForms = (list || []).map((item) => item.form);
+    const formsWithThemes = await this.batchAttachThemesToForms(rawForms);
+    const formsWithThemesMap = new Map(formsWithThemes.map((f) => [f.id, f]));
+
+    const result = (list || []).map((item) => ({
+      form: formsWithThemesMap.get(item.form.id) ?? item.form,
+      workspace: item.workspace,
+    }));
+    return z.array(PublicFormResponseSchema).parse(result);
   }
 
   public async archiveTemplate(userId: string, formId: string): Promise<void> {
@@ -549,15 +649,14 @@ export class WorkspaceService {
       .where(eq(dbArchivedTemplates.userId, userId))
       .orderBy(desc(dbArchivedTemplates.createdAt));
 
-    const formsWithThemes = await Promise.all((list || []).map(async (item) => {
-      const formWithTheme = await this.attachThemeToForm(item.form);
-      return {
-        form: formWithTheme,
-        workspace: item.workspace,
-      };
-    }));
+    const rawForms = (list || []).map((item) => item.form);
+    const formsWithThemes = await this.batchAttachThemesToForms(rawForms);
+    const formsWithThemesMap = new Map(formsWithThemes.map((f) => [f.id, f]));
 
-    return formsWithThemes;
+    return (list || []).map((item) => ({
+      form: formsWithThemesMap.get(item.form.id) ?? item.form,
+      workspace: item.workspace,
+    }));
   }
 
   public async isTemplateArchived(userId: string, formId: string): Promise<boolean> {
@@ -567,5 +666,17 @@ export class WorkspaceService {
       .where(and(eq(dbArchivedTemplates.userId, userId), eq(dbArchivedTemplates.formId, formId)));
 
     return existing.length > 0;
+  }
+
+  public async getDefaultThemes(): Promise<any[]> {
+    return await this.workspaceQuery.getDefaultThemes();
+  }
+
+  public async createDefaultTheme(input: any): Promise<any> {
+    return await this.workspaceQuery.createDefaultTheme(input);
+  }
+
+  public async deleteDefaultTheme(id: string): Promise<void> {
+    await this.workspaceQuery.deleteDefaultTheme(id);
   }
 }

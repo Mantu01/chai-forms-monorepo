@@ -14,7 +14,6 @@ interface WorkspaceHeaderProps {
 const mainTabs = [
   { id: "forms", label: "Forms", icon: FileText, path: (slug: string) => `/workspaces/${slug}/forms` },
   { id: "members", label: "Members", icon: Users, path: (slug: string) => `/workspaces/${slug}/members` },
-  { id: "analytics", label: "Analytics", icon: BarChart3, path: (slug: string) => `/workspaces/${slug}/analytics` },
 ];
 
 const formsFilterTabs = [
@@ -25,12 +24,7 @@ const formsFilterTabs = [
   { id: "private", label: "Private" },
 ];
 
-const analyticsFilterTabs = [
-  { id: "overview", label: "Overview" },
-  { id: "submissions", label: "Submissions" },
-  { id: "device", label: "Devices" },
-  { id: "country", label: "Countries" },
-];
+
 
 const formTabs = [
   { id: "fields", label: "Fields" },
@@ -42,7 +36,6 @@ export function WorkspaceHeader({ slug }: WorkspaceHeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentFilter = searchParams.get("filter") || "all";
-  const currentAnalyticsTab = searchParams.get("type") || "overview";
 
   const parts = pathname.split("/");
   const formIndex = parts.indexOf("form");
@@ -78,7 +71,6 @@ export function WorkspaceHeader({ slug }: WorkspaceHeaderProps) {
   };
 
   const isFormsPath = pathname.endsWith(`/forms`);
-  const isAnalyticsPath = pathname.endsWith(`/analytics`);
   const isMembersPath = pathname.endsWith(`/members`);
   const isMainWorkspacePath = pathname === `/workspaces/${slug}` || pathname === `/workspaces/${slug}/`;
 
@@ -149,24 +141,7 @@ export function WorkspaceHeader({ slug }: WorkspaceHeaderProps) {
             );
           })}
 
-          {isAnalyticsPath && analyticsFilterTabs.map((tab) => {
-            const isActive = currentAnalyticsTab === tab.id;
-            return (
-              <Link key={tab.id} href={`?type=${tab.id}`} scroll={false}>
-                <Button
-                  variant={isActive ? "default" : "ghost"}
-                  size="sm"
-                  className={`h-8 gap-1.5 px-3 text-xs font-normal transition-all ${
-                    isActive
-                      ? "shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </Button>
-              </Link>
-            );
-          })}
+
 
           {isFormDetailsPage && formTabs.map((tab) => {
             const isActive = activeFormTab === tab.id;
@@ -188,9 +163,28 @@ export function WorkspaceHeader({ slug }: WorkspaceHeaderProps) {
           })}
 
           {isMembersPath && (
-            <span className="text-xs text-muted-foreground self-center px-3 py-1 bg-muted/50 rounded-lg border">
-              Workspace Members
-            </span>
+            <div className="flex gap-1.5">
+              <Link href={`/workspaces/${slug}/forms`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 px-3 text-xs font-normal text-muted-foreground hover:text-foreground"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  Forms
+                </Button>
+              </Link>
+              <Link href={`/workspaces/${slug}/members`}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-8 gap-1.5 px-3 text-xs font-normal shadow-sm"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Members
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>

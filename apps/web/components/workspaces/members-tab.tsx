@@ -9,6 +9,8 @@ import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { trpc } from "~/trpc/client";
 import { MemberDetailsDialog } from "./member-details-dialog";
+import { InviteMemberDialog } from "./invite-member-dialog";
+import { toast } from "sonner";
 
 interface MembersTabProps {
   workspaceId: string;
@@ -36,27 +38,39 @@ export function MembersTab({ workspaceId, isAdminOrOwner, workspaceSlug }: Membe
   const removeMember = trpc.workspace.removeMember.useMutation({
     onSuccess: () => {
       utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      toast.success("Member removed successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to remove member");
     },
   });
 
   const changeMemberRole = trpc.workspace.changeMemberRole.useMutation({
     onSuccess: () => {
       utils.workspace.getWorkspaceMembers.invalidate({ workspaceId });
+      toast.success("Role updated successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update role");
     },
   });
 
   const cancelInvite = trpc.workspace.cancelInvite.useMutation({
     onSuccess: () => {
       utils.workspace.getWorkspaceInvites.invalidate({ workspaceId });
+      toast.success("Invitation cancelled successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to cancel invitation");
     },
   });
 
   const handleMemberClick = (userId: string) => {
-    router.push(`?tab=members&memberId=${userId}`);
+    router.replace(`?tab=members&memberId=${userId}`);
   };
 
   const handleCloseMemberDetails = () => {
-    router.push(`?tab=members`);
+    router.replace(`?tab=members`);
   };
 
   return (
@@ -190,6 +204,12 @@ export function MembersTab({ workspaceId, isAdminOrOwner, workspaceSlug }: Membe
         userId={selectedMemberId}
         open={!!selectedMemberId}
         onClose={handleCloseMemberDetails}
+      />
+
+      <InviteMemberDialog
+        workspaceId={workspaceId}
+        open={searchParams.get("new-invite") === "true"}
+        onClose={() => router.replace("?tab=members")}
       />
     </div>
   );

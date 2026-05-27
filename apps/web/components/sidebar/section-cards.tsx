@@ -28,7 +28,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
     <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-2 lg:grid-cols-4 dark:*:data-[slot=card]:bg-card">
       <Card className="@container/card ">
         <CardHeader>
-          <CardDescription>Total Submissions (1m)</CardDescription>
+          <CardDescription>Total Submissions </CardDescription>
           <CardTitle className="text-2xl font-bold tabular-nums">
             {totalSubmissions.toLocaleString()}
           </CardTitle>
@@ -39,8 +39,8 @@ export function SectionCards({ stats }: SectionCardsProps) {
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs">
-          <div className="flex gap-1.5 font-medium items-center">
+        <CardFooter className="flex-col items-start gap-1 font-mono text-xs">
+          <div className="flex gap-1.5 items-center">
             {submissionsTrend >= 0 ? "Trending up this month" : "Trending down this month"}
           </div>
           <div>Compared to the previous 30 days</div>
@@ -54,7 +54,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
             {totalForms.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs">
+        <CardFooter className="flex-col items-start gap-1 font-mono text-xs">
           <div>Forms across all workspaces</div>
           <div>Both draft and published configurations</div>
         </CardFooter>
@@ -67,7 +67,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
             {activeForms.toLocaleString()}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs">
+        <CardFooter className="flex-col items-start gap-1 font-mono text-xs">
           <div>Forms set to published status</div>
           <div>Available for submission response capture</div>
         </CardFooter>
@@ -86,7 +86,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
             </Badge>
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-2xs">
+        <CardFooter className="flex-col items-start gap-1 font-mono text-xs">
           <div className="flex gap-1.5 font-medium items-center">
             {submissionRateTrend >= 0 ? "Rate increased from last period" : "Rate decreased from last period"}
           </div>

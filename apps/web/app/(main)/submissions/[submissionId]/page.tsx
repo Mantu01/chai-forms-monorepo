@@ -89,7 +89,7 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
   }
 
   if (!userData?.user || !subData) {
-    router.push("/auth");
+    router.push("/login");
     return null;
   }
 
@@ -126,7 +126,7 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
     } else {
       params.delete("deleteOpen");
     }
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`);
   };
 
   return (
@@ -241,11 +241,6 @@ export default function SubmissionDetailsPage({ params }: SubmissionPageProps) {
                     </div>
                   );
                 })}
-                <div className="pt-2 flex justify-end">
-                  <Button type="submit" disabled={replaceAnswers.isPending} className="cursor-pointer">
-                    Save Answer Overwrites
-                  </Button>
-                </div>
               </form>
             ) : (
               <p className="text-muted-foreground text-center py-6 text-xs">No fields matched for this form.</p>

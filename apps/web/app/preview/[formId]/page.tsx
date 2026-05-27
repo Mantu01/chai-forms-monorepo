@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, Suspense } from "react";
+import { use } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "~/trpc/client";
@@ -47,7 +47,7 @@ function CommentNode({ comment, allComments, formId, onReplyAdded, router, searc
       formData.set('replyText','')
       const params = new URLSearchParams(searchParams.toString());
       params.delete("replyToCommentId");
-      router.push(`?${params.toString()}`);
+      router.replace(`?${params.toString()}`);
       onReplyAdded();
       toast.success("Reply added");
     } catch (err) {
@@ -60,23 +60,23 @@ function CommentNode({ comment, allComments, formId, onReplyAdded, router, searc
   const displayName = comment.userFullName || comment.guestName || "Anonymous";
 
   return (
-    <div className="space-y-3 pl-4 border-l border-zinc-800 mt-3">
-      <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
+    <div className="space-y-3 pl-4 border-l border-border mt-3">
+      <div className="bg-muted/30 p-3 rounded-xl border border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               {comment.userProfileImageUrl && <AvatarImage src={comment.userProfileImageUrl} />}
-              <AvatarFallback className="text-[10px] bg-zinc-800 text-zinc-300">
+              <AvatarFallback className="text-[10px] text-muted-foreground">
                 {displayName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs font-semibold text-zinc-200">{displayName}</span>
+            <span className="text-xs font-semibold text-foreground">{displayName}</span>
           </div>
-          <span className="text-[10px] text-zinc-500">
+          <span className="text-[10px] text-muted-foreground">
             {new Date(comment.createdAt).toLocaleDateString()}
           </span>
         </div>
-        <p className="text-xs text-zinc-350 mt-2 leading-relaxed">{comment.content}</p>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{comment.content}</p>
         <div className="mt-2 flex justify-end">
           <Button
             variant="ghost"
@@ -84,9 +84,9 @@ function CommentNode({ comment, allComments, formId, onReplyAdded, router, searc
             onClick={() => {
               const params = new URLSearchParams(searchParams.toString());
               params.set("replyToCommentId", comment.id);
-              router.push(`?${params.toString()}`);
+              router.replace(`?${params.toString()}`);
             }}
-            className="text-[10px] text-zinc-400 hover:text-white"
+            className="text-[10px] text-muted-foreground hover:text-foreground"
           >
             Reply
           </Button>
@@ -94,20 +94,20 @@ function CommentNode({ comment, allComments, formId, onReplyAdded, router, searc
       </div>
 
       {isReplying && (
-        <form onSubmit={handleReplySubmit} className="space-y-2 mt-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+        <form onSubmit={handleReplySubmit} className="space-y-2 mt-2 p-3 rounded-lg border border-border bg-card">
           {!userData?.user && (
             <Input
               type="text"
               name="guestName"
               placeholder="Your Name (Guest)"
-              className="text-xs h-8 bg-zinc-900 border-zinc-800 text-white"
+              className="text-xs h-8 border-border bg-background"
             />
           )}
           <div className="flex gap-2">
             <Textarea
               name="replyText"
               placeholder="Write a reply..."
-              className="text-xs bg-zinc-900 border-zinc-800 text-white min-h-[50px] resize-none"
+              className="text-xs border-border bg-background min-h-12.5 resize-none"
             />
             <Button type="submit" size="sm" className="h-9 self-end">
               Send
@@ -161,27 +161,27 @@ function FormComments({ formId, router, searchParams }: { formId: string; router
   const rootComments = comments?.filter((c) => !c.parentId) || [];
 
   return (
-    <Card className="border border-zinc-800 bg-zinc-900/30 backdrop-blur-md">
+    <Card className="border border-border bg-card/30 backdrop-blur-md text-card-foreground">
       <CardContent className="p-4 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
           <MessageSquare className="h-4 w-4 text-primary" />
           Community Discussions ({comments?.length || 0})
         </h3>
 
-        <form onSubmit={handleSubmit} className="space-y-3 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
+        <form onSubmit={handleSubmit} className="space-y-3 bg-muted/20 p-4 rounded-xl border border-border">
           {!userData?.user && (
             <Input
               type="text"
               name="guestName"
               placeholder="Your Name (Guest)"
-              className="text-xs h-9 bg-zinc-950 border-zinc-800 text-white max-w-xs"
+              className="text-xs h-9 border-border bg-background max-w-xs"
             />
           )}
           <div className="flex gap-2">
             <Textarea
               name="commentText"
               placeholder="Share your thoughts about this template..."
-              className="text-xs bg-zinc-950 border-zinc-800 text-white min-h-[60px]"
+              className="text-xs border-border bg-background min-h-15"
             />
             <Button type="submit" className="h-10 self-end px-4 gap-1">
               <Send className="h-3 w-3" />
@@ -190,9 +190,9 @@ function FormComments({ formId, router, searchParams }: { formId: string; router
           </div>
         </form>
 
-        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+        <div className="space-y-4 max-h-100 overflow-y-auto pr-2">
           {rootComments.length === 0 ? (
-            <p className="text-xs text-zinc-500 text-center py-4">No discussions yet. Be the first to share your feedback!</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No discussions yet. Be the first to share your feedback!</p>
           ) : (
             rootComments.map((comment) => (
               <CommentNode
@@ -212,7 +212,12 @@ function FormComments({ formId, router, searchParams }: { formId: string; router
   );
 }
 
-function PreviewContent({ formId }: { formId: string }) {
+interface PreviewPageProps {
+  params: Promise<{ formId: string }>;
+}
+
+export default function PreviewPage({ params }: PreviewPageProps) {
+  const { formId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -235,24 +240,24 @@ function PreviewContent({ formId }: { formId: string }) {
 
   if (formLoading || !form) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 space-y-6">
+    <div className="min-h-screen p-6 space-y-6 bg-background text-foreground">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
-          <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+          <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-2" variant="outline">
             <Sparkles className="h-3 w-3" />
             Live Preview Mode
           </Badge>
-          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
             {form.title}
           </h1>
-          <p className="text-zinc-400 text-xs leading-relaxed max-w-lg">
+          <p className="text-muted-foreground text-xs leading-relaxed max-w-lg">
             Test conditional visibility flows and inputs. Submissions will not be saved.
           </p>
         </div>
@@ -260,7 +265,7 @@ function PreviewContent({ formId }: { formId: string }) {
           variant="outline"
           size="sm"
           onClick={() => window.close()}
-          className="h-8 text-xs border-zinc-800 gap-1.5"
+          className="h-8 text-xs border-border gap-1.5"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Close Preview</span>
@@ -268,7 +273,7 @@ function PreviewContent({ formId }: { formId: string }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 px-[10%]">
           <FormRenderer
             form={form}
             pages={pages || []}
@@ -296,14 +301,5 @@ function PreviewContent({ formId }: { formId: string }) {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function PreviewPage(props: { params: Promise<{ formId: string }> }) {
-  const { formId } = use(props.params);
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-zinc-950"><Spinner /></div>}>
-      <PreviewContent formId={formId} />
-    </Suspense>
   );
 }

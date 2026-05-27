@@ -1,5 +1,5 @@
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
-import { Archive, Building2, LayoutDashboard, LayoutTemplate, MessageSquareText} from "lucide-react"
+import { Archive, Building2, LayoutDashboard, LayoutTemplate, MessageSquareText, Globe, FileCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -16,7 +16,9 @@ import {
 const MAIN_NAV = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Workspaces', url: '/workspaces', icon: Building2 },
+  {title:"Submissions",url:'/submissions',icon:FileCheck},
   { title: 'Community', url: '/community', icon: MessageSquareText },
+  { title: 'Explore', url: '/explore', icon: Globe },
   { title: 'Archived', url: '/archived', icon: Archive },
   { title: 'Templates', url: '/templates', icon: LayoutTemplate },
 ];

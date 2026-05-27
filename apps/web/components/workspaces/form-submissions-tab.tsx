@@ -150,7 +150,7 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`?tab=submissions&sortSub-dialog=true`)}
+            onClick={() => router.replace(`?tab=submissions&sortSub-dialog=true`)}
             className="h-9 gap-1.5 text-xs"
           >
             <ArrowUpDown className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`?tab=submissions&view-submission=${sub.id}`)}
+                        onClick={() => router.replace(`?tab=submissions&view-submission=${sub.id}`)}
                         className="gap-1 text-xs"
                       >
                         <Eye className="h-3 w-3" />
@@ -214,7 +214,7 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
         </div>
       )}
 
-      <Dialog open={!!activeDetailId} onOpenChange={(open) => { if (!open) router.push(`?tab=submissions`); }}>
+      <Dialog open={!!activeDetailId} onOpenChange={(open) => { if (!open) router.replace(`?tab=submissions`); }}>
         <DialogContent className="border-border bg-card/95 backdrop-blur-md max-h-[80vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold">Submission Details</DialogTitle>
@@ -249,12 +249,12 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
           ) : null}
 
           <DialogFooter>
-            <Button size="sm" onClick={() => router.push(`?tab=submissions`)} className="rounded-xl text-xs">Close</Button>
+            <Button size="sm" onClick={() => router.replace(`?tab=submissions`)} className="rounded-xl text-xs">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={searchParams.get("sortSub-dialog") === "true"} onOpenChange={(open) => { if (!open) router.push(`?tab=submissions`); }}>
+      <Dialog open={searchParams.get("sortSub-dialog") === "true"} onOpenChange={(open) => { if (!open) router.replace(`?tab=submissions`); }}>
         <DialogContent className="border-border bg-card/95 backdrop-blur-md sm:max-w-xs">
           <DialogHeader>
             <DialogTitle className="text-sm font-bold">Sort Submissions</DialogTitle>
@@ -270,7 +270,7 @@ export function FormSubmissionsTab({ formId }: FormSubmissionsTabProps) {
                 <Button
                   key={option.id}
                   variant={isActive ? "default" : "outline"}
-                  onClick={() => router.push(`?tab=submissions&sortBySub=${option.id}`)}
+                  onClick={() => router.replace(`?tab=submissions&sortBySub=${option.id}`)}
                   className="justify-start text-xs rounded-xl h-9"
                 >
                   {option.label}

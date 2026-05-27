@@ -1,4 +1,4 @@
-import { SubmissionQuery, FormQuery } from "@repo/database/queries";
+import { SubmissionQuery, FormQuery, UserQuery } from "@repo/database/queries";
 import {
   CreateSubmissionInputSchema,
   createSubmissionInputSchema,
@@ -31,9 +31,11 @@ import {
   RecentSubmissionsResponseSchema,
   recentSubmissionsResponseSchema,
 } from "./modal";
+import { sendMail } from "../mail/mailer";
 
 export class SubmissionService {
   private readonly submissionQuery = new SubmissionQuery();
+  private readonly userQuery = new UserQuery();
 
   public async createSubmission(
     input: CreateSubmissionInputSchema & { submittedBy?: string }
@@ -123,6 +125,49 @@ export class SubmissionService {
     }).filter((a: any) => a !== undefined);
 
     const answers = await this.submissionQuery.bulkCreateAnswers(answersToInsert as any[]);
+
+    try {
+      const form = await formQuery.getFormById(payload.formId);
+      if (form) {
+        const creator = await this.userQuery.findUserById(form.createdBy);
+        if (creator && creator.email) {
+          const answersWithLabels = visibleFields.map((f: any) => {
+            const ans = answersToInsert.find((a: any) => a.fieldId === f.id);
+            return {
+              label: f.label || f.fieldKey,
+              value: ans ? ans.value : null,
+            };
+          });
+
+          let submittedByText = "Guest";
+          if (input.submittedBy) {
+            const submitter = await this.userQuery.findUserById(input.submittedBy);
+            if (submitter) {
+              submittedByText = submitter.fullName;
+            }
+          }
+
+          sendMail({
+            to: creator.email,
+            subject: `New submission for Form: ${form.title}`,
+            templateProps: {
+              type: "submission",
+              data: {
+                formTitle: form.title,
+                submissionId: submission.id,
+                submittedAt: submission.submittedAt ? submission.submittedAt.toLocaleString() : new Date().toLocaleString(),
+                submittedBy: submittedByText,
+                answers: answersWithLabels,
+              },
+            },
+          }).catch(mailErr => {
+            console.error("Failed to send submission email inside sendMail promise:", mailErr);
+          });
+        }
+      }
+    } catch (mailError) {
+      console.error("Failed to send submission email notification:", mailError);
+    }
 
     return submissionWithAnswersResponseSchema.parse({
       submission,

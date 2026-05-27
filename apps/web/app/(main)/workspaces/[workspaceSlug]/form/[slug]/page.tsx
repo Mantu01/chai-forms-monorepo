@@ -11,7 +11,6 @@ import { Spinner } from "~/components/ui/spinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
 import { toast } from "sonner";
-import { Suspense } from "react";
 import { FormFieldsTab } from "~/components/workspaces/form-fields-tab";
 import { FormSubmissionsTab } from "~/components/workspaces/form-submissions-tab";
 import { FormSettingsTab } from "~/components/workspaces/form-settings-tab";
@@ -20,7 +19,7 @@ interface FormDetailsPageProps {
   params: Promise<{ workspaceSlug: string; slug: string }>;
 }
 
-function FormDetailsContent({ params }: FormDetailsPageProps) {
+export default function FormDetailsPage({ params }: FormDetailsPageProps) {
   const { workspaceSlug, slug: formSlug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +61,7 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
   const createField = trpc.form.createField.useMutation({
     onSuccess: () => {
       toast.success("Field added successfully");
-      router.push(`?tab=fields`);
+      router.replace(`?tab=fields`);
       if (formId) {
         utils.form.getFieldsByForm.invalidate({ formId });
       }
@@ -132,6 +131,7 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
 
           {activeTab === "settings" && formId && (
             <FormSettingsTab
+              key={formId}
               form={form}
               workspaceId={workspaceId!}
               workspaceSlug={workspaceSlug}
@@ -140,98 +140,6 @@ function FormDetailsContent({ params }: FormDetailsPageProps) {
           )}
         </main>
       </div>
-
-      <Dialog open={searchParams.get("new-field") === "true"} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
-        <DialogContent>
-          <form onSubmit={handleAddField} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Add Form Field</DialogTitle>
-              <DialogDescription>
-                Create a new input field for submitters to respond to.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="field-label">Field Label</Label>
-                <Input
-                  id="field-label"
-                  name="label"
-                  required
-                  placeholder="e.g. Email Address"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="field-type">Field Type</Label>
-                <Select name="type" defaultValue="text">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-48 overflow-y-auto">
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="textarea">Textarea</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="phone">Phone Number</SelectItem>
-                    <SelectItem value="number">Number</SelectItem>
-                    <SelectItem value="date">Date</SelectItem>
-                    <SelectItem value="time">Time</SelectItem>
-                    <SelectItem value="file">File</SelectItem>
-                    <SelectItem value="checkbox">Checkbox</SelectItem>
-                    <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="radio">Radio</SelectItem>
-                    <SelectItem value="matrix">Matrix</SelectItem>
-                    <SelectItem value="multi_select">Multi Select</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="field-placeholder">Placeholder</Label>
-                <Input
-                  id="field-placeholder"
-                  name="placeholder"
-                  placeholder="e.g. enter your email"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="field-req">Required Field</Label>
-                <Select name="isRequired" defaultValue="false">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="false">Optional</SelectItem>
-                    <SelectItem value="true">Required (*)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push(`?tab=fields`)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createField.isPending}>
-                Add Field
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
-
-export default function FormDetailsPage(props: FormDetailsPageProps) {
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Spinner /></div>}>
-      <FormDetailsContent {...props} />
-    </Suspense>
   );
 }

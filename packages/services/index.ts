@@ -15,3 +15,4 @@ export const dashboardService = new DashboardService();
 export const billingService = new BillingService();
 
 export { uploadImage } from "./clients/cloudinary";
+export { sendMail } from "./mail/mailer";

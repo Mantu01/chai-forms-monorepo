@@ -149,3 +149,54 @@ export const UpdateFieldInputSchema = CreateFieldInputSchema.partial();
 export const ReorderInputSchema = z.object({
   ids: z.array(z.string().uuid()),
 });
+
+export const DefaultThemeResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  backgroundColor: z.string(),
+  formBackgroundColor: z.string(),
+  headerBackgroundColor: z.string(),
+  primaryColor: z.string(),
+  buttonTextColor: z.string(),
+  textColor: z.string(),
+  mutedTextColor: z.string(),
+  borderColor: z.string(),
+  inputBackgroundColor: z.string(),
+  inputTextColor: z.string(),
+  bannerUrl: z.string().nullable(),
+  isDefault: z.boolean(),
+  createdAt: z.any(),
+  updatedAt: z.any().nullable(),
+});
+
+export const CreateDefaultThemeInputSchema = z.object({
+  name: z.string().min(1),
+  backgroundColor: z.string(),
+  formBackgroundColor: z.string(),
+  headerBackgroundColor: z.string(),
+  primaryColor: z.string(),
+  buttonTextColor: z.string(),
+  textColor: z.string(),
+  mutedTextColor: z.string(),
+  borderColor: z.string(),
+  inputBackgroundColor: z.string(),
+  inputTextColor: z.string(),
+  bannerUrl: z.string().optional().nullable(),
+  isDefault: z.boolean().optional(),
+});
+
+export const PublicTemplateResponseSchema = z.object({
+  form: FormResponseSchema,
+  workspace: z.object({
+    name: z.string(),
+    logoUrl: z.string().nullable(),
+  }),
+});
+
+export const PublicFormResponseSchema = z.object({
+  form: FormResponseSchema,
+  workspace: z.object({
+    name: z.string(),
+    logoUrl: z.string().nullable(),
+  }),
+});

@@ -1,5 +1,5 @@
 import db from "..";
-import { and, count, desc, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { forms } from "../models/form.model";
 import { submissions } from "../models/submission.model";
 import { formComments } from "../models/comment.model";
@@ -118,6 +118,7 @@ export class DashboardQuery {
   public async getRecentPublishedForms(workspaceIds: string[], limit = 3) {
     if (!workspaceIds.length) return [];
 
+    // Single query: forms + submission counts via LEFT JOIN
     const rows = await db
       .select({
         id: forms.id,
@@ -125,36 +126,29 @@ export class DashboardQuery {
         createdAt: forms.createdAt,
         publishedAt: forms.publishedAt,
         createdByName: users.fullName,
+        submissionCount: sql<number>`cast(count(${submissions.id}) as integer)`,
       })
       .from(forms)
       .innerJoin(users, eq(forms.createdBy, users.id))
+      .leftJoin(submissions, eq(submissions.formId, forms.id))
       .where(
         and(
           inArray(forms.workspaceId, workspaceIds),
           eq(forms.status, "published")
         )
       )
+      .groupBy(forms.id, users.fullName)
       .orderBy(desc(forms.publishedAt), desc(forms.createdAt))
       .limit(limit);
 
-    const result = [];
-    for (const row of rows) {
-      const [res] = await db
-        .select({ count: count() })
-        .from(submissions)
-        .where(eq(submissions.formId, row.id));
-
-      result.push({
-        id: row.id,
-        title: row.title,
-        createdAt: row.createdAt,
-        publishedAt: row.publishedAt,
-        createdByName: row.createdByName,
-        submissionCount: res?.count ?? 0,
-      });
-    }
-
-    return result;
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      createdAt: row.createdAt,
+      publishedAt: row.publishedAt,
+      createdByName: row.createdByName,
+      submissionCount: row.submissionCount ?? 0,
+    }));
   }
 
   public async getRecentComments(workspaceIds: string[], limit = 3) {

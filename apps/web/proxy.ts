@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = ["/profile", "/workspaces", "/submissions"];
+const protectedRoutes = ["/profile","/notification", "/billings", "/workspaces","/dashboard","/community","/archived","/templates",'/form'];
 
-const publicRoutes = ["/auth"];
+const publicRoutes = ["/login", "/signup"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
 
   if (isProtectedRoute && !session) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/auth";
+    loginUrl.pathname = "/login";
 
     loginUrl.searchParams.set("from", pathname);
 

@@ -74,7 +74,7 @@ export function ChartAreaInteractive() {
   };
 
   const activeKeys = graphData && graphData.length > 0 
-    ? Object.keys(graphData[0]).filter((k) => k !== "date")
+    ? Object.keys(graphData[0]!).filter((k) => k !== "date")
     : [];
 
   const chartConfig: any = {};
@@ -149,7 +149,7 @@ export function ChartAreaInteractive() {
               );
             })}
 
-            {type === "form" && allForms?.map((f) => {
+            {type === "form" && allForms?.map((f: any) => {
               const isChecked = selectedIds.includes(f.id);
               return (
                 <div key={f.id} className="flex items-center gap-2">

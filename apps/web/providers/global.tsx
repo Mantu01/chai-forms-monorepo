@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Toaster } from "~/components/ui/sonner";
 import { TamboProvider } from "@tambo-ai/react";
 
@@ -40,7 +40,9 @@ export const GlobalProviders: React.FC<{ children: React.ReactNode }> = ({ child
           disableTransitionOnChange
         >
           <trpc.Provider queryClient={queryClient} client={trpcClient}>
-            {children}
+            <Suspense>
+              {children}
+            </Suspense>
             <Toaster />
           </trpc.Provider>
         </NextThemesProvider>

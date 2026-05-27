@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns:[
       'res.cloudinary.com',
       'lh3.googleusercontent.com',
+      'images.unsplash.com',
     ].map(hostname=>({
       protocol:'https',
       hostname

@@ -5,6 +5,7 @@ const navLinks = [
   { href: "/about", label: "About" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
+  {href:'/pricing',label:"Pricing"},
 ]
 
 export default function Header() {

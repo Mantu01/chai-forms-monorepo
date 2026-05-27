@@ -50,7 +50,6 @@ export default function FormsPage({ params }: FormsPageProps) {
   const sortBy = searchParams.get("sortBy") || "date_desc";
 
   const { data: userData, isLoading: userLoading } = trpc.auth.me.useQuery();
-  const userId = userData?.user?.id;
 
   const { data: workspace, isLoading: workspaceLoading } = trpc.workspace.getWorkspaceBySlug.useQuery(
     { slug: workspaceSlug },
@@ -213,10 +212,10 @@ export default function FormsPage({ params }: FormsPageProps) {
                     </div>
 
                     <div className="flex gap-1.5 sm:w-48 shrink-0 justify-start sm:justify-end">
-                      <Badge variant="outline" className="text-3xs px-1.5 py-0 capitalize bg-muted/40 font-mono">
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 capitalize bg-muted/40 font-mono">
                         {form.status}
                       </Badge>
-                      <Badge variant="outline" className="text-3xs px-1.5 py-0 capitalize bg-muted/40 font-mono">
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 capitalize bg-muted/40 font-mono">
                         {form.accessLevel}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground bg-muted/20 px-1.5 py-0.5 rounded border self-center">
@@ -363,7 +362,7 @@ export default function FormsPage({ params }: FormsPageProps) {
                 <Button
                   key={option.id}
                   variant={isActive ? "default" : "outline"}
-                  onClick={() => router.push(`?sortBy=${option.id}`)}
+                  onClick={() => router.replace(`?sortBy=${option.id}`)}
                   className="justify-start text-xs rounded-xl"
                 >
                   {option.label}

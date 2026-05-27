@@ -1,12 +1,5 @@
 "use client";
 
-import * as React from "react";
-import {
-  IconDatabase,
-  IconHelp,
-  IconSearch,
-  IconSettings,
-} from "@tabler/icons-react";
 
 import { NavDocuments } from "~/components/sidebar/nav-documents";
 import { NavMain } from "~/components/sidebar/nav-main";
@@ -90,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     isSubscribed: false,
   };
 
-  const documentItems = userForms? userForms.map((f) => f.title): [];
+  const documentItems = userForms? userForms.map((f: any) => f.title): [];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

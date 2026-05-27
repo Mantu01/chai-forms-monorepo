@@ -11,6 +11,15 @@ export const billingRouter = router({
   createOrder: protectedProcedure
     .meta({ openapi: { method: "POST", path: getPath("/order/create"), tags: TAGS } })
     .input(z.object({ amount: z.number() }))
+    .output(
+      z.object({
+        id: z.string().uuid(),
+        razorpayOrderId: z.string(),
+        amount: z.number(),
+        currency: z.string(),
+        keyId: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       try {
         return await billingService.createOrder(ctx.userId, input.amount);
@@ -28,6 +37,7 @@ export const billingRouter = router({
         razorpaySignature: z.string(),
       })
     )
+    .output(z.object({ success: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       try {
         return await billingService.verifyPayment(

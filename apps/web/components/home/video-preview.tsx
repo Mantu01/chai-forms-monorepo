@@ -7,7 +7,7 @@ interface VideoPreviewProps {
 export default function VideoPreview({videoUrl,}: VideoPreviewProps) {
   return (
     <div className="w-full">
-      <div className="group relative overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_20px_80px_rgba(0,0,0,0.45)] ring-1 ring-white/5">
+      <div className="group  overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_20px_80px_rgba(0,0,0,0.45)] ring-1 ring-white/5">
         
         {/* Top Bar */}
         <div className="flex items-center gap-2 border-b border-white/10 bg-white/3 px-4 py-3 backdrop-blur-xl">

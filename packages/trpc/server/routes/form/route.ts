@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { z } from "../../schema";
+import { z, zodUndefinedModel } from "../../schema";
 import {
   CreateFormInputSchema,
   UpdateFormInputSchema,
@@ -12,13 +12,22 @@ import {
   UpdatePageInputSchema,
   PageResponseSchema,
   ReorderInputSchema,
+  DefaultThemeResponseSchema,
+  CreateDefaultThemeInputSchema,
+  PublicTemplateResponseSchema,
+  PublicFormResponseSchema,
 } from "@repo/services/form/model";
 import { publicProcedure, protectedProcedure, router } from "../../trpc";
 import { generatePath } from "../../utils/path-generator";
 import { formService } from "@repo/services";
+import redis from "../../utils/redis";
 
 const TAGS = ["Form"];
 const getPath = generatePath("/form");
+
+// Cache TTL values (seconds)
+const SLUG_CACHE_TTL = 3600;    // 1 hour – public form by slug
+const TEMPLATE_CACHE_TTL = 300; // 5 minutes – public/archived templates
 
 export const formRouter = router({
   createForm: protectedProcedure
@@ -44,7 +53,10 @@ export const formRouter = router({
     .output(FormResponseSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.updateForm(ctx.userId, input.formId, input.data);
+        const result = await formService.updateForm(ctx.userId, input.formId, input.data);
+        // Invalidate slug cache in case slug changed
+        await redis.del(`public:form:slug:${result.slug}`);
+        return result;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -56,13 +68,15 @@ export const formRouter = router({
     .output(FormResponseSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.deleteForm(ctx.userId, input.formId);
+        const result = await formService.deleteForm(ctx.userId, input.formId);
+        await redis.del(`public:form:slug:${result.slug}`);
+        return result;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
     }),
 
-  getFormById: publicProcedure
+  getFormById: protectedProcedure
     .meta({ openapi: { method: "GET", path: getPath("/get"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(FormResponseSchema)
@@ -74,13 +88,21 @@ export const formRouter = router({
       }
     }),
 
+  // Redis cached: public form fetch by slug (used on live form page)
   getFormBySlug: publicProcedure
     .meta({ openapi: { method: "GET", path: getPath("/get-by-slug"), tags: TAGS } })
     .input(z.object({ workspaceId: z.string().uuid().optional(), slug: z.string() }))
     .output(FormResponseSchema)
     .query(async ({ input }) => {
       try {
-        return await formService.getFormBySlug(input.workspaceId, input.slug);
+        const cacheKey = `public:form:slug:${input.slug}`;
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+        const data = await formService.getFormBySlug(input.workspaceId, input.slug);
+        await redis.setex(cacheKey, SLUG_CACHE_TTL, JSON.stringify(data));
+        return data;
       } catch (error: any) {
         throw new TRPCError({ code: "NOT_FOUND", message: error.message });
       }
@@ -104,7 +126,10 @@ export const formRouter = router({
     .output(FormResponseSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.publishForm(ctx.userId, input.formId);
+        const result = await formService.publishForm(ctx.userId, input.formId);
+        // Slug cache may now serve stale draft data — clear it
+        await redis.del(`public:form:slug:${result.slug}`);
+        return result;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -116,7 +141,9 @@ export const formRouter = router({
     .output(FormResponseSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await formService.archiveForm(ctx.userId, input.formId);
+        const result = await formService.archiveForm(ctx.userId, input.formId);
+        await redis.del(`public:form:slug:${result.slug}`);
+        return result;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
@@ -262,6 +289,7 @@ export const formRouter = router({
     }),
 
   uploadFile: publicProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/upload"), tags: TAGS } })
     .input(z.object({ fileData: z.string(), folder: z.string() }))
     .output(z.object({ url: z.string() }))
     .mutation(async ({ input }) => {
@@ -273,16 +301,48 @@ export const formRouter = router({
       }
     }),
 
+  // Redis cached: public templates list
   getPublicTemplates: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/templates/public"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.readonly(z.array(PublicTemplateResponseSchema)))
     .query(async () => {
       try {
-        return await formService.getPublicTemplates();
+        const cacheKey = "public:templates";
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
+        }
+        const data = await formService.getPublicTemplates();
+        await redis.setex(cacheKey, TEMPLATE_CACHE_TTL, JSON.stringify(data));
+        return data as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  // Redis cached: public forms list
+  getPublicForms: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/public"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.readonly(z.array(PublicFormResponseSchema)))
+    .query(async () => {
+      try {
+        const cacheKey = "public:forms";
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
+        }
+        const data = await formService.getPublicForms();
+        await redis.setex(cacheKey, TEMPLATE_CACHE_TTL, JSON.stringify(data));
+        return data as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
     }),
 
   cloneFormTemplate: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/template/clone"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid(), workspaceId: z.string().uuid() }))
     .output(FormResponseSchema)
     .mutation(async ({ ctx, input }) => {
@@ -294,10 +354,16 @@ export const formRouter = router({
     }),
 
   archiveTemplate: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/template/archive"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
+    .output(z.object({ success: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       try {
         await formService.archiveTemplate(ctx.userId, input.formId);
+        // Invalidate archived templates cache for this user
+        await redis.del(`archived:templates:${ctx.userId}`);
+        // Also invalidate public templates since visibility may change
+        await redis.del("public:templates");
         return { success: true };
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
@@ -305,31 +371,84 @@ export const formRouter = router({
     }),
 
   unarchiveTemplate: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/template/unarchive"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
+    .output(z.object({ success: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       try {
         await formService.unarchiveTemplate(ctx.userId, input.formId);
+        await redis.del(`archived:templates:${ctx.userId}`);
+        await redis.del("public:templates");
         return { success: true };
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
     }),
 
+  // Redis cached: archived templates (per user)
   getArchivedTemplates: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/templates/archived"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.readonly(z.array(PublicTemplateResponseSchema)))
     .query(async ({ ctx }) => {
       try {
-        return await formService.getArchivedTemplates(ctx.userId);
+        const cacheKey = `archived:templates:${ctx.userId}`;
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached) as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
+        }
+        const data = await formService.getArchivedTemplates(ctx.userId);
+        await redis.setex(cacheKey, TEMPLATE_CACHE_TTL, JSON.stringify(data));
+        return data as Array<{ form: any; workspace: { name: string; logoUrl: string | null } }>;
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }
     }),
 
   isTemplateArchived: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/template/is-archived"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(z.boolean())
     .query(async ({ ctx, input }) => {
       try {
         return await formService.isTemplateArchived(ctx.userId, input.formId);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  getDefaultThemes: publicProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/themes/default"), tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.array(DefaultThemeResponseSchema))
+    .query(async () => {
+      try {
+        return await formService.getDefaultThemes();
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  createDefaultTheme: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/theme/default/create"), tags: TAGS } })
+    .input(CreateDefaultThemeInputSchema)
+    .output(DefaultThemeResponseSchema)
+    .mutation(async ({ input }) => {
+      try {
+        return await formService.createDefaultTheme(input);
+      } catch (error: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+      }
+    }),
+
+  deleteDefaultTheme: protectedProcedure
+    .meta({ openapi: { method: "POST", path: getPath("/theme/default/delete"), tags: TAGS } })
+    .input(z.object({ id: z.string().uuid() }))
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input }) => {
+      try {
+        await formService.deleteDefaultTheme(input.id);
+        return { success: true };
       } catch (error: any) {
         throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
       }

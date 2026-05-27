@@ -41,7 +41,7 @@ export function WorkspacesClient() {
 
   const handleOpenMembers = (id: string | null) => {
     if (id) {
-      router.push(`?members=${id}`);
+      router.replace(`?members=${id}`);
     } else {
       router.push("/workspaces");
     }
@@ -49,7 +49,7 @@ export function WorkspacesClient() {
 
   const handleOpenSettings = (id: string | null) => {
     if (id) {
-      router.push(`?settings=${id}`);
+      router.replace(`?settings=${id}`);
     } else {
       router.push("/workspaces");
     }
@@ -57,7 +57,7 @@ export function WorkspacesClient() {
 
   const handleOpenDelete = (id: string | null) => {
     if (id) {
-      router.push(`?delete=${id}`);
+      router.replace(`?delete=${id}`);
     } else {
       router.push("/workspaces");
     }

@@ -1,8 +1,9 @@
-import { and, asc, count, desc, eq, ilike, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import db from "..";
 import { formFields, formPages, forms, InsertForm, InsertFormField, InsertFormPage, SelectForm, SelectFormField, SelectFormPage } from "../models/form.model";
 import { submissions } from "../models/submission.model";
-import { formThemes } from "../models/theme.model";
+import { formThemes, defaultThemes, SelectFormTheme } from "../models/theme.model";
+
 
 export class FormQuery {
   public async createForm(data: InsertForm): Promise<SelectForm | undefined> {
@@ -126,17 +127,28 @@ export class FormQuery {
   }
 
   public async getFormsWithStats(workspaceId: string) {
-    const formsList = await db.select().from(forms).where(eq(forms.workspaceId, workspaceId)).orderBy(desc(forms.createdAt));
-    const stats = await Promise.all(
-      formsList.map(async (f) => {
-        const [res] = await db.select({ count: count() }).from(submissions).where(eq(submissions.formId, f.id));
-        return {
-          ...f,
-          submissionCount: res?.count ?? 0,
-        };
+    // Single query with LEFT JOIN instead of N+1 per-form count queries
+    const rows = await db
+      .select({
+        form: forms,
+        submissionCount: sql<number>`cast(count(${submissions.id}) as integer)`,
       })
-    );
-    return stats;
+      .from(forms)
+      .leftJoin(submissions, eq(submissions.formId, forms.id))
+      .where(eq(forms.workspaceId, workspaceId))
+      .groupBy(forms.id)
+      .orderBy(desc(forms.createdAt));
+
+    return rows.map((r) => ({
+      ...r.form,
+      submissionCount: r.submissionCount ?? 0,
+    }));
+  }
+
+  /** Batch-fetch form themes for multiple form IDs in one query */
+  public async getFormThemesByIds(formIds: string[]): Promise<SelectFormTheme[]> {
+    if (!formIds.length) return [];
+    return db.select().from(formThemes).where(inArray(formThemes.formId, formIds));
   }
 
   public async getFormTheme(formId: string) {
@@ -153,5 +165,28 @@ export class FormQuery {
       const [inserted] = await db.insert(formThemes).values({ ...data, formId }).returning();
       return inserted;
     }
+  }
+
+  public async getDefaultThemes() {
+    return await db.select().from(defaultThemes).where(eq(defaultThemes.isDefault, true)).orderBy(asc(defaultThemes.name));
+  }
+
+  public async createDefaultTheme(data: any) {
+    const [theme] = await db.insert(defaultThemes).values(data).returning();
+    return theme;
+  }
+
+  public async deleteDefaultTheme(id: string) {
+    await db.delete(defaultThemes).where(eq(defaultThemes.id, id));
+  }
+
+  public async getDefaultThemeById(id: string) {
+    const [theme] = await db.select().from(defaultThemes).where(eq(defaultThemes.id, id));
+    return theme;
+  }
+
+  public async getDefaultThemeByName(name: string) {
+    const [theme] = await db.select().from(defaultThemes).where(eq(defaultThemes.name, name));
+    return theme;
   }
 }

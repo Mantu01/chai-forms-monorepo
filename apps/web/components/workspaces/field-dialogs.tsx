@@ -43,7 +43,7 @@ export function FormFieldDialogs({
 
   return (
     <>
-      <Dialog open={searchParams.get("new-field") === "true"} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
+      <Dialog open={searchParams.get("new-field") === "true"} onOpenChange={(open) => { if (!open) router.replace(`?tab=fields`); }}>
         <DialogContent className="border-border bg-card/95 backdrop-blur-md max-h-[85vh] overflow-y-auto scroll-smooth">
           <form onSubmit={handleCreateField} className="space-y-4">
             <DialogHeader>
@@ -158,13 +158,13 @@ export function FormFieldDialogs({
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => router.push(`?tab=fields`)} className="rounded-xl">Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => router.replace(`?tab=fields`)} className="rounded-xl">Cancel</Button>
               <Button type="submit" disabled={createField.isPending} className="rounded-xl">Add Field</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!searchParams.get("edit-field")} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
+      <Dialog open={!!searchParams.get("edit-field")} onOpenChange={(open) => { if (!open) router.replace(`?tab=fields`); }}>
         <DialogContent className="border-border bg-card/95 backdrop-blur-md max-h-[85vh] overflow-y-auto scroll-smooth">
           {editingField && (
             <form key={editingField.id} onSubmit={handleUpdateField} className="space-y-4">
@@ -274,7 +274,7 @@ export function FormFieldDialogs({
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => router.push(`?tab=fields`)} className="rounded-xl">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => router.replace(`?tab=fields`)} className="rounded-xl">Cancel</Button>
                 <Button type="submit" disabled={updateField.isPending} className="rounded-xl">Save Changes</Button>
               </DialogFooter>
             </form>

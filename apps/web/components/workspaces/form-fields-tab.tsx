@@ -244,7 +244,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
   const updatePage = trpc.form.updatePage.useMutation({
     onSuccess: () => {
       toast.success("Page properties updated successfully!");
-      router.push(`?tab=fields`);
+      router.replace(`?tab=fields`);
       utils.form.getPagesByForm.invalidate({ formId });
     }
   });
@@ -258,7 +258,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
   const createField = trpc.form.createField.useMutation({
     onSuccess: () => {
       toast.success("New field successfully added!");
-      router.push(`?tab=fields`);
+      router.replace(`?tab=fields`);
       utils.form.getFieldsByForm.invalidate({ formId });
     }
   });
@@ -266,7 +266,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
   const updateField = trpc.form.updateField.useMutation({
     onSuccess: () => {
       toast.success("Field properties updated successfully!");
-      router.push(`?tab=fields`);
+      router.replace(`?tab=fields`);
       utils.form.getFieldsByForm.invalidate({ formId });
     }
   });
@@ -588,11 +588,11 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
                   page={page}
                   fields={pageMap[page.id] || []}
                   isAdminOrOwner={isAdminOrOwner}
-                  onEditPage={(p) => router.push(`?tab=fields&edit-page=${p.id}`)}
+                  onEditPage={(p) => router.replace(`?tab=fields&edit-page=${p.id}`)}
                   onDeletePage={handleDeletePage}
-                  onEditField={(f) => router.push(`?tab=fields&edit-field=${f.id}`)}
+                  onEditField={(f) => router.replace(`?tab=fields&edit-field=${f.id}`)}
                   onDeleteField={(fid) => deleteField.mutate({ fieldId: fid })}
-                  onAddFieldToPage={(pid) => router.push(`?tab=fields&new-field=true&targetPageId=${pid}`)}
+                  onAddFieldToPage={(pid) => router.replace(`?tab=fields&new-field=true&targetPageId=${pid}`)}
                 />
               ))}
             </div>
@@ -612,7 +612,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
         handleUpdateField={handleUpdateField}
       />
 
-      <Dialog open={!!activeEditPageId} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
+      <Dialog open={!!activeEditPageId} onOpenChange={(open) => { if (!open) router.replace(`?tab=fields`); }}>
         <DialogContent className="border-border bg-card/95 backdrop-blur-md">
           {editingPage && (
             <form key={editingPage?.id} onSubmit={handleUpdatePageDetails} className="space-y-4">
@@ -631,7 +631,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => router.push(`?tab=fields`)} className="rounded-xl">Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => router.replace(`?tab=fields`)} className="rounded-xl">Cancel</Button>
                 <Button type="submit" disabled={updatePage.isPending} className="rounded-xl">Save Changes</Button>
               </DialogFooter>
             </form>
@@ -639,7 +639,7 @@ export function FormFieldsTab({ formId, isAdminOrOwner }: FormFieldsTabProps) {
         </DialogContent>
       </Dialog>
 
-      <Sheet open={searchParams.get("preview") === "true"} onOpenChange={(open) => { if (!open) router.push(`?tab=fields`); }}>
+      <Sheet open={searchParams.get("preview") === "true"} onOpenChange={(open) => { if (!open) router.replace(`?tab=fields`); }}>
         <SheetContent
           side="right"
           className="w-[95%] sm:max-w-[500px] overflow-y-auto border-l p-6 flex flex-col gap-5"

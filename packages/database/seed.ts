@@ -3,1108 +3,471 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { env } from "./env";
 import * as schema from "./schema";
+import crypto from "crypto";
 
-const pool = new pg.Pool({
-  connectionString: env.DATABASE_URL,
-});
-
+const pool = new pg.Pool({ connectionString: env.DATABASE_URL });
 const db = drizzle(pool, { schema });
 
-const USER_1_ID = "84a86ebf-e14b-4860-936e-213c41ef65b1";
-const USER_2_ID = "5a05b382-7774-4b5c-b174-8b63b27b3d30";
-const USER_3_ID = "dcd8c843-f111-4770-b9f4-0cd3f02498be";
-const USER_4_ID = "f192b45a-c603-4c9b-b0b3-9eb170d740eb";
-const USER_5_ID = "0bbfbc31-29e2-411a-be10-85f02bc0f719";
-const USER_6_ID = "ae29fa75-1049-411c-aa7f-61122a278912";
-const USER_7_ID = "cb327299-c290-410a-8bf8-2cfa0303be1f";
-const USER_8_ID = "a8449c2a-9e12-4217-be18-2fe849e779a1";
-const USER_9_ID = "bd2b0cfb-c9a4-4a43-9828-98e6ff050c77";
-const USER_10_ID = "e9c20a3a-18e3-4c12-a74c-882292f7678f";
+const uuidFrom = (n: number) =>
+  `00000000-0000-4000-8000-${n.toString().padStart(12, "0")}`;
 
-const WORK_1_ID = "11a5cb1b-fa3e-46ff-a5bd-6b0be043e7bb";
-const WORK_2_ID = "22c2a075-8120-4e31-afcd-98a972fb89a9";
-const WORK_3_ID = "33f4a3bf-9e12-4cfd-b2b9-e1e57c6b98ea";
-const WORK_4_ID = "44bdc41f-d20a-4bf3-a178-5e6080fb05f7";
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto
+    .pbkdf2Sync(password, salt, 1000, 64, "sha512")
+    .toString("hex");
+  return `${salt}:${hash}`;
+}
 
-const FORM_1_ID = "f1a4e101-de23-455b-80df-5fb8a07c1ef0";
-const FORM_2_ID = "f2b5e202-ef34-466c-91e0-6fc9b08d2ef1";
-const FORM_3_ID = "f3c6e303-fa45-477d-a2f1-7fd0c09e3ef2";
-const FORM_4_ID = "f4d7e404-0ab5-488e-b3f2-8fe1d0af4ef3";
-const FORM_5_ID = "f5e8e505-1bc6-499f-c4a3-90f2e0bf5ef4";
-const FORM_6_ID = "f6f9e606-2cd7-4aaf-d5b4-01a3f0cf6ef5";
+// ---------------------------------------------------------------------------
+// Users — unchanged from original schema; chaiuser@gmail.com is uuidFrom(1)
+// ---------------------------------------------------------------------------
+const usersSeed = [
+  { id: uuidFrom(1),  fullName: "Chai User",     email: "chaiuser@gmail.com",   isSubscribed: true,  emailVerified: true,  googleId: "google-chaiuser", profileImageUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779538926/QGenius/avatars/u2h42qzfdhceftda8uc1.png" },
+  { id: uuidFrom(2),  fullName: "Aarav Singh",   email: "aarav@chaiforms.com",  isSubscribed: true,  emailVerified: true,  googleId: "google-aarav",    profileImageUrl: null },
+  { id: uuidFrom(3),  fullName: "Nisha Patel",   email: "nisha@chaiforms.com",  isSubscribed: true,  emailVerified: true,  googleId: "google-nisha",    profileImageUrl: null },
+  { id: uuidFrom(4),  fullName: "Rohan Mehta",   email: "rohan@chaiforms.com",  isSubscribed: false, emailVerified: true,  googleId: null,              profileImageUrl: null },
+  { id: uuidFrom(5),  fullName: "Mia Das",       email: "mia@chaiforms.com",    isSubscribed: true,  emailVerified: true,  googleId: "google-mia",      profileImageUrl: null },
+  { id: uuidFrom(6),  fullName: "Ishaan Kapoor", email: "ishaan@chaiforms.com", isSubscribed: false, emailVerified: false, googleId: null,              profileImageUrl: null },
+  { id: uuidFrom(7),  fullName: "Zoya Khan",     email: "zoya@chaiforms.com",   isSubscribed: true,  emailVerified: true,  googleId: "google-zoya",     profileImageUrl: null },
+  { id: uuidFrom(8),  fullName: "Rahul Verma",   email: "rahul@chaiforms.com",  isSubscribed: false, emailVerified: true,  googleId: null,              profileImageUrl: null },
+  { id: uuidFrom(9),  fullName: "Ananya Iyer",   email: "ananya@chaiforms.com", isSubscribed: true,  emailVerified: true,  googleId: "google-ananya",   profileImageUrl: null },
+  { id: uuidFrom(10), fullName: "Kabir Nair",    email: "kabir@chaiforms.com",  isSubscribed: false, emailVerified: true,  googleId: null,              profileImageUrl: null },
+  { id: uuidFrom(11), fullName: "Simran Kaur",   email: "simran@chaiforms.com", isSubscribed: true,  emailVerified: true,  googleId: "google-simran",   profileImageUrl: null },
+  { id: uuidFrom(12), fullName: "Vivek Rao",     email: "vivek@chaiforms.com",  isSubscribed: false, emailVerified: false, googleId: null,              profileImageUrl: null },
+];
 
-const PAGE_F1_ID = "ab11a22b-cd33-4ef5-8966-1234567890ab";
-const PAGE_F2_P1_ID = "cd22b33c-de44-4f66-9877-2345678901bc";
-const PAGE_F2_P2_ID = "ef33c44d-ef55-4077-8766-3456789012cd";
-const PAGE_F2_P3_ID = "ab44d55e-fa66-4188-7655-4567890123de";
-const PAGE_F4_ID = "bc55e66f-ab77-4299-6544-5678901234ef";
-const PAGE_F6_ID = "cd66f77a-bc88-43aa-5433-6789012345fa";
+// ---------------------------------------------------------------------------
+// Stable IDs
+// ---------------------------------------------------------------------------
+const workspaceIds = {
+  main:      uuidFrom(101),
+  growth:    uuidFrom(102),
+  product:   uuidFrom(103),
+  community: uuidFrom(104),
+  hiring:    uuidFrom(105),
+};
 
-const FIELD_F1_RATING = "c011e001-44bb-4ff2-8aa1-1122334455aa";
-const FIELD_F1_TEXT = "c011e002-44bb-4ff2-8aa1-1122334455bb";
-const FIELD_F1_TEXTAREA = "c011e003-44bb-4ff2-8aa1-1122334455cc";
-const FIELD_F1_SELECT = "c011e004-44bb-4ff2-8aa1-1122334455dd";
-const FIELD_F1_MULTI = "c011e005-44bb-4ff2-8aa1-1122334455ee";
-const FIELD_F1_CHECKBOX = "c011e006-44bb-4ff2-8aa1-1122334455ff";
+const formIds = {
+  allFields:  uuidFrom(201),
+  nps:        uuidFrom(202),
+  event:      uuidFrom(203),
+  template:   uuidFrom(204),
+  archived:   uuidFrom(205),
+  hiring:     uuidFrom(206),
+  onboarding: uuidFrom(207),
+};
 
-const FIELD_F2_NAME = "c022e001-55cc-4ff3-9bb2-2233445566aa";
-const FIELD_F2_EMAIL = "c022e002-55cc-4ff3-9bb2-2233445566bb";
-const FIELD_F2_PHONE = "c022e003-55cc-4ff3-9bb2-2233445566cc";
-const FIELD_F2_URL = "c022e004-55cc-4ff3-9bb2-2233445566dd";
-const FIELD_F2_YEARS = "c022e005-55cc-4ff3-9bb2-2233445566ee";
-const FIELD_F2_RESUME = "c022e006-55cc-4ff3-9bb2-2233445566ff";
-const FIELD_F2_DATE = "c022e007-55cc-4ff3-9bb2-223344556611";
-const FIELD_F2_TIME = "c022e008-55cc-4ff3-9bb2-223344556622";
-const FIELD_F2_RADIO = "c022e009-55cc-4ff3-9bb2-223344556633";
-const FIELD_F2_MATRIX = "c022e010-55cc-4ff3-9bb2-223344556644";
-const FIELD_F2_SIGNATURE = "c022e011-55cc-4ff3-9bb2-223344556655";
-
-const COMM_1_ID = "d011c001-66aa-4ee2-bb11-1122334455aa";
-const COMM_2_ID = "d011c002-66aa-4ee2-bb11-1122334455bb";
-const COMM_3_ID = "d011c003-66aa-4ee2-bb11-1122334455cc";
+// ---------------------------------------------------------------------------
+// Date helpers — everything within May 12–27 2026
+// ---------------------------------------------------------------------------
+const d = (month: number, day: number, hour = 0, min = 0) =>
+  new Date(2026, month - 1, day, hour, min);
 
 async function main() {
-  console.log("🧹 Cleaning out existing database records...");
-
+  console.log("Cleaning existing records...");
   await db.delete(schema.submissionAnswers);
   await db.delete(schema.submissions);
-  await db.delete(schema.formAnalyticsDaily);
-  await db.delete(schema.formViews);
   await db.delete(schema.formComments);
   await db.delete(schema.formThemes);
   await db.delete(schema.archivedTemplates);
-  await db.delete(schema.workspaceMembers);
-  await db.delete(schema.workspaceInvites);
   await db.delete(schema.formFields);
   await db.delete(schema.formPages);
   await db.delete(schema.forms);
+  await db.delete(schema.workspaceInvites);
+  await db.delete(schema.workspaceMembers);
   await db.delete(schema.workspaces);
   await db.delete(schema.orders);
+  await db.delete(schema.defaultThemes);
   await db.delete(schema.users);
   await db.delete(schema.referralCodes);
 
-  console.log("✅ Database successfully cleared.");
+  // -------------------------------------------------------------------------
+  // Referral codes
+  // -------------------------------------------------------------------------
+  await db.insert(schema.referralCodes).values([
+    { code: "CHAI50"      },
+    { code: "POWERUSER25" },
+    { code: "TEAMUP30"    },
+    { code: "EARLY100"    },
+    { code: "FESTIVE20"   },
+  ]);
 
-  console.log("🌱 Seeding referral codes...");
-  const refCodes = [
-    { code: "CHAI_LAUNCH_50" },
-    { code: "EARLY_BIRD_30" },
-    { code: "INFLUENCER_GIFT" },
-    { code: "WINTER_SALE_20" },
-    { code: "PARTNER_VIP_100" }
+  // -------------------------------------------------------------------------
+  // Users — accounts created May 12–13; last updated May 25–27
+  // chaiuser (id=1) is the earliest, everyone else onboarded after
+  // -------------------------------------------------------------------------
+  await db.insert(schema.users).values(
+    usersSeed.map((u, i) => ({
+      ...u,
+      passwordHash: hashPassword("Chai@123"),
+      createdAt:   d(5, 12 + Math.min(i, 3)),           // May 12–15
+      updatedAt:   d(5, 24 + Math.min(i % 4, 3)),       // May 24–27
+    })),
+  );
+
+  // -------------------------------------------------------------------------
+  // Workspaces — all created by chaiuser (1) or co-founders, May 12–14
+  // -------------------------------------------------------------------------
+  await db.insert(schema.workspaces).values([
+    { id: workspaceIds.main,      name: "Chai Forms HQ",      slug: "chai-forms-hq",      logoUrl: null, createdBy: uuidFrom(1), createdAt: d(5, 12) },
+    { id: workspaceIds.growth,    name: "Chai Growth Ops",    slug: "chai-growth-ops",    logoUrl: null, createdBy: uuidFrom(1), createdAt: d(5, 13) },
+    { id: workspaceIds.product,   name: "Chai Product Lab",   slug: "chai-product-lab",   logoUrl: null, createdBy: uuidFrom(1), createdAt: d(5, 13) },
+    { id: workspaceIds.community, name: "Community Programs", slug: "community-programs", logoUrl: null, createdBy: uuidFrom(3), createdAt: d(5, 14) },
+    { id: workspaceIds.hiring,    name: "Talent Pipeline",    slug: "talent-pipeline",    logoUrl: null, createdBy: uuidFrom(2), createdAt: d(5, 14) },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Workspace members — joined May 12–16
+  // -------------------------------------------------------------------------
+  await db.insert(schema.workspaceMembers).values([
+    // HQ
+    { workspaceId: workspaceIds.main, userId: uuidFrom(1), name: "Chai User",    role: "owner",  joinedAt: d(5, 12) },
+    { workspaceId: workspaceIds.main, userId: uuidFrom(2), name: "Aarav Singh",  role: "admin",  joinedAt: d(5, 12) },
+    { workspaceId: workspaceIds.main, userId: uuidFrom(3), name: "Nisha Patel",  role: "member", joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.main, userId: uuidFrom(4), name: "Rohan Mehta",  role: "member", joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.main, userId: uuidFrom(7), name: "Zoya Khan",    role: "member", joinedAt: d(5, 14) },
+
+    // Growth
+    { workspaceId: workspaceIds.growth, userId: uuidFrom(1), name: "Chai User",     role: "owner",  joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.growth, userId: uuidFrom(5), name: "Mia Das",       role: "admin",  joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.growth, userId: uuidFrom(6), name: "Ishaan Kapoor", role: "member", joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.growth, userId: uuidFrom(3), name: "Nisha Patel",   role: "member", joinedAt: d(5, 14) },
+
+    // Product
+    { workspaceId: workspaceIds.product, userId: uuidFrom(1), name: "Chai User",   role: "owner",  joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.product, userId: uuidFrom(8), name: "Rahul Verma", role: "admin",  joinedAt: d(5, 13) },
+    { workspaceId: workspaceIds.product, userId: uuidFrom(9), name: "Ananya Iyer", role: "member", joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.product, userId: uuidFrom(2), name: "Aarav Singh", role: "member", joinedAt: d(5, 15) },
+
+    // Community
+    { workspaceId: workspaceIds.community, userId: uuidFrom(3),  name: "Nisha Patel",  role: "owner",  joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.community, userId: uuidFrom(1),  name: "Chai User",    role: "admin",  joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.community, userId: uuidFrom(10), name: "Kabir Nair",   role: "member", joinedAt: d(5, 15) },
+    { workspaceId: workspaceIds.community, userId: uuidFrom(11), name: "Simran Kaur",  role: "member", joinedAt: d(5, 15) },
+
+    // Hiring
+    { workspaceId: workspaceIds.hiring, userId: uuidFrom(2),  name: "Aarav Singh", role: "owner",  joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.hiring, userId: uuidFrom(1),  name: "Chai User",   role: "admin",  joinedAt: d(5, 14) },
+    { workspaceId: workspaceIds.hiring, userId: uuidFrom(12), name: "Vivek Rao",   role: "member", joinedAt: d(5, 15) },
+    { workspaceId: workspaceIds.hiring, userId: uuidFrom(4),  name: "Rohan Mehta", role: "member", joinedAt: d(5, 16) },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Workspace invites — sent May 17–22, some accepted by May 24–26
+  // -------------------------------------------------------------------------
+  await db.insert(schema.workspaceInvites).values([
+    { workspaceId: workspaceIds.main,      email: "future-admin@chai.dev",      role: "admin",  token: "invite-main-admin",       expiresAt: d(6, 17),      createdAt: d(5, 17) },
+    { workspaceId: workspaceIds.main,      email: "guest-analyst@chai.dev",     role: "member", token: "invite-main-member",      expiresAt: d(6, 17), acceptedAt: d(5, 24), createdAt: d(5, 17) },
+    { workspaceId: workspaceIds.growth,    email: "campaign-lead@chai.dev",     role: "member", token: "invite-growth-member",    expiresAt: d(6, 20),      createdAt: d(5, 20) },
+    { workspaceId: workspaceIds.product,   email: "design-reviewer@chai.dev",   role: "member", token: "invite-product-member",   expiresAt: d(6, 22), acceptedAt: d(5, 26), createdAt: d(5, 22) },
+    { workspaceId: workspaceIds.community, email: "partner-community@chai.dev", role: "admin",  token: "invite-community-admin",  expiresAt: d(6, 22),      createdAt: d(5, 22) },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Default themes
+  // -------------------------------------------------------------------------
+  await db.insert(schema.defaultThemes).values([
+  {id:uuidFrom(301), name: "cyberpunk",  backgroundColor: "#0d0010", formBackgroundColor: "#1a0020", headerBackgroundColor: "#2a0035", primaryColor: "#ff2d78", buttonTextColor: "#ffffff", textColor: "#ffe0f0", mutedTextColor: "#cc80aa", borderColor: "#ff2d78", inputBackgroundColor: "#1f0028", inputTextColor: "#ffe0f0", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883442/c644aa11382fdd66e42fdbdb1a65aeab_kazdkm.jpg", isDefault: true },
+  {id:uuidFrom(302), name: "education",  backgroundColor: "#0f1a14", formBackgroundColor: "#f0f4f1", headerBackgroundColor: "#ddeae2", primaryColor: "#1a7a4a", buttonTextColor: "#ffffff", textColor: "#0f1a14", mutedTextColor: "#3a5244", borderColor: "#1a7a4a", inputBackgroundColor: "#e8f0eb", inputTextColor: "#0f1a14", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883442/d90d921f859121ca4b277e3f3787ac76_gq7xj6.jpg", isDefault: true },
+  {id:uuidFrom(303), name: "sports",     backgroundColor: "#0a0a06", formBackgroundColor: "#fffbf5", headerBackgroundColor: "#fff3e0", primaryColor: "#f97316", buttonTextColor: "#1a1a0a", textColor: "#1a1a0a", mutedTextColor: "#4a4a2a", borderColor: "#f97316", inputBackgroundColor: "#fff8ee", inputTextColor: "#1a1a0a", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/ae3342120b26ae1fe321545250a1b00e_x0zvfp.jpg", isDefault: true },
+  {id:uuidFrom(304), name: "anime",      backgroundColor: "#1a0008", formBackgroundColor: "#1e0010", headerBackgroundColor: "#2e0018", primaryColor: "#e8192c", buttonTextColor: "#ffffff", textColor: "#ffe8ec", mutedTextColor: "#cc8899", borderColor: "#e8192c", inputBackgroundColor: "#260010", inputTextColor: "#ffe8ec", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883442/cc70f0027a0a4da401461b33044b7827_lhn9iu.jpg", isDefault: true },
+  {id:uuidFrom(305), name: "cinematic",  backgroundColor: "#0c0c0a", formBackgroundColor: "#1a1a16", headerBackgroundColor: "#222220", primaryColor: "#b5a16a", buttonTextColor: "#0c0c0a", textColor: "#e8e0cc", mutedTextColor: "#9a9080", borderColor: "#b5a16a", inputBackgroundColor: "#141410", inputTextColor: "#e8e0cc", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/87457141110db7a11dcb7469dc31bb9f_eoxuqz.jpg", isDefault: true },
+  {id:uuidFrom(306), name: "nature",     backgroundColor: "#071810", formBackgroundColor: "#e8f5ee", headerBackgroundColor: "#d4ecdf", primaryColor: "#2e9e6e", buttonTextColor: "#ffffff", textColor: "#0d2818", mutedTextColor: "#2a5040", borderColor: "#2e9e6e", inputBackgroundColor: "#ddf0e8", inputTextColor: "#0d2818", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/a2fa3bd37373e18b7142e85c91ecabf3_tuvmla.jpg", isDefault: true },
+  {id:uuidFrom(307), name: "tech",       backgroundColor: "#030b1a", formBackgroundColor: "#060f24", headerBackgroundColor: "#0a1530", primaryColor: "#2563eb", buttonTextColor: "#ffffff", textColor: "#e0ecff", mutedTextColor: "#7a9acc", borderColor: "#2563eb", inputBackgroundColor: "#08122e", inputTextColor: "#e0ecff", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/0448c54f68583fb0e4e0fd3d08523daf_obnmmr.jpg", isDefault: true },
+  {id:uuidFrom(308), name: "startup",    backgroundColor: "#010f14", formBackgroundColor: "#021820", headerBackgroundColor: "#032530", primaryColor: "#06b6d4", buttonTextColor: "#010f14", textColor: "#e0faff", mutedTextColor: "#60b8cc", borderColor: "#06b6d4", inputBackgroundColor: "#031c24", inputTextColor: "#e0faff", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/bbf78f8921ac3a68ae6574f64da9b140_dvhnem.jpg", isDefault: true },
+  {id:uuidFrom(309), name: "game",       backgroundColor: "#020816", formBackgroundColor: "#060e28", headerBackgroundColor: "#0a1438", primaryColor: "#1d4ed8", buttonTextColor: "#ffffff", textColor: "#dceeff", mutedTextColor: "#6899cc", borderColor: "#1d4ed8", inputBackgroundColor: "#040c1e", inputTextColor: "#dceeff", bannerUrl: "https://res.cloudinary.com/dqznmhhtv/image/upload/v1779883441/20a706a18514c33b9e643641e8cbe25a_aaj36c.jpg", isDefault: true },
+]);
+
+  // -------------------------------------------------------------------------
+  // Forms — created May 13–17; published May 14–19
+  // chaiuser created 5 of 7; Nisha owns event; Aarav owns hiring
+  // -------------------------------------------------------------------------
+  await db.insert(schema.forms).values([
+    {
+      id: formIds.allFields, workspaceId: workspaceIds.main,
+      title: "All Fields Demo Form", description: "Shows every field type in one place.",
+      slug: "all-fields-demo-form", status: "published", isPublic: true, accessLevel: "public",
+      createdBy: uuidFrom(1), allowMultipleSubmissions: true, requireAuth: false,
+      maxSubmissions: 500, redirectUrl: "https://chai.dev/thanks",
+      themeConfig: { preset: "dark-pro" }, isTemplate: false,
+      publishedAt: d(5, 14), createdAt: d(5, 13),
+    },
+    {
+      id: formIds.nps, workspaceId: workspaceIds.growth,
+      title: "NPS Tracker – May 2026", description: "NPS and retention feedback for Q2 close.",
+      slug: "nps-tracker-may-2026", status: "published", isPublic: true, accessLevel: "public",
+      createdBy: uuidFrom(1), allowMultipleSubmissions: false, requireAuth: false,
+      maxSubmissions: 1000, redirectUrl: null,
+      themeConfig: { preset: "ocean-breeze" }, isTemplate: false,
+      publishedAt: d(5, 15), createdAt: d(5, 14),
+    },
+    {
+      id: formIds.event, workspaceId: workspaceIds.community,
+      title: "Community Meetup RSVP – June", description: "Monthly community meetup RSVP for June 2026.",
+      slug: "community-meetup-rsvp-june", status: "published", isPublic: true, accessLevel: "public",
+      createdBy: uuidFrom(3), allowMultipleSubmissions: true, requireAuth: true,
+      maxSubmissions: 300, redirectUrl: null,
+      themeConfig: { preset: "mint" }, isTemplate: false,
+      publishedAt: d(5, 16), createdAt: d(5, 15),
+    },
+    {
+      id: formIds.template, workspaceId: workspaceIds.product,
+      title: "Feature Request Template", description: "Reusable template for collecting product feature ideas.",
+      slug: "feature-request-template", status: "published", isPublic: true, accessLevel: "public",
+      createdBy: uuidFrom(1), allowMultipleSubmissions: true, requireAuth: false,
+      maxSubmissions: null, redirectUrl: null,
+      themeConfig: { preset: "sunset" }, isTemplate: true,
+      publishedAt: d(5, 16), createdAt: d(5, 15),
+    },
+    {
+      id: formIds.archived, workspaceId: workspaceIds.main,
+      title: "Legacy Contact Intake", description: "Archived intake form — superseded by All Fields Demo.",
+      slug: "legacy-contact-intake", status: "archived", isPublic: false, accessLevel: "restricted",
+      createdBy: uuidFrom(1), allowMultipleSubmissions: false, requireAuth: false,
+      maxSubmissions: 50, redirectUrl: null,
+      themeConfig: { preset: "dark-pro" }, isTemplate: false,
+      closeAt: d(5, 20), createdAt: d(5, 13),
+    },
+    {
+      id: formIds.hiring, workspaceId: workspaceIds.hiring,
+      title: "Senior Engineer Application", description: "Application form for the May 2026 senior engineer opening.",
+      slug: "senior-engineer-application", status: "published", isPublic: true, accessLevel: "public",
+      createdBy: uuidFrom(2), allowMultipleSubmissions: true, requireAuth: false,
+      maxSubmissions: 400, redirectUrl: null,
+      themeConfig: { preset: "ocean-breeze" }, isTemplate: false,
+      publishedAt: d(5, 17), createdAt: d(5, 16),
+    },
+    {
+      id: formIds.onboarding, workspaceId: workspaceIds.main,
+      title: "Internal Onboarding Checklist", description: "Employee onboarding form — currently in draft.",
+      slug: "internal-onboarding-checklist", status: "draft", isPublic: false, accessLevel: "private",
+      createdBy: uuidFrom(1), allowMultipleSubmissions: true, requireAuth: true,
+      maxSubmissions: null, redirectUrl: null,
+      themeConfig: { preset: "dark-pro" }, isTemplate: false,
+      createdAt: d(5, 17),
+    },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Form pages
+  // -------------------------------------------------------------------------
+  const pages: any[] = [
+    { id: uuidFrom(401), formId: formIds.allFields, title: "Primary Details",  description: "General details",    order: 1 },
+    { id: uuidFrom(402), formId: formIds.allFields, title: "Advanced Inputs",  description: "Structured answers", order: 2 },
   ];
-  await db.insert(schema.referralCodes).values(refCodes);
-  console.log(`✅ Seeded ${refCodes.length} referral codes.`);
-
-  console.log("🌱 Seeding users...");
-  const userData = [
-    {
-      id: USER_1_ID,
-      fullName: "Aditya Sharma",
-      email: "aditya@chaiforms.com",
-      isSubscribed: true,
-      emailVerified: true,
-      googleId: "google-aditya-12345",
-      profileImageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
-      createdAt: new Date("2026-01-15T09:00:00Z"),
-      updatedAt: new Date("2026-01-15T09:00:00Z")
-    },
-    {
-      id: USER_2_ID,
-      fullName: "Sarah Jenkins",
-      email: "sarah@chaiforms.com",
-      isSubscribed: true,
-      emailVerified: true,
-      googleId: "google-sarah-67890",
-      profileImageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150",
-      createdAt: new Date("2026-02-01T10:30:00Z"),
-      updatedAt: new Date("2026-02-01T10:30:00Z")
-    },
-    {
-      id: USER_3_ID,
-      fullName: "Devon Miller",
-      email: "devon@chaiforms.com",
-      isSubscribed: false,
-      emailVerified: true,
-      googleId: null,
-      profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
-      createdAt: new Date("2026-02-15T14:20:00Z"),
-      updatedAt: new Date("2026-02-15T14:20:00Z")
-    },
-    {
-      id: USER_4_ID,
-      fullName: "Priya Patel",
-      email: "priya@chaiforms.com",
-      isSubscribed: true,
-      emailVerified: true,
-      googleId: "google-priya-11223",
-      profileImageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150",
-      createdAt: new Date("2026-03-01T11:00:00Z"),
-      updatedAt: new Date("2026-03-01T11:00:00Z")
-    },
-    {
-      id: USER_5_ID,
-      fullName: "Marcus Aurelius",
-      email: "marcus@rome.org",
-      isSubscribed: false,
-      emailVerified: false,
-      googleId: null,
-      profileImageUrl: null,
-      createdAt: new Date("2026-03-10T08:00:00Z"),
-      updatedAt: new Date("2026-03-10T08:00:00Z")
-    },
-    {
-      id: USER_6_ID,
-      fullName: "Alice Smith",
-      email: "alice@example.com",
-      isSubscribed: false,
-      emailVerified: true,
-      profileImageUrl: null,
-      createdAt: new Date("2026-03-15T16:00:00Z")
-    },
-    {
-      id: USER_7_ID,
-      fullName: "Bob Johnson",
-      email: "bob@example.com",
-      isSubscribed: false,
-      emailVerified: false,
-      profileImageUrl: null,
-      createdAt: new Date("2026-03-20T09:45:00Z")
-    },
-    {
-      id: USER_8_ID,
-      fullName: "Charlie Brown",
-      email: "charlie@example.com",
-      isSubscribed: true,
-      emailVerified: true,
-      profileImageUrl: null,
-      createdAt: new Date("2026-04-01T10:00:00Z")
-    },
-    {
-      id: USER_9_ID,
-      fullName: "Diana Prince",
-      email: "diana@example.com",
-      isSubscribed: true,
-      emailVerified: true,
-      profileImageUrl: null,
-      createdAt: new Date("2026-04-05T12:00:00Z")
-    },
-    {
-      id: USER_10_ID,
-      fullName: "Evan Wright",
-      email: "evan@example.com",
-      isSubscribed: false,
-      emailVerified: true,
-      profileImageUrl: null,
-      createdAt: new Date("2026-04-10T14:30:00Z")
-    },
-    {
-      id: "e1fb3c9b-640a-41e9-a3bf-9a3d6a45749f",
-      fullName: "Fiona Gallagher",
-      email: "fiona@example.com",
-      isSubscribed: false,
-      emailVerified: true,
-      profileImageUrl: null,
-      createdAt: new Date("2026-04-15T11:15:00Z")
-    },
-    {
-      id: "ac5f22e7-eb7d-4b9a-bbcb-b219195b0ff7",
-      fullName: "George Costanza",
-      email: "george@example.com",
-      isSubscribed: false,
-      emailVerified: false,
-      profileImageUrl: null,
-      createdAt: new Date("2026-04-20T17:50:00Z")
-    }
-  ];
-  await db.insert(schema.users).values(userData);
-  console.log(`✅ Seeded ${userData.length} users.`);
-
-  console.log("🌱 Seeding workspaces...");
-  const workspaceData = [
-    {
-      id: WORK_1_ID,
-      name: "Chai Dev Lab",
-      slug: "chai-dev-lab",
-      logoUrl: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&q=80&w=100",
-      createdBy: USER_1_ID,
-      createdAt: new Date("2026-01-16T10:00:00Z")
-    },
-    {
-      id: WORK_2_ID,
-      name: "Jenkins Marketing Agency",
-      slug: "jenkins-marketing",
-      logoUrl: "https://images.unsplash.com/photo-1557200134-90327ee9fafa?auto=format&fit=crop&q=80&w=100",
-      createdBy: USER_2_ID,
-      createdAt: new Date("2026-02-02T11:00:00Z")
-    },
-    {
-      id: WORK_3_ID,
-      name: "Startup Launchpad",
-      slug: "startup-launchpad",
-      logoUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=100",
-      createdBy: USER_4_ID,
-      createdAt: new Date("2026-03-02T12:00:00Z")
-    },
-    {
-      id: WORK_4_ID,
-      name: "Open Community Forms",
-      slug: "open-community",
-      logoUrl: null,
-      createdBy: USER_1_ID,
-      createdAt: new Date("2026-03-15T09:00:00Z")
-    }
-  ];
-  await db.insert(schema.workspaces).values(workspaceData);
-  console.log(`✅ Seeded ${workspaceData.length} workspaces.`);
-
-  console.log("🌱 Seeding workspace members...");
-  const workspaceMemberData = [
-    { workspaceId: WORK_1_ID, userId: USER_1_ID, name: "Aditya Sharma", role: "owner" as const, joinedAt: new Date("2026-01-16T10:00:00Z") },
-    { workspaceId: WORK_1_ID, userId: USER_3_ID, name: "Devon Miller", role: "member" as const, joinedAt: new Date("2026-02-16T11:00:00Z") },
-    { workspaceId: WORK_1_ID, userId: USER_5_ID, name: "Marcus Aurelius", role: "admin" as const, joinedAt: new Date("2026-03-11T09:00:00Z") },
-
-    { workspaceId: WORK_2_ID, userId: USER_2_ID, name: "Sarah Jenkins", role: "owner" as const, joinedAt: new Date("2026-02-02T11:00:00Z") },
-    { workspaceId: WORK_2_ID, userId: USER_1_ID, name: "Aditya Sharma", role: "admin" as const, joinedAt: new Date("2026-02-05T14:00:00Z") },
-    { workspaceId: WORK_2_ID, userId: USER_6_ID, name: "Alice Smith", role: "member" as const, joinedAt: new Date("2026-03-16T10:00:00Z") },
-
-    { workspaceId: WORK_3_ID, userId: USER_4_ID, name: "Priya Patel", role: "owner" as const, joinedAt: new Date("2026-03-02T12:00:00Z") },
-    { workspaceId: WORK_3_ID, userId: USER_8_ID, name: "Charlie Brown", role: "member" as const, joinedAt: new Date("2026-04-02T10:00:00Z") },
-
-    { workspaceId: WORK_4_ID, userId: USER_1_ID, name: "Aditya Sharma", role: "owner" as const, joinedAt: new Date("2026-03-15T09:00:00Z") },
-    { workspaceId: WORK_4_ID, userId: USER_7_ID, name: "Bob Johnson", role: "member" as const, joinedAt: new Date("2026-03-21T10:00:00Z") }
-  ];
-  await db.insert(schema.workspaceMembers).values(workspaceMemberData);
-  console.log(`✅ Seeded ${workspaceMemberData.length} workspace members.`);
-
-  console.log("🌱 Seeding workspace invites...");
-  const workspaceInviteData = [
-    {
-      workspaceId: WORK_1_ID,
-      email: "invitee1@example.com",
-      role: "member" as const,
-      token: "invite-token-1-abc",
-      expiresAt: new Date("2026-06-30T23:59:59Z"),
-      createdAt: new Date("2026-05-01T10:00:00Z")
-    },
-    {
-      workspaceId: WORK_2_ID,
-      email: "invitee2@example.com",
-      role: "admin" as const,
-      token: "invite-token-2-xyz",
-      expiresAt: new Date("2026-02-10T12:00:00Z"),
-      createdAt: new Date("2026-02-03T12:00:00Z")
-    },
-    {
-      workspaceId: WORK_3_ID,
-      email: "invitee3@example.com",
-      role: "member" as const,
-      token: "invite-token-3-qwe",
-      expiresAt: new Date("2026-06-15T00:00:00Z"),
-      acceptedAt: new Date("2026-05-15T15:00:00Z"),
-      createdAt: new Date("2026-05-10T09:00:00Z")
-    }
-  ];
-  await db.insert(schema.workspaceInvites).values(workspaceInviteData);
-  console.log(`✅ Seeded ${workspaceInviteData.length} workspace invites.`);
-
-  console.log("🌱 Seeding forms...");
-  const defaultThemeConfig = {
-    themeName: "dark",
-    primaryColor: "#a855f7",
-    backgroundColor: "#09090b",
-    formBackgroundColor: "#18181b",
-    textColor: "#f4f4f5",
-    mutedTextColor: "#a1a1aa",
-    borderColor: "#27272a"
-  };
-
-  const retroThemeConfig = {
-    themeName: "retro",
-    primaryColor: "#d97706",
-    backgroundColor: "#fef3c7",
-    formBackgroundColor: "#fffbeb",
-    textColor: "#78350f",
-    mutedTextColor: "#b45309",
-    borderColor: "#f59e0b"
-  };
-
-  const oceanThemeConfig = {
-    themeName: "ocean",
-    primaryColor: "#0ea5e9",
-    backgroundColor: "#f0f9ff",
-    formBackgroundColor: "#ffffff",
-    textColor: "#0c4a6e",
-    mutedTextColor: "#0284c7",
-    borderColor: "#e0f2fe"
-  };
-
-  const neonThemeConfig = {
-    themeName: "neon",
-    primaryColor: "#10b981",
-    backgroundColor: "#022c22",
-    formBackgroundColor: "#064e3b",
-    textColor: "#ecfdf5",
-    mutedTextColor: "#34d399",
-    borderColor: "#047857"
-  };
-
-  const formData = [
-    {
-      id: FORM_1_ID,
-      workspaceId: WORK_1_ID,
-      title: "Chai Customer Satisfaction Survey",
-      description: "Help us improve our tools by sharing your valuable feedback.",
-      slug: "chai-customer-satisfaction",
-      status: "published" as const,
-      isPublic: true,
-      accessLevel: "public",
-      createdBy: USER_1_ID,
-      allowMultipleSubmissions: false,
-      requireAuth: false,
-      maxSubmissions: 500,
-      redirectUrl: "https://chaiforms.com/thank-you",
-      themeConfig: defaultThemeConfig,
-      isTemplate: false,
-      publishedAt: new Date("2026-01-20T12:00:00Z"),
-      createdAt: new Date("2026-01-18T10:00:00Z")
-    },
-    {
-      id: FORM_2_ID,
-      workspaceId: WORK_2_ID,
-      title: "Senior Full-Stack Engineer Application",
-      description: "Join our fast-growing technical product team. This is a multi-page form.",
-      slug: "senior-fullstack-job",
-      status: "published" as const,
-      isPublic: true,
-      accessLevel: "public",
-      createdBy: USER_2_ID,
-      allowMultipleSubmissions: true,
-      requireAuth: false,
-      maxSubmissions: 200,
-      themeConfig: oceanThemeConfig,
-      isTemplate: false,
-      publishedAt: new Date("2026-02-10T09:00:00Z"),
-      createdAt: new Date("2026-02-05T14:30:00Z")
-    },
-    {
-      id: FORM_3_ID,
-      workspaceId: WORK_1_ID,
-      title: "Developer Meetup RSVP",
-      description: "RSVP for our upcoming local developer drinks and showcase meetup.",
-      slug: "dev-meetup-rsvp",
-      status: "draft" as const,
-      isPublic: true,
-      accessLevel: "public",
-      createdBy: USER_1_ID,
-      allowMultipleSubmissions: true,
-      requireAuth: true,
-      themeConfig: retroThemeConfig,
-      isTemplate: false,
-      createdAt: new Date("2026-04-15T08:00:00Z")
-    },
-    {
-      id: FORM_4_ID,
-      workspaceId: WORK_3_ID,
-      title: "SaaS Product Feedback Template",
-      description: "A standard template to collect features requests and rating ratings.",
-      slug: "saas-feedback-template",
-      status: "published" as const,
-      isPublic: true,
-      accessLevel: "public",
-      createdBy: USER_4_ID,
-      allowMultipleSubmissions: true,
-      themeConfig: neonThemeConfig,
-      isTemplate: true,
-      publishedAt: new Date("2026-03-05T10:00:00Z"),
-      createdAt: new Date("2026-03-03T11:00:00Z")
-    },
-    {
-      id: FORM_5_ID,
-      workspaceId: WORK_4_ID,
-      title: "Historical Web Form V1",
-      description: "Old outdated form archived for compliance reasons.",
-      slug: "historical-web-v1",
-      status: "archived" as const,
-      isPublic: false,
-      accessLevel: "restricted",
-      createdBy: USER_1_ID,
-      themeConfig: defaultThemeConfig,
-      isTemplate: false,
-      closeAt: new Date("2026-04-01T00:00:00Z"),
-      createdAt: new Date("2026-03-16T10:00:00Z")
-    },
-    {
-      id: FORM_6_ID,
-      workspaceId: WORK_1_ID,
-      title: "Quick JavaScript Knowledge Quiz",
-      description: "Test your JS fundamentals in 2 minutes!",
-      slug: "js-quick-quiz",
-      status: "published" as const,
-      isPublic: true,
-      accessLevel: "public",
-      createdBy: USER_3_ID,
-      themeConfig: defaultThemeConfig,
-      isTemplate: false,
-      publishedAt: new Date("2026-05-01T15:00:00Z"),
-      createdAt: new Date("2026-04-28T09:30:00Z")
-    }
-  ];
-  await db.insert(schema.forms).values(formData);
-  console.log(`✅ Seeded ${formData.length} forms.`);
-
-  console.log("🌱 Seeding form pages...");
-  const formPageData = [
-    { id: PAGE_F1_ID, formId: FORM_1_ID, title: "Your Feedback", description: "All questions about your experience", order: 1 },
-    { id: PAGE_F2_P1_ID, formId: FORM_2_ID, title: "Personal Details", description: "How we can contact you", order: 1 },
-    { id: PAGE_F2_P2_ID, formId: FORM_2_ID, title: "Professional Background", description: "Your experience & achievements", order: 2 },
-    { id: PAGE_F2_P3_ID, formId: FORM_2_ID, title: "Technical Preferences", description: "Tech stacks and systems", order: 3 },
-    { id: PAGE_F4_ID, formId: FORM_4_ID, title: "Product Features Feedback", description: "Review our current roadmap", order: 1 },
-    { id: PAGE_F6_ID, formId: FORM_6_ID, title: "JS Fundamentals", description: "Answer carefully", order: 1 }
-  ];
-  await db.insert(schema.formPages).values(formPageData);
-  console.log(`✅ Seeded ${formPageData.length} form pages.`);
-
-  console.log("🌱 Seeding form fields...");
-  const formFieldData = [
-    // Form 1 Fields
-    {
-      id: FIELD_F1_RATING,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Overall Satisfaction Rating",
-      placeholder: "Choose a rating from 1 to 5",
-      type: "rating" as const,
-      fieldKey: "overall_satisfaction",
-      isRequired: true,
-      order: 1,
-      config: { maxStars: 5, lowLabel: "Poor", highLabel: "Excellent" }
-    },
-    {
-      id: FIELD_F1_TEXT,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Key Benefit",
-      placeholder: "What was the most positive aspect of your experience?",
-      type: "text" as const,
-      fieldKey: "key_benefit",
-      isRequired: false,
-      order: 2,
-      config: null
-    },
-    {
-      id: FIELD_F1_TEXTAREA,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Areas to Improve",
-      placeholder: "What can we build or fix to serve you better?",
-      type: "textarea" as const,
-      fieldKey: "areas_to_improve",
-      isRequired: false,
-      order: 3,
-      config: null
-    },
-    {
-      id: FIELD_F1_SELECT,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Usage Frequency",
-      placeholder: "Select one option",
-      type: "select" as const,
-      fieldKey: "usage_frequency",
-      isRequired: false,
-      order: 4,
-      config: { options: ["Daily", "Weekly", "Monthly", "Rarely"] }
-    },
-    {
-      id: FIELD_F1_MULTI,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Favorite Features",
-      type: "multi_select" as const,
-      fieldKey: "favorite_features",
-      isRequired: false,
-      order: 5,
-      config: { options: ["Form Editor", "Submissions DB", "Theme customizer", "Integrations"] }
-    },
-    {
-      id: FIELD_F1_CHECKBOX,
-      formId: FORM_1_ID,
-      pageId: PAGE_F1_ID,
-      label: "Subscribe to our newsletters and updates",
-      defaultValue: "true",
-      type: "checkbox" as const,
-      fieldKey: "newsletter_subscribed",
-      isRequired: false,
-      order: 6,
-      config: null
-    },
-
-    // Form 2 Fields
-    {
-      id: FIELD_F2_NAME,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P1_ID,
-      label: "Full Name",
-      placeholder: "John Doe",
-      type: "text" as const,
-      fieldKey: "full_name",
-      isRequired: true,
-      order: 1,
-      config: null
-    },
-    {
-      id: FIELD_F2_EMAIL,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P1_ID,
-      label: "Email Address",
-      placeholder: "john.doe@example.com",
-      type: "email" as const,
-      fieldKey: "email_address",
-      isRequired: true,
-      order: 2,
-      config: null
-    },
-    {
-      id: FIELD_F2_PHONE,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P1_ID,
-      label: "Phone Number",
-      placeholder: "+1 (555) 123-4567",
-      type: "phone" as const,
-      fieldKey: "phone_number",
-      isRequired: false,
-      order: 3,
-      config: null
-    },
-    {
-      id: FIELD_F2_URL,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P1_ID,
-      label: "LinkedIn Profile URL",
-      placeholder: "https://linkedin.com/in/johndoe",
-      type: "url" as const,
-      fieldKey: "linkedin_url",
-      isRequired: false,
-      order: 4,
-      config: null
-    },
-    {
-      id: FIELD_F2_YEARS,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P2_ID,
-      label: "Years of Experience (React/NextJS)",
-      placeholder: "e.g. 5",
-      type: "number" as const,
-      fieldKey: "years_react_experience",
-      isRequired: true,
-      order: 1,
-      config: { min: 0, max: 30 }
-    },
-    {
-      id: FIELD_F2_RESUME,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P2_ID,
-      label: "Upload Resume (PDF only)",
-      type: "file" as const,
-      fieldKey: "resume_file",
-      isRequired: true,
-      order: 2,
-      config: { allowedExtensions: [".pdf"], maxSizeBytes: 5242880 }
-    },
-    {
-      id: FIELD_F2_DATE,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P2_ID,
-      label: "Earliest Start Date",
-      type: "date" as const,
-      fieldKey: "earliest_start_date",
-      isRequired: false,
-      order: 3,
-      config: null
-    },
-    {
-      id: FIELD_F2_TIME,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P2_ID,
-      label: "Preferred Call Time (EST)",
-      type: "time" as const,
-      fieldKey: "preferred_call_time",
-      isRequired: false,
-      order: 4,
-      config: null
-    },
-    {
-      id: FIELD_F2_RADIO,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P3_ID,
-      label: "Primary Programming Language",
-      type: "radio" as const,
-      fieldKey: "primary_language",
-      isRequired: true,
-      order: 1,
-      config: { options: ["TypeScript", "JavaScript", "Rust", "Go"] }
-    },
-    {
-      id: FIELD_F2_MATRIX,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P3_ID,
-      label: "Domain Skill Levels",
-      type: "matrix" as const,
-      fieldKey: "domain_skills",
-      isRequired: true,
-      order: 2,
-      config: {
-        rows: ["Frontend Frameworks", "NodeJS / Backend APIs", "Database & SQL", "Cloud & DevOps"],
-        columns: ["Beginner", "Intermediate", "Expert"]
-      }
-    },
-    {
-      id: FIELD_F2_SIGNATURE,
-      formId: FORM_2_ID,
-      pageId: PAGE_F2_P3_ID,
-      label: "Draw your signature / Type initials to confirm",
-      type: "signature" as const,
-      fieldKey: "applicant_signature",
-      isRequired: true,
-      order: 3,
-      config: null
-    }
-  ];
-  await db.insert(schema.formFields).values(formFieldData);
-  console.log(`✅ Seeded ${formFieldData.length} form fields.`);
-
-  console.log("🌱 Seeding form themes...");
-  const formThemeData = [
-    {
-      formId: FORM_1_ID,
-      themeName: "dark",
-      backgroundColor: "#09090b",
-      formBackgroundColor: "#18181b",
-      headerBackgroundColor: "#27272a",
-      primaryColor: "#a855f7",
-      buttonTextColor: "#ffffff",
-      textColor: "#ffffff",
-      mutedTextColor: "#a1a1aa",
-      borderColor: "#27272a",
-      inputBackgroundColor: "#27272a",
-      inputTextColor: "#ffffff",
-      bannerUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600"
-    },
-    {
-      formId: FORM_2_ID,
-      themeName: "ocean",
-      backgroundColor: "#f0f9ff",
-      formBackgroundColor: "#ffffff",
-      headerBackgroundColor: "#e0f2fe",
-      primaryColor: "#0ea5e9",
-      buttonTextColor: "#ffffff",
-      textColor: "#0c4a6e",
-      mutedTextColor: "#0284c7",
-      borderColor: "#bae6fd",
-      inputBackgroundColor: "#f0f9ff",
-      inputTextColor: "#0c4a6e",
-      bannerUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600"
-    },
-    {
-      formId: FORM_3_ID,
-      themeName: "retro",
-      backgroundColor: "#fef3c7",
-      formBackgroundColor: "#fffbeb",
-      headerBackgroundColor: "#fde68a",
-      primaryColor: "#d97706",
-      buttonTextColor: "#ffffff",
-      textColor: "#78350f",
-      mutedTextColor: "#b45309",
-      borderColor: "#fcd34d",
-      inputBackgroundColor: "#fffbeb",
-      inputTextColor: "#78350f",
-      bannerUrl: null
-    },
-    {
-      formId: FORM_4_ID,
-      themeName: "neon",
-      backgroundColor: "#022c22",
-      formBackgroundColor: "#064e3b",
-      headerBackgroundColor: "#065f46",
-      primaryColor: "#10b981",
-      buttonTextColor: "#022c22",
-      textColor: "#ecfdf5",
-      mutedTextColor: "#34d399",
-      borderColor: "#047857",
-      inputBackgroundColor: "#022c22",
-      inputTextColor: "#ecfdf5",
-      bannerUrl: "https://images.unsplash.com/photo-1547394765-185e1e68f34e?auto=format&fit=crop&q=80&w=600"
-    },
-    {
-      formId: FORM_5_ID,
-      themeName: "dark",
-      backgroundColor: "#09090b",
-      formBackgroundColor: "#18181b",
-      headerBackgroundColor: "#27272a",
-      primaryColor: "#3f3f46",
-      buttonTextColor: "#ffffff",
-      textColor: "#ffffff",
-      mutedTextColor: "#a1a1aa",
-      borderColor: "#27272a",
-      inputBackgroundColor: "#27272a",
-      inputTextColor: "#ffffff",
-      bannerUrl: null
-    },
-    {
-      formId: FORM_6_ID,
-      themeName: "dark",
-      backgroundColor: "#09090b",
-      formBackgroundColor: "#18181b",
-      headerBackgroundColor: "#27272a",
-      primaryColor: "#3b82f6",
-      buttonTextColor: "#ffffff",
-      textColor: "#ffffff",
-      mutedTextColor: "#a1a1aa",
-      borderColor: "#27272a",
-      inputBackgroundColor: "#27272a",
-      inputTextColor: "#ffffff",
-      bannerUrl: null
-    }
-  ];
-  await db.insert(schema.formThemes).values(formThemeData);
-  console.log(`✅ Seeded ${formThemeData.length} form themes.`);
-
-  console.log("🌱 Seeding submissions and answer values...");
   
-  // 1. Form 1 Submissions (15 entries)
-  const f1Submissions = [
-    { id: "s011f101-da11-4eb1-99ee-1122334455aa", submittedBy: USER_3_ID, status: "completed", createdAt: new Date("2026-01-21T10:00:00Z"), submittedAt: new Date("2026-01-21T10:00:00Z") },
-    { id: "s011f102-da11-4eb1-99ee-1122334455bb", submittedBy: null, status: "completed", createdAt: new Date("2026-01-22T14:30:00Z"), submittedAt: new Date("2026-01-22T14:30:00Z") },
-    { id: "s011f103-da11-4eb1-99ee-1122334455cc", submittedBy: USER_5_ID, status: "completed", createdAt: new Date("2026-02-15T09:00:00Z"), submittedAt: new Date("2026-02-15T09:00:00Z") },
-    { id: "s011f104-da11-4eb1-99ee-1122334455dd", submittedBy: null, status: "completed", createdAt: new Date("2026-02-28T16:15:00Z"), submittedAt: new Date("2026-02-28T16:15:00Z") },
-    { id: "s011f105-da11-4eb1-99ee-1122334455ee", submittedBy: USER_6_ID, status: "completed", createdAt: new Date("2026-03-05T11:00:00Z"), submittedAt: new Date("2026-03-05T11:00:00Z") },
-    { id: "s011f106-da11-4eb1-99ee-1122334455ff", submittedBy: null, status: "completed", createdAt: new Date("2026-03-12T12:00:00Z"), submittedAt: new Date("2026-03-12T12:00:00Z") },
-    { id: "s011f107-da11-4eb1-99ee-112233445501", submittedBy: null, status: "completed", createdAt: new Date("2026-03-25T15:45:00Z"), submittedAt: new Date("2026-03-25T15:45:00Z") },
-    { id: "s011f108-da11-4eb1-99ee-112233445502", submittedBy: USER_7_ID, status: "completed", createdAt: new Date("2026-04-02T10:30:00Z"), submittedAt: new Date("2026-04-02T10:30:00Z") },
-    { id: "s011f109-da11-4eb1-99ee-112233445503", submittedBy: null, status: "completed", createdAt: new Date("2026-04-14T09:20:00Z"), submittedAt: new Date("2026-04-14T09:20:00Z") },
-    { id: "s011f110-da11-4eb1-99ee-112233445504", submittedBy: USER_8_ID, status: "completed", createdAt: new Date("2026-04-20T17:00:00Z"), submittedAt: new Date("2026-04-20T17:00:00Z") },
-    { id: "s011f111-da11-4eb1-99ee-112233445505", submittedBy: null, status: "completed", createdAt: new Date("2026-05-01T11:15:00Z"), submittedAt: new Date("2026-05-01T11:15:00Z") },
-    { id: "s011f112-da11-4eb1-99ee-112233445506", submittedBy: USER_9_ID, status: "completed", createdAt: new Date("2026-05-10T14:40:00Z"), submittedAt: new Date("2026-05-10T14:40:00Z") },
-    { id: "s011f113-da11-4eb1-99ee-112233445507", submittedBy: null, status: "completed", createdAt: new Date("2026-05-18T13:00:00Z"), submittedAt: new Date("2026-05-18T13:00:00Z") },
-    { id: "s011f114-da11-4eb1-99ee-112233445508", submittedBy: null, status: "completed", createdAt: new Date("2026-05-22T08:30:00Z"), submittedAt: new Date("2026-05-22T08:30:00Z") },
-    { id: "s011f115-da11-4eb1-99ee-112233445509", submittedBy: USER_10_ID, status: "completed", createdAt: new Date("2026-05-25T16:50:00Z"), submittedAt: new Date("2026-05-25T16:50:00Z") }
+  let pageCounter = 403;
+  const otherFormIds = [formIds.nps, formIds.event, formIds.template, formIds.archived, formIds.hiring, formIds.onboarding];
+  for (const fId of otherFormIds) {
+    pages.push({ id: uuidFrom(pageCounter++), formId: fId, title: "Page 1", description: "First page", order: 1 });
+    pages.push({ id: uuidFrom(pageCounter++), formId: fId, title: "Page 2", description: "Second page", order: 2 });
+    pages.push({ id: uuidFrom(pageCounter++), formId: fId, title: "Page 3", description: "Third page", order: 3 });
+  }
+  await db.insert(schema.formPages).values(pages);
+
+  const allFieldsPage1 = pages[0]!.id;
+  const allFieldsPage2 = pages[1]!.id;
+
+  // -------------------------------------------------------------------------
+  // Form fields
+  // -------------------------------------------------------------------------
+  const fieldIds = {
+    text:      uuidFrom(501),
+    textarea:  uuidFrom(502),
+    email:     uuidFrom(503),
+    phone:     uuidFrom(504),
+    number:    uuidFrom(505),
+    select:    uuidFrom(506),
+    multi:     uuidFrom(507),
+    radio:     uuidFrom(508),
+    checkbox:  uuidFrom(509),
+    date:      uuidFrom(510),
+    time:      uuidFrom(511),
+    file:      uuidFrom(512),
+    rating:    uuidFrom(513),
+    matrix:    uuidFrom(514),
+    signature: uuidFrom(515),
+    url:       uuidFrom(516),
+  };
+
+  const fields: any[] = [
+    // Page 1 — primary details
+    { id: fieldIds.text,      formId: formIds.allFields, pageId: allFieldsPage1, label: "Full Name",            type: "text",         fieldKey: "full_name",      isRequired: true,  order: 1 },
+    { id: fieldIds.textarea,  formId: formIds.allFields, pageId: allFieldsPage1, label: "Bio",                  type: "textarea",     fieldKey: "bio",            isRequired: false, order: 2 },
+    { id: fieldIds.email,     formId: formIds.allFields, pageId: allFieldsPage1, label: "Email",                type: "email",        fieldKey: "email",          isRequired: true,  order: 3 },
+    { id: fieldIds.phone,     formId: formIds.allFields, pageId: allFieldsPage1, label: "Phone",                type: "phone",        fieldKey: "phone",          isRequired: false, order: 4 },
+    { id: fieldIds.url,       formId: formIds.allFields, pageId: allFieldsPage1, label: "Portfolio URL",        type: "url",          fieldKey: "portfolio_url",  isRequired: false, order: 5 },
+
+    // Page 2 — advanced inputs
+    { id: fieldIds.number,    formId: formIds.allFields, pageId: allFieldsPage2, label: "Years of Experience",  type: "number",       fieldKey: "years_experience", isRequired: true,  order: 1,  config: { min: 0, max: 25 } },
+    { id: fieldIds.select,    formId: formIds.allFields, pageId: allFieldsPage2, label: "Department",           type: "select",       fieldKey: "department",       isRequired: true,  order: 2,  config: { options: ["Engineering", "Growth", "Support"] } },
+    { id: fieldIds.multi,     formId: formIds.allFields, pageId: allFieldsPage2, label: "Preferred Tools",      type: "multi_select", fieldKey: "tools",            isRequired: false, order: 3,  config: { options: ["Notion", "Linear", "Slack", "Figma"] } },
+    { id: fieldIds.radio,     formId: formIds.allFields, pageId: allFieldsPage2, label: "Work Mode",            type: "radio",        fieldKey: "work_mode",        isRequired: true,  order: 4,  config: { options: ["Remote", "Hybrid", "Onsite"] } },
+    { id: fieldIds.checkbox,  formId: formIds.allFields, pageId: allFieldsPage2, label: "Agree to terms",       type: "checkbox",     fieldKey: "agree",            defaultValue: "true", isRequired: true, order: 5 },
+    { id: fieldIds.date,      formId: formIds.allFields, pageId: allFieldsPage2, label: "Join Date",            type: "date",         fieldKey: "join_date",        isRequired: false, order: 6 },
+    { id: fieldIds.time,      formId: formIds.allFields, pageId: allFieldsPage2, label: "Preferred Meeting Time", type: "time",       fieldKey: "meeting_time",     isRequired: false, order: 7 },
+    { id: fieldIds.file,      formId: formIds.allFields, pageId: allFieldsPage2, label: "Resume",               type: "file",         fieldKey: "resume",           isRequired: false, order: 8,  config: { allowedExtensions: [".pdf"], maxSizeBytes: 4000000 } },
+    { id: fieldIds.rating,    formId: formIds.allFields, pageId: allFieldsPage2, label: "Rate Experience",      type: "rating",       fieldKey: "rating",           isRequired: true,  order: 9,  config: { maxStars: 5 } },
+    { id: fieldIds.matrix,    formId: formIds.allFields, pageId: allFieldsPage2, label: "Skill Matrix",         type: "matrix",       fieldKey: "skill_matrix",     isRequired: false, order: 10, config: { rows: ["Frontend", "Backend", "DevOps"], columns: ["Beginner", "Intermediate", "Expert"] } },
+    { id: fieldIds.signature, formId: formIds.allFields, pageId: allFieldsPage2, label: "Signature",            type: "signature",    fieldKey: "signature",        isRequired: true,  order: 11 },
   ];
 
-  await db.insert(schema.submissions).values(
-    f1Submissions.map(s => ({ ...s, formId: FORM_1_ID }))
-  );
+  let fieldCounter = 517;
+  for (let i = 2; i < pages.length; i++) {
+    const page = pages[i];
+    fields.push({ id: uuidFrom(fieldCounter++), formId: page.formId, pageId: page.id, label: `Text Field - ${page.title}`, type: "text", fieldKey: `text_${fieldCounter}`, isRequired: true, order: 1 });
+    fields.push({ id: uuidFrom(fieldCounter++), formId: page.formId, pageId: page.id, label: `Textarea - ${page.title}`, type: "textarea", fieldKey: `textarea_${fieldCounter}`, isRequired: false, order: 2 });
+    fields.push({ id: uuidFrom(fieldCounter++), formId: page.formId, pageId: page.id, label: `Email - ${page.title}`, type: "email", fieldKey: `email_${fieldCounter}`, isRequired: true, order: 3 });
+    fields.push({ id: uuidFrom(fieldCounter++), formId: page.formId, pageId: page.id, label: `Select - ${page.title}`, type: "select", fieldKey: `select_${fieldCounter}`, isRequired: true, order: 4, config: { options: ["Option A", "Option B", "Option C"] } });
+    fields.push({ id: uuidFrom(fieldCounter++), formId: page.formId, pageId: page.id, label: `Rating - ${page.title}`, type: "rating", fieldKey: `rating_${fieldCounter}`, isRequired: false, order: 5, config: { maxStars: 5 } });
+  }
 
-  const f1Answers = [
-    // Sub 1
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_RATING, value: 5 },
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_TEXT, value: "Instant real-time form styling" },
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_TEXTAREA, value: "Need more font integrations to choose from." },
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_SELECT, value: "Daily" },
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_MULTI, value: ["Form Editor", "Theme customizer"] },
-    { submissionId: f1Submissions[0].id, fieldId: FIELD_F1_CHECKBOX, value: true },
+  await db.insert(schema.formFields).values(fields as any);
 
-    // Sub 2
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_RATING, value: 4 },
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_TEXT, value: "Awesome developer ergonomics" },
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_TEXTAREA, value: "Add Razorpay payment integration for premium forms." },
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_SELECT, value: "Weekly" },
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_MULTI, value: ["Form Editor", "Submissions DB"] },
-    { submissionId: f1Submissions[1].id, fieldId: FIELD_F1_CHECKBOX, value: false },
+  // -------------------------------------------------------------------------
+  // Form themes
+  // -------------------------------------------------------------------------
+  await db.insert(schema.formThemes).values([
+    { formId: formIds.allFields,  themeName: "dark-pro",     defaultThemeId: uuidFrom(301), primaryColor: "#7c3aed" },
+    { formId: formIds.nps,        themeName: "ocean-breeze", defaultThemeId: uuidFrom(302), primaryColor: "#0284c7" },
+    { formId: formIds.event,      themeName: "mint",         defaultThemeId: uuidFrom(304), primaryColor: "#10b981" },
+    { formId: formIds.template,   themeName: "sunset",       defaultThemeId: uuidFrom(303), primaryColor: "#f97316" },
+    { formId: formIds.archived,   themeName: "dark-pro",     defaultThemeId: uuidFrom(301), primaryColor: "#7c3aed" },
+    { formId: formIds.hiring,     themeName: "ocean-breeze", defaultThemeId: uuidFrom(302), primaryColor: "#0284c7" },
+    { formId: formIds.onboarding, themeName: "dark-pro",     defaultThemeId: uuidFrom(301), primaryColor: "#7c3aed" },
+  ]);
 
-    // Sub 3
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_RATING, value: 2 },
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_TEXT, value: "Clean UI theme presets" },
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_TEXTAREA, value: "The loader state is slightly sluggish. Needs optimization." },
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_SELECT, value: "Rarely" },
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_MULTI, value: ["Form Editor"] },
-    { submissionId: f1Submissions[2].id, fieldId: FIELD_F1_CHECKBOX, value: true },
+  // -------------------------------------------------------------------------
+  // Submissions
+  // -------------------------------------------------------------------------
+  const submissions: any[] = [];
+  const answers: any[] = [];
+  let subCounter = 700;
+  
+  const formsToSeed = Object.values(formIds);
+  
+  for (let fIndex = 0; fIndex < formsToSeed.length; fIndex++) {
+    const formId = formsToSeed[fIndex]!;
+    const numSubs = Math.floor(Math.random() * 100) + 20; // Random number between 120 and 20
+    const formFields = fields.filter(f => f.formId === formId);
+    
+    for (let i = 0; i < numSubs; i++) {
+      const subId = uuidFrom(subCounter++);
+      const date = d(5, 14 + (i % 13), 9 + (i % 8), i % 60);
+      
+      let submittedBy = null;
+      if (i % 7 === 0) submittedBy = uuidFrom(1);
+      if (i % 11 === 0) submittedBy = uuidFrom(2);
 
-    // Sub 4
-    { submissionId: f1Submissions[3].id, fieldId: FIELD_F1_RATING, value: 5 },
-    { submissionId: f1Submissions[3].id, fieldId: FIELD_F1_TEXT, value: "Speed of form creation is phenomenal!" },
-    { submissionId: f1Submissions[3].id, fieldId: FIELD_F1_SELECT, value: "Daily" },
-    { submissionId: f1Submissions[3].id, fieldId: FIELD_F1_MULTI, value: ["Form Editor", "Theme customizer", "Integrations"] },
-    { submissionId: f1Submissions[3].id, fieldId: FIELD_F1_CHECKBOX, value: true },
+      submissions.push({
+        id: subId,
+        formId,
+        submittedBy,
+        status: "completed",
+        submittedAt: date,
+        createdAt: date,
+      });
 
-    // Programmatic defaults for 5-15 to build a robust dataset
-    ...f1Submissions.slice(4).flatMap((s, idx) => {
-      const score = (idx % 2 === 0) ? 5 : 4;
-      const freq = (idx % 3 === 0) ? "Weekly" : (idx % 3 === 1) ? "Monthly" : "Daily";
-      return [
-        { submissionId: s.id, fieldId: FIELD_F1_RATING, value: score },
-        { submissionId: s.id, fieldId: FIELD_F1_TEXT, value: `Benefit #${idx + 5}` },
-        { submissionId: s.id, fieldId: FIELD_F1_SELECT, value: freq },
-        { submissionId: s.id, fieldId: FIELD_F1_CHECKBOX, value: score === 5 }
-      ];
-    })
-  ];
-  await db.insert(schema.submissionAnswers).values(f1Answers);
+      // Answers
+      for (const field of formFields) {
+        let value: any = `Answer ${i} for ${field.label}`;
+        if (field.type === "email") value = `user${i}@mail.com`;
+        if (field.type === "select") value = field.config?.options?.[i % (field.config?.options?.length || 1)] || "Option A";
+        if (field.type === "rating") value = (i % 5) + 1;
+        if (field.type === "number") value = i;
+        if (field.type === "phone") value = `+91-900001${(100 + i).toString()}`;
+        if (field.type === "checkbox") value = i % 2 === 0;
+        if (field.type === "radio") value = field.config?.options?.[i % (field.config?.options?.length || 1)] || "Option A";
+        if (field.type === "multi_select") value = [field.config?.options?.[i % (field.config?.options?.length || 1)] || "Option A"];
+        if (field.type === "date") value = "2026-06-16";
+        if (field.type === "time") value = "10:00";
+        if (field.type === "file") value = { filename: `file_${i}.pdf`, sizeBytes: 1200000, url: `https://cdn.chai.dev/file_${i}.pdf` };
+        if (field.type === "matrix") value = { [field.config?.rows?.[0] || "R1"]: field.config?.columns?.[0] || "C1" };
+        if (field.type === "signature") value = `Signature ${i}`;
+        if (field.type === "url") value = `https://example.com/user${i}`;
 
-  // 2. Form 2 Submissions (Job Application - 6 entries)
-  const f2Submissions = [
-    { id: "s022f201-db22-4eb2-88ff-2233445566aa", submittedBy: USER_1_ID, status: "completed", createdAt: new Date("2026-02-12T10:00:00Z"), submittedAt: new Date("2026-02-12T10:00:00Z") },
-    { id: "s022f202-db22-4eb2-88ff-2233445566bb", submittedBy: USER_3_ID, status: "completed", createdAt: new Date("2026-02-14T15:30:00Z"), submittedAt: new Date("2026-02-14T15:30:00Z") },
-    { id: "s022f203-db22-4eb2-88ff-2233445566cc", submittedBy: null, status: "completed", createdAt: new Date("2026-03-01T09:00:00Z"), submittedAt: new Date("2026-03-01T09:00:00Z") },
-    { id: "s022f204-db22-4eb2-88ff-2233445566dd", submittedBy: null, status: "completed", createdAt: new Date("2026-03-22T11:00:00Z"), submittedAt: new Date("2026-03-22T11:00:00Z") },
-    { id: "s022f205-db22-4eb2-88ff-2233445566ee", submittedBy: null, status: "completed", createdAt: new Date("2026-04-11T16:00:00Z"), submittedAt: new Date("2026-04-11T16:00:00Z") },
-    { id: "s022f206-db22-4eb2-88ff-2233445566ff", submittedBy: null, status: "completed", createdAt: new Date("2026-05-20T14:00:00Z"), submittedAt: new Date("2026-05-20T14:00:00Z") }
-  ];
-
-  await db.insert(schema.submissions).values(
-    f2Submissions.map(s => ({ ...s, formId: FORM_2_ID }))
-  );
-
-  const f2Answers = [
-    // Sub 1 (Aditya)
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_NAME, value: "Aditya Sharma" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_EMAIL, value: "aditya@chaiforms.com" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_PHONE, value: "+91 9999999999" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_URL, value: "https://linkedin.com/in/adityadev" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_YEARS, value: 6 },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_RESUME, value: { filename: "aditya_resume.pdf", sizeBytes: 1045231, url: "https://chaiforms-s3.s3.amazonaws.com/resumes/resume_aditya.pdf" } },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_DATE, value: "2026-06-01" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_TIME, value: "10:00" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_RADIO, value: "TypeScript" },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_MATRIX, value: { "Frontend Frameworks": "Expert", "NodeJS / Backend APIs": "Expert", "Database & SQL": "Expert", "Cloud & DevOps": "Intermediate" } },
-    { submissionId: f2Submissions[0].id, fieldId: FIELD_F2_SIGNATURE, value: "Aditya Sharma (Digitally Signed)" },
-
-    // Sub 2 (Devon)
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_NAME, value: "Devon Miller" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_EMAIL, value: "devon@chaiforms.com" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_PHONE, value: "+1 (555) 987-6543" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_URL, value: "https://linkedin.com/in/devonm" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_YEARS, value: 3 },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_RESUME, value: { filename: "devon_resume.pdf", sizeBytes: 2045612, url: "https://chaiforms-s3.s3.amazonaws.com/resumes/devon_resume.pdf" } },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_DATE, value: "2026-07-15" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_TIME, value: "14:30" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_RADIO, value: "JavaScript" },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_MATRIX, value: { "Frontend Frameworks": "Intermediate", "NodeJS / Backend APIs": "Intermediate", "Database & SQL": "Beginner", "Cloud & DevOps": "Beginner" } },
-    { submissionId: f2Submissions[1].id, fieldId: FIELD_F2_SIGNATURE, value: "DM" },
-
-    // Sub 3 (Guest Tony)
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_NAME, value: "Tony Stark" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_EMAIL, value: "tony@starkindustries.com" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_PHONE, value: "+1 (300) I-AM-IRONMAN" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_URL, value: "https://linkedin.com/in/tonystark" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_YEARS, value: 15 },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_RESUME, value: { filename: "stark_resume.pdf", sizeBytes: 450123, url: "https://chaiforms-s3.s3.amazonaws.com/resumes/tony_resume.pdf" } },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_DATE, value: "2026-05-30" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_TIME, value: "09:00" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_RADIO, value: "Rust" },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_MATRIX, value: { "Frontend Frameworks": "Expert", "NodeJS / Backend APIs": "Expert", "Database & SQL": "Expert", "Cloud & DevOps": "Expert" } },
-    { submissionId: f2Submissions[2].id, fieldId: FIELD_F2_SIGNATURE, value: "TS" },
-
-    // Dynamic defaults for 4-6
-    ...f2Submissions.slice(3).flatMap((s, idx) => {
-      const names = ["Emily Watson", "Frank Lucas", "Grace Hopper"];
-      const code = idx % 2 === 0 ? "Rust" : "Go";
-      return [
-        { submissionId: s.id, fieldId: FIELD_F2_NAME, value: names[idx] },
-        { submissionId: s.id, fieldId: FIELD_F2_EMAIL, value: `${names[idx].toLowerCase().replace(" ", "")}@example.com` },
-        { submissionId: s.id, fieldId: FIELD_F2_YEARS, value: 4 + idx },
-        { submissionId: s.id, fieldId: FIELD_F2_RESUME, value: { filename: "resume.pdf", sizeBytes: 900000, url: "https://s3.com/resume.pdf" } },
-        { submissionId: s.id, fieldId: FIELD_F2_RADIO, value: code },
-        { submissionId: s.id, fieldId: FIELD_F2_MATRIX, value: { "Frontend Frameworks": "Intermediate", "NodeJS / Backend APIs": "Expert", "Database & SQL": "Intermediate", "Cloud & DevOps": "Beginner" } },
-        { submissionId: s.id, fieldId: FIELD_F2_SIGNATURE, value: names[idx] }
-      ];
-    })
-  ];
-  await db.insert(schema.submissionAnswers).values(f2Answers);
-  console.log(`✅ Seeded ${f1Submissions.length + f2Submissions.length} submissions with answers.`);
-
-  console.log("🌱 Seeding form comments (including nested recursive replies)...");
-  const formCommentData = [
-    {
-      id: COMM_1_ID,
-      formId: FORM_1_ID,
-      userId: USER_3_ID,
-      guestName: null,
-      content: "Amazing job on the dark mode theme colors! It looks highly polished.",
-      parentId: null,
-      createdAt: new Date("2026-01-21T11:00:00Z")
-    },
-    {
-      id: COMM_2_ID,
-      formId: FORM_1_ID,
-      userId: USER_1_ID, // Aditya (Owner)
-      guestName: null,
-      content: "Thank you, Devon! We worked really hard on curating HSL tailored templates.",
-      parentId: COMM_1_ID,
-      createdAt: new Date("2026-01-21T11:30:00Z")
-    },
-    {
-      id: "d011c004-66aa-4ee2-bb11-1122334455dd",
-      formId: FORM_1_ID,
-      userId: USER_3_ID,
-      guestName: null,
-      content: "It definitely paid off. The glassmorphism card feels extremely premium.",
-      parentId: COMM_2_ID,
-      createdAt: new Date("2026-01-21T12:00:00Z")
-    },
-    {
-      id: COMM_3_ID,
-      formId: FORM_1_ID,
-      userId: null,
-      guestName: "Jane Techie",
-      content: "Is there support for conditional skip logic fields yet? Loving the form editor so far!",
-      parentId: null,
-      createdAt: new Date("2026-03-01T15:00:00Z")
-    },
-    {
-      id: "d011c005-66aa-4ee2-bb11-1122334455ee",
-      formId: FORM_1_ID,
-      userId: USER_1_ID,
-      guestName: null,
-      content: "Hi Jane! We are currently designing the conditions builder module. Expect it in the June release!",
-      parentId: COMM_3_ID,
-      createdAt: new Date("2026-03-01T16:00:00Z")
-    },
-    {
-      id: "d022c001-77bb-4ff3-cc22-2233445566aa",
-      formId: FORM_2_ID,
-      userId: USER_2_ID,
-      guestName: null,
-      content: "We've received over 6 high-quality applications through this form already!",
-      parentId: null,
-      createdAt: new Date("2026-02-15T09:00:00Z")
+        answers.push({
+          submissionId: subId,
+          fieldId: field.id,
+          value,
+        });
+      }
     }
-  ];
-  await db.insert(schema.formComments).values(formCommentData);
-  console.log(`✅ Seeded ${formCommentData.length} comments.`);
-
-  console.log("🌱 Seeding billing orders...");
-  const orderData = [
-    {
-      userId: USER_1_ID,
-      razorpayOrderId: "order_PRX123456789",
-      razorpayPaymentId: "pay_PRX123456789_complete",
-      razorpaySignature: "sig_abcdef123456789",
-      amount: 49900,
-      currency: "INR",
-      status: "completed",
-      createdAt: new Date("2026-01-15T09:30:00Z")
-    },
-    {
-      userId: USER_2_ID,
-      razorpayOrderId: "order_JEN987654321",
-      razorpayPaymentId: "pay_JEN987654321_complete",
-      razorpaySignature: "sig_xyz987654321",
-      amount: 99900,
-      currency: "INR",
-      status: "completed",
-      createdAt: new Date("2026-02-01T11:00:00Z")
-    },
-    {
-      userId: USER_4_ID,
-      razorpayOrderId: "order_PRI112233445",
-      razorpayPaymentId: null,
-      razorpaySignature: null,
-      amount: 49900,
-      currency: "INR",
-      status: "pending",
-      createdAt: new Date("2026-05-25T16:00:00Z")
-    },
-    {
-      userId: USER_3_ID,
-      razorpayOrderId: "order_DEV556677889",
-      razorpayPaymentId: null,
-      razorpaySignature: null,
-      amount: 49900,
-      currency: "INR",
-      status: "failed",
-      createdAt: new Date("2026-05-20T10:00:00Z")
-    }
-  ];
-  await db.insert(schema.orders).values(orderData);
-  console.log(`✅ Seeded ${orderData.length} subscription orders.`);
-
-  console.log("🌱 Seeding archived templates...");
-  const archivedTemplateData = [
-    { userId: USER_1_ID, formId: FORM_4_ID, createdAt: new Date("2026-03-06T10:00:00Z") },
-    { userId: USER_2_ID, formId: FORM_4_ID, createdAt: new Date("2026-03-10T14:00:00Z") },
-    { userId: USER_3_ID, formId: FORM_4_ID, createdAt: new Date("2026-04-01T09:00:00Z") }
-  ];
-  await db.insert(schema.archivedTemplates).values(archivedTemplateData);
-  console.log(`✅ Seeded ${archivedTemplateData.length} template bookmarks.`);
-
-  console.log("🌱 Seeding form views (detailed visitor geo & device distribution)...");
-  const countries = ["US", "IN", "GB", "DE", "CA", "AU", "FR", "JP", "BR", "ZA"];
-  const devices = ["desktop", "mobile", "tablet"];
-  const formViewsData: any[] = [];
-
-  // Generate 50 views for Form 1 (Jan - May)
-  for (let i = 0; i < 50; i++) {
-    const country = countries[i % countries.length];
-    const device = devices[i % devices.length];
-    const viewedAt = new Date(new Date("2026-01-20T00:00:00Z").getTime() + Math.random() * (new Date("2026-05-25T00:00:00Z").getTime() - new Date("2026-01-20T00:00:00Z").getTime()));
-    formViewsData.push({
-      formId: FORM_1_ID,
-      visitorId: `visitor_f1_${i}_${Math.random().toString(36).substring(7)}`,
-      country,
-      device,
-      viewedAt
-    });
   }
 
-  // Generate 30 views for Form 2 (Feb - May)
-  for (let i = 0; i < 30; i++) {
-    const country = countries[(i + 3) % countries.length];
-    const device = devices[(i + 1) % devices.length];
-    const viewedAt = new Date(new Date("2026-02-10T00:00:00Z").getTime() + Math.random() * (new Date("2026-05-25T00:00:00Z").getTime() - new Date("2026-02-10T00:00:00Z").getTime()));
-    formViewsData.push({
-      formId: FORM_2_ID,
-      visitorId: `visitor_f2_${i}_${Math.random().toString(36).substring(7)}`,
-      country,
-      device,
-      viewedAt
-    });
+  // Insert submissions in batches
+  const subChunkSize = 2000;
+  for (let i = 0; i < submissions.length; i += subChunkSize) {
+    await db.insert(schema.submissions).values(submissions.slice(i, i + subChunkSize));
   }
-  await db.insert(schema.formViews).values(formViewsData);
-  console.log(`✅ Seeded ${formViewsData.length} granular form views.`);
-
-  console.log("🌱 Seeding form daily analytics (charts rollup data)...");
-  const analyticsDailyData: any[] = [];
-
-  // Form 1 aggregations (every 2 days)
-  const baseDateF1 = new Date("2026-01-20T00:00:00Z");
-  for (let day = 0; day < 30; day += 2) {
-    const date = new Date(baseDateF1.getTime() + day * 24 * 60 * 60 * 1000);
-    const totalViews = Math.floor(Math.random() * 20) + 5;
-    const totalSubmissions = Math.floor(Math.random() * totalViews);
-    const conversionRate = totalViews > 0 ? Math.round((totalSubmissions / totalViews) * 100) : 0;
-    analyticsDailyData.push({
-      formId: FORM_1_ID,
-      date,
-      totalViews,
-      totalSubmissions,
-      conversionRate
-    });
+  
+  // Insert answers in batches
+  const chunkAnsSize = 2000;
+  for (let i = 0; i < answers.length; i += chunkAnsSize) {
+    await db.insert(schema.submissionAnswers).values(answers.slice(i, i + chunkAnsSize));
   }
 
-  // Form 2 aggregations (every 2 days)
-  const baseDateF2 = new Date("2026-02-10T00:00:00Z");
-  for (let day = 0; day < 20; day += 2) {
-    const date = new Date(baseDateF2.getTime() + day * 24 * 60 * 60 * 1000);
-    const totalViews = Math.floor(Math.random() * 15) + 3;
-    const totalSubmissions = Math.floor(Math.random() * totalViews);
-    const conversionRate = totalViews > 0 ? Math.round((totalSubmissions / totalViews) * 100) : 0;
-    analyticsDailyData.push({
-      formId: FORM_2_ID,
-      date,
-      totalViews,
-      totalSubmissions,
-      conversionRate
-    });
-  }
-  await db.insert(schema.formAnalyticsDaily).values(analyticsDailyData);
-  console.log(`✅ Seeded ${analyticsDailyData.length} daily roll-up analytics entries.`);
+  // -------------------------------------------------------------------------
+  // Form comments — May 18–26; chaiuser (1) is the most active commenter
+  // -------------------------------------------------------------------------
+  const c1 = uuidFrom(801);
+  const c2 = uuidFrom(802);
+  await db.insert(schema.formComments).values([
+    // All Fields Demo thread
+    { id: c1,           formId: formIds.allFields, userId: uuidFrom(2), content: "The demo form is super useful for onboarding new teammates — covers every field type.",                     createdAt: d(5, 18, 10, 0) },
+    { id: c2,           formId: formIds.allFields, userId: uuidFrom(1), content: "Agreed! I added a matrix and signature field specifically for the QA walkthrough.", parentId: c1,          createdAt: d(5, 18, 10, 45) },
+    { id: uuidFrom(803), formId: formIds.allFields, userId: null, guestName: "Guest Reviewer", content: "Could we add conditional logic per field? Would make it even more powerful.",          createdAt: d(5, 19, 9, 0) },
+    { id: uuidFrom(806), formId: formIds.allFields, userId: uuidFrom(1), content: "Good call — conditional logic is on the roadmap for Q3.",  parentId: uuidFrom(803),                       createdAt: d(5, 19, 11, 30) },
 
-  console.log("\n🚀 Database Seeding complete! Happy development!");
+    // Feature Request Template thread
+    { id: uuidFrom(804), formId: formIds.template, userId: uuidFrom(3), content: "Template usage jumped 40% this week — teams love having a starting point.",                                 createdAt: d(5, 21, 9, 0) },
+    { id: uuidFrom(807), formId: formIds.template, userId: uuidFrom(1), content: "Great signal. Will pin this template to the product workspace for easier discovery.",                       createdAt: d(5, 21, 10, 15) },
+
+    // Senior Engineer hiring form thread
+    { id: uuidFrom(805), formId: formIds.hiring, userId: uuidFrom(1),   content: "We've already received 14 strong applications in the first week — pipeline looks healthy.",               createdAt: d(5, 23, 9, 30) },
+    { id: uuidFrom(808), formId: formIds.hiring, userId: uuidFrom(2),   content: "Agreed. Shortlisting starts Friday — I'll share the filtered view with the hiring panel.",                createdAt: d(5, 23, 11, 0) },
+    { id: uuidFrom(809), formId: formIds.hiring, userId: uuidFrom(1),   content: "Sounds good. Let me know if you need me to adjust any field weights before the review.",                  createdAt: d(5, 23, 12, 0) },
+
+    // NPS Tracker comment
+    { id: uuidFrom(810), formId: formIds.nps, userId: uuidFrom(5),      content: "Early NPS responses are trending at 8.4 — best score we've had this quarter.",                           createdAt: d(5, 25, 10, 0) },
+    { id: uuidFrom(811), formId: formIds.nps, userId: uuidFrom(1),      content: "Excellent! Let's make sure Mia highlights this in the Q2 growth sync tomorrow.",                          createdAt: d(5, 25, 11, 30) },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Orders — chaiuser is the primary paying customer (2 orders)
+  // Others have one each; dates spread May 12–26
+  // -------------------------------------------------------------------------
+  await db.insert(schema.orders).values([
+    // chaiuser — completed subscription on account creation day
+    { userId: uuidFrom(1), razorpayOrderId: "order_chai_001",  razorpayPaymentId: "pay_chai_001",  razorpaySignature: "sig_chai_001",  amount: 99900,  currency: "INR", status: "completed", createdAt: d(5, 12) },
+    // chaiuser — upgrade attempt still pending
+    { userId: uuidFrom(1), razorpayOrderId: "order_chai_002",  razorpayPaymentId: null,             razorpaySignature: null,             amount: 49900,  currency: "INR", status: "pending",   createdAt: d(5, 26) },
+    // Aarav — completed
+    { userId: uuidFrom(2), razorpayOrderId: "order_aarav_001", razorpayPaymentId: "pay_aarav_001", razorpaySignature: "sig_aarav_001", amount: 49900,  currency: "INR", status: "completed", createdAt: d(5, 13) },
+    // Nisha — payment failed
+    { userId: uuidFrom(3), razorpayOrderId: "order_nisha_001", razorpayPaymentId: null,             razorpaySignature: null,             amount: 49900,  currency: "INR", status: "failed",    createdAt: d(5, 14) },
+    // Mia — annual plan completed
+    { userId: uuidFrom(5), razorpayOrderId: "order_mia_001",   razorpayPaymentId: "pay_mia_001",   razorpaySignature: "sig_mia_001",   amount: 199900, currency: "INR", status: "completed", createdAt: d(5, 16) },
+  ]);
+
+  // -------------------------------------------------------------------------
+  // Archived templates — chaiuser saved the template first, others followed
+  // -------------------------------------------------------------------------
+  await db.insert(schema.archivedTemplates).values([
+    { userId: uuidFrom(1), formId: formIds.template, createdAt: d(5, 17) },
+    { userId: uuidFrom(2), formId: formIds.template, createdAt: d(5, 18) },
+    { userId: uuidFrom(3), formId: formIds.template, createdAt: d(5, 20) },
+    { userId: uuidFrom(9), formId: formIds.template, createdAt: d(5, 22) },
+  ]);
+
+  console.log("Seed complete.");
+  await pool.end();
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error("❌ Seeding encountered an error:", err);
+main().catch(async (err) => {
+  console.error("Seeding error:", err);
+  await pool.end();
   process.exit(1);
 });

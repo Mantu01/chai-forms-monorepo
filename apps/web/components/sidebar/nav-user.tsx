@@ -46,7 +46,7 @@ export function NavUser({
   const router = useRouter()
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      router.push("/auth")
+      router.push("/login")
     },
   })
 

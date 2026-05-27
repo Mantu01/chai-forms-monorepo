@@ -43,7 +43,7 @@ function ReplyItem({ reply, allComments, isAdmin, onDeleted, router, searchParam
   const handleDeleteTrigger = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("deleteCommentId", reply.id);
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`);
   };
 
   const showDelete = isAdmin || (userData?.user && reply.userId === userData.user.id);
@@ -110,7 +110,7 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
       toast.success("Comment deleted successfully");
       const params = new URLSearchParams(searchParams.toString());
       params.delete("deleteCommentId");
-      router.push(`?${params.toString()}`);
+      router.replace(`?${params.toString()}`);
       refetch();
     },
     onError: (err) => {
@@ -142,13 +142,13 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
   const handleDeleteTrigger = (commentId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("deleteCommentId", commentId);
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`);
   };
 
   const handleSortChange = (val: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", val);
-    router.push(`?${params.toString()}`, { scroll: false });
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const activeDeleteCommentId = searchParams.get("deleteCommentId");
@@ -267,7 +267,7 @@ export default function CommunityDetailPage(props: CommunityDetailPageProps) {
         if (!open) {
           const params = new URLSearchParams(searchParams.toString());
           params.delete("deleteCommentId");
-          router.push(`?${params.toString()}`);
+          router.replace(`?${params.toString()}`);
         }
       }}>
         <AlertDialogContent className="bg-card border-border">

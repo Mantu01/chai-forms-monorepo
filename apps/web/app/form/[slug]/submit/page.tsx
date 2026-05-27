@@ -9,14 +9,13 @@ import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { CheckCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Suspense } from "react";
 import { FormRenderer } from "~/components/forms/form-renderer";
 
 interface SubmitPageProps {
   params: Promise<{ slug: string }>;
 }
 
-function SubmitFormContent({ params }: SubmitPageProps) {
+export default function SubmitFormCPage({ params }: SubmitPageProps) {
   const { slug } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,7 +95,7 @@ function SubmitFormContent({ params }: SubmitPageProps) {
               </CardDescription>
             </CardHeader>
             <CardFooter className="flex justify-center">
-              <Link href="/auth">
+              <Link href="/login">
                 <Button className="text-xs">Sign In as Member</Button>
               </Link>
             </CardFooter>
@@ -127,7 +126,7 @@ function SubmitFormContent({ params }: SubmitPageProps) {
               </CardDescription>
             </CardHeader>
             <CardFooter className="flex justify-center">
-              <Link href="/auth">
+              <Link href="/login">
                 <Button className="text-xs">Sign In to Workspace</Button>
               </Link>
             </CardFooter>
@@ -271,9 +270,9 @@ function SubmitFormContent({ params }: SubmitPageProps) {
                 </Button>
               </Link>
             ) : (
-              <Link href="/auth">
+              <Link href="/workspaces">
                 <Button size="sm" style={{ backgroundColor: primaryColor, color: buttonTextColor }} className="text-xs">
-                  Sign In to ChaiForm
+                  Create form on ChaiForm
                 </Button>
               </Link>
             )}
@@ -302,10 +301,3 @@ function SubmitFormContent({ params }: SubmitPageProps) {
   );
 }
 
-export default function SubmitFormPage(props: SubmitPageProps) {
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-zinc-950 text-white"><Spinner /></div>}>
-      <SubmitFormContent {...props} />
-    </Suspense>
-  );
-}

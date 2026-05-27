@@ -1,6 +1,5 @@
 "use client";
 
-import React, { Suspense } from "react";
 import { ChartAreaInteractive } from "~/components/sidebar/chart-area-interactive";
 import { SectionCards } from "~/components/sidebar/section-cards";
 import { RecentActivity } from "~/components/sidebar/recent-activity";
@@ -39,9 +38,7 @@ function AnalyticsContent() {
 function DashboardPage() {
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground min-h-screen">
-      <Suspense fallback={<div className="flex justify-center py-20"><Spinner /></div>}>
-        <AnalyticsContent />
-      </Suspense>
+      <AnalyticsContent />
     </div>
   );
 }

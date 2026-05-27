@@ -5,7 +5,7 @@ export default function Logo() {
     <div className="inline-flex items-center py-1 gap-x-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-800 dark:focus-visible:ring-gray-300 rounded-lg transition-all duration-300 hover:scale-105">
       <Image 
         src="https://res.cloudinary.com/dqznmhhtv/image/upload/v1779557963/favicon_pihkox.png" 
-        alt="TezArt Logo"
+        alt="ChaiForm Logo"
         width={32}
         height={32}
         className="object-contain filter brightness-110 contrast-110"

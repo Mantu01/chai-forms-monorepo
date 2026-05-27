@@ -7,7 +7,7 @@ import ActionButton from "~/components/home/action-button";
 import Header from "~/components/layout/header";
 import Footer from "~/components/layout/footer";
 
-const VIDEO_URL = "https://res.cloudinary.com/dqznmhhtv/video/upload/v1779300873/samples/dance-2.mp4";
+const VIDEO_URL = "https://res.cloudinary.com/dqznmhhtv/video/upload/v1779889221/Video_Project_2_l1bvso.mp4";
 
 const features = [
   {
@@ -97,7 +97,7 @@ export default function HomePage() {
               <ActionButton variant="hero" />
             </div>
 
-            <div className="w-full">
+            <div className="w-full scale-120">
               <VideoPreview videoUrl={VIDEO_URL} />
             </div>
           </div>

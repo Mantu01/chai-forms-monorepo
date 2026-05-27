@@ -164,6 +164,7 @@ export const submissionRouter = router({
     }),
 
   getExportSubmissions: protectedProcedure
+    .meta({ openapi: { method: "GET", path: getPath("/export"), tags: TAGS } })
     .input(z.object({ formId: z.string().uuid() }))
     .output(z.array(z.any()))
     .query(async ({ input }) => {

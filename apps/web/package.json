@@ -73,6 +73,7 @@
     "framer-motion": "^12.40.0",
     "highlight.js": "^11.11.1",
     "input-otp": "^1.4.2",
+    "ioredis": "^5.11.0",
     "json-stringify-pretty-compact": "^4.0.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.0",

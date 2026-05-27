@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import { UserQuery, WorkspaceQuery } from "@repo/database/queries";
+import { sendMail } from "../mail/mailer";
 
 import {
   workspaceSchema,
@@ -169,6 +170,30 @@ export class WorkspaceService {
       token,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     });
+
+    try {
+      const workspace = await this.workspaceQuery.findWorkspaceById(validated.workspaceId);
+      if (workspace) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const inviteLink = `${appUrl}/notification`;
+        sendMail({
+          to: validated.email,
+          subject: `Invitation to join ${workspace.name} workspace on Chai Forms`,
+          templateProps: {
+            type: "invite",
+            data: {
+              workspaceName: workspace.name,
+              role: validated.role,
+              inviteLink,
+            },
+          },
+        }).catch(mailErr => {
+          console.error("Failed to send workspace invitation email inside sendMail promise:", mailErr);
+        });
+      }
+    } catch (mailError) {
+      console.error("Failed to send workspace invitation email notification:", mailError);
+    }
 
     return workspaceInviteSchema.parse(invite);
   }

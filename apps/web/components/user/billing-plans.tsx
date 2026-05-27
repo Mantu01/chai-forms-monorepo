@@ -97,7 +97,7 @@ export function BillingPlans({ isSubscribed }: BillingPlansProps) {
 
   const proFeatures = [
     "Unlimited form creation",
-    "Real-time Tambo AI form builder",
+    "Real-time AI form builder",
     "Conditional logic branching",
     "Base64 file uploads storage",
     "90d telemetry logs dashboard",
