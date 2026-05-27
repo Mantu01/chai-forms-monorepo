@@ -15,10 +15,11 @@ authRouter.get("/callback", async (req, res) => {
     const state = req.query.state;
     const user = await userService.handleGoogleCallback(code, typeof state === "string" ? state : undefined);
     const sessionToken = signToken({ userId: user.id });
+    const isProd = env.NODE_ENV === "production" || env.NODE_ENV === "prod";
     res.cookie("cookie", sessionToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });

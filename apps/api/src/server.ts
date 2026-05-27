@@ -10,6 +10,7 @@ import { authRouter } from "./routes/auth";
 import { env } from "./env";
 
 export const app = express();
+app.set("trust proxy", 1);
 const openApiDocument = generateOpenApiDocument(serverRouter, {
   title: "ChaiForm OpenAPI",
   version: "1.0.0",
@@ -25,7 +26,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE'], 
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE'],
   credentials: true
 }));
 

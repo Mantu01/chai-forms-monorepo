@@ -39,9 +39,10 @@ export const authRouter = router({
             path: "/",
           });
         } else {
+          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV !== "development";
           ctx.res.setHeader(
             "Set-Cookie",
-            "cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly"
+            `cookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
           );
         }
       }
@@ -63,18 +64,19 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
+          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod";
           if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
-              secure: false,
-              sameSite: "lax",
+              secure: isProd,
+              sameSite: isProd ? "none" : "lax",
               path: "/",
               maxAge: 7 * 24 * 60 * 60 * 1000,
             });
           } else {
             ctx.res.setHeader(
               "Set-Cookie",
-              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
+              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
             );
           }
         }
@@ -110,18 +112,19 @@ export const authRouter = router({
         const sessionToken = signToken({ userId: user.id });
 
         if (ctx.res) {
+          const isProd = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod";
           if ("cookie" in ctx.res && typeof (ctx.res as any).cookie === "function") {
             (ctx.res as any).cookie("cookie", sessionToken, {
               httpOnly: true,
-              secure: false,
-              sameSite: "lax",
+              secure: isProd,
+              sameSite: isProd ? "none" : "lax",
               path: "/",
               maxAge: 7 * 24 * 60 * 60 * 1000,
             });
           } else {
             ctx.res.setHeader(
               "Set-Cookie",
-              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
+              `cookie=${sessionToken}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
             );
           }
         }
