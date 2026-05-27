@@ -18,7 +18,18 @@
       "persistent": true
     },
     "db:generate": {},
-    "db:migrate": {},
-    "db:push": {}
+    "db:migrate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:seed": {
+      "cache": false
+    }
   }
 }

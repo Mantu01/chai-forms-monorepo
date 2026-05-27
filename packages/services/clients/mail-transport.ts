@@ -17,7 +17,7 @@ const developmentConfig = {
   auth,
 };
 
-const isProduction = env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV !== "development";
 const config = isProduction ? productionConfig : developmentConfig;
 
 const transport = nodemailer.createTransport(config);
