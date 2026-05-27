@@ -16,6 +16,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Spinner } from "~/components/ui/spinner";
+import { env } from "~/env";
 
 interface WorkspaceSettingsDialogProps {
   workspaceId: string | null;
@@ -65,7 +66,7 @@ export function WorkspaceSettingsDialog({
     formData.append("workspaceId", workspaceId);
 
     try {
-      const response = await fetch("http://localhost:5000/api/workspace/upload-logo", {
+      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/workspace/upload-logo`, {
         method: "POST",
         body: formData,
       });

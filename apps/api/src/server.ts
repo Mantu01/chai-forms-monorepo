@@ -18,7 +18,8 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin === env.CLIENT_URL) {
+    const clientUrl = env.CLIENT_URL?.replace(/\/$/, '');
+    if (!origin || origin === clientUrl || origin === env.CLIENT_URL) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
