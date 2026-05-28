@@ -33,6 +33,11 @@ async function handler(req: NextRequest) {
     headers.set(key, value);
   });
 
+  const cookie = req.headers.get("cookie");
+  if (cookie) {
+    headers.set("cookie", cookie);
+  }
+
   const init: RequestInit = {
     method: req.method,
     headers,
