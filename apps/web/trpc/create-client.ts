@@ -49,6 +49,7 @@ export const createTRPCHttpBatchClientClient = (opts?: CreateTRPCHttpBatchClient
           ...opts?.headers,
         },
         credentials: "include",
+        cache: "no-store",
       });
     },
   });

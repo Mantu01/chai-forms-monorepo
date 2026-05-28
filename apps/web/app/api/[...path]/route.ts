@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = (
@@ -33,6 +34,7 @@ async function handler(req: NextRequest) {
   const init: RequestInit = {
     method: req.method,
     headers,
+    cache: "no-store",
     // @ts-expect-error
     duplex: "half",
   };
