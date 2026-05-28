@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * Catch-all TRPC proxy route.
- *
- * Proxies /trpc/* requests through the same origin as the frontend so that
- * cookies set by the backend are treated as first-party cookies.
- */
-
 const BACKEND_URL = (
   process.env.INTERNAL_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
@@ -14,7 +7,7 @@ const BACKEND_URL = (
 ).replace(/\/$/, "");
 
 async function handler(req: NextRequest) {
-  const path = req.nextUrl.pathname; // e.g. /trpc/auth.login
+  const path = req.nextUrl.pathname;
   const search = req.nextUrl.search;
 
   const targetUrl = `${BACKEND_URL}${path}${search}`;
@@ -32,15 +25,15 @@ async function handler(req: NextRequest) {
     headers.set(key, value);
   });
 
-  const cookie = req.headers.get("cookie");
-  if (cookie) {
-    headers.set("cookie", cookie);
+  const cookieHeader = req.headers.get("cookie");
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
   }
 
   const init: RequestInit = {
     method: req.method,
     headers,
-    // @ts-expect-error - duplex is required for streaming request bodies
+    // @ts-expect-error
     duplex: "half",
   };
 

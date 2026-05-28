@@ -19,7 +19,6 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no Origin header (server-to-server, e.g. Next.js proxy)
     if (!origin) {
       callback(null, true);
       return;

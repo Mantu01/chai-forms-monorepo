@@ -33,7 +33,6 @@ async function handler(req: NextRequest) {
   const init: RequestInit = {
     method: req.method,
     headers,
-    redirect: "manual",
     // @ts-expect-error
     duplex: "half",
   };
@@ -56,11 +55,6 @@ async function handler(req: NextRequest) {
         return;
       }
 
-      if (lower === "location") {
-        responseHeaders.set(key, value);
-        return;
-      }
-
       responseHeaders.set(key, value);
     });
 
@@ -73,7 +67,7 @@ async function handler(req: NextRequest) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("[Auth Proxy] Error forwarding request:", error);
+    console.error("[API Proxy] Error forwarding request:", error);
     return NextResponse.json(
       { error: "Backend service unavailable" },
       { status: 502 }
